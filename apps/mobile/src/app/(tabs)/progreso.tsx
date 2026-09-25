@@ -95,7 +95,7 @@ export default function Progreso() {
                   <Txt v="cuerpoMedio">{s.nombreDia}</Txt>
                   <Txt v="secundario">
                     {fmtFecha(s.cerradaAt ?? s.iniciadaAt)} · {fmtHace(s.cerradaAt ?? s.iniciadaAt)}
-                    {s.prs.length ? ` · ${s.prs.length} PR` : ''}
+                    {s.prs.length ? ` · ${s.prs.length} ${s.prs.length === 1 ? 'récord' : 'récords'}` : ''}
                   </Txt>
                 </>
               }

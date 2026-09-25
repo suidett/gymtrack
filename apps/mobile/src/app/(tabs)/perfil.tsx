@@ -1,7 +1,7 @@
 import { fmtNum } from '@gymtrack/shared';
 import { useMemo, useState } from 'react';
 import { View } from 'react-native';
-import { Boton, Cabecera, Campo, Confirmar, Dato, Pantalla, Separador, Stepper, Tarjeta, Txt } from '@/components/ui';
+import { Boton, Cabecera, Campo, CampoDiferido, Confirmar, Dato, Pantalla, Separador, Stepper, Tarjeta, Txt } from '@/components/ui';
 import { parseNumero } from '@/lib/tiempo';
 import { rachaDias } from '@/store/selectors';
 import { useStore } from '@/store/useStore';
@@ -30,10 +30,10 @@ export default function Perfil() {
 
       <Separador titulo="Datos personales" />
       <Tarjeta className="gap-4">
-        <Campo
+        <CampoDiferido
           etiqueta="Nombre"
-          value={perfil.nombre}
-          onChangeText={(t) => actualizarPerfil({ nombre: t })}
+          valor={perfil.nombre}
+          onConfirmar={(t) => actualizarPerfil({ nombre: t.trim() })}
           placeholder="Cómo te llamas"
           autoCapitalize="words"
         />

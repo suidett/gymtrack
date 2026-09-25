@@ -10,6 +10,7 @@ const LETRAS = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
 
 export default function Hoy() {
   const perfil = useStore((s) => s.perfil);
+  const errorCarga = useStore((s) => s.errorCarga);
   const rutinas = useStore((s) => s.rutinas);
   const sesiones = useStore((s) => s.sesiones);
   const iniciarSesion = useStore((s) => s.iniciarSesion);
@@ -47,8 +48,15 @@ export default function Hoy() {
         </View>
       </View>
 
+      {errorCarga ? (
+        <Tarjeta tono="peligro" className="mb-4 gap-1">
+          <Txt v="cuerpoMedio">No se pudieron leer tus datos guardados</Txt>
+          <Txt v="secundario">Para no pisarlos, la app no guardará nada en esta sesión. Cierra la app y vuelve a abrirla.</Txt>
+        </Tarjeta>
+      ) : null}
+
       {enCurso ? (
-        <Tarjeta className="gap-3 border-accent bg-accent-soft">
+        <Tarjeta tono="acento" className="gap-3">
           <Text className="font-mono text-[11px] uppercase tracking-widest text-accent-deep">Sesión en curso</Text>
           <Txt v="h2">{enCurso.nombreDia}</Txt>
           <Txt v="secundario">Empezaste {fmtHace(enCurso.iniciadaAt)}. Retómala donde la dejaste.</Txt>
@@ -85,7 +93,7 @@ export default function Hoy() {
       <View className="mt-4 flex-row gap-2">
         <Dato valor={String(stats.sesiones)} etiqueta="sesiones este mes" />
         <Dato valor={fmtVolumen(stats.volumenKg)} etiqueta="volumen del mes" />
-        <Dato valor={String(stats.prs)} etiqueta="PRs del mes" />
+        <Dato valor={String(stats.prs)} etiqueta="récords del mes" />
       </View>
 
       <Separador titulo="Esta semana" />

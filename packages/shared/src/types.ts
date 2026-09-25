@@ -71,6 +71,8 @@ export interface Routine {
   estado: EstadoRutina;
   dias: RoutineDay[];
   creadoAt: string;
+  /** Cuándo se activó por primera vez; desde ahí se cuentan las semanas. */
+  activadaAt: string | null;
   actualizadoAt: string;
 }
 
@@ -109,6 +111,8 @@ export interface PR {
   nombre: string;
   tipo: TipoPR;
   valor: number;
+  /** Lastre con el que se hizo la marca (solo en peso corporal). */
+  lastreKg: number;
   anterior: number | null;
   setId: string;
   fecha: string;
@@ -119,6 +123,7 @@ export type MotivoSugerencia =
   | 'dentro_del_rango'
   | 'bajo_el_minimo'
   | 'baja_dos_sesiones'
+  | 'sin_lastre_sube_reps'
   | 'lineal_sube'
   | 'lineal_mantiene'
   | 'lineal_baja';

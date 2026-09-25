@@ -58,6 +58,7 @@ export function rutinaEjemplo(newId: () => string, ahoraIso: string): Routine {
       ]),
     ],
     creadoAt: ahoraIso,
+    activadaAt: ahoraIso,
     actualizadoAt: ahoraIso,
   };
 }

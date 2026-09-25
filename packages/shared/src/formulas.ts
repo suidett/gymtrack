@@ -12,6 +12,16 @@ export function e1rm(pesoKg: number, reps: number): number | null {
   return redondear(pesoKg * (1 + reps / 30));
 }
 
+/**
+ * La misma fórmula sin el tope de 12: sirve para comparar marcas entre sesiones,
+ * porque es creciente en repeticiones. Para mostrar, prefiere e1rm.
+ */
+export function e1rmComparable(pesoKg: number, reps: number): number | null {
+  if (!(pesoKg > 0) || !(reps >= 1)) return null;
+  if (reps === 1) return redondear(pesoKg);
+  return redondear(pesoKg * (1 + reps / 30));
+}
+
 export function rpeDesdeRir(rir: number): number {
   return Math.max(0, Math.min(10, 10 - rir));
 }

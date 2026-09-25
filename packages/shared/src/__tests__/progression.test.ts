@@ -55,6 +55,44 @@ describe('doble progresión', () => {
     expect(dos?.pesoKg).toBe(27.5);
   });
 
+  it('sin lastre (incremento 0) nunca inventa kilos: al tope sube el rango de repeticiones', () => {
+    const s = sugerirProgresion({
+      ...base,
+      incrementoKg: 0,
+      repsMin: 8,
+      repsMax: 12,
+      setsActuales: [set(0, 12), set(0, 12), set(0, 12)],
+    });
+    expect(s?.motivo).toBe('sin_lastre_sube_reps');
+    expect(s?.pesoKg).toBe(0);
+    expect(s?.repsMin).toBe(12);
+    expect(s?.repsMax).toBe(14);
+    expect(s?.texto).toContain('12 a 14 repeticiones con peso corporal');
+    expect(s?.texto).not.toContain('kg');
+  });
+
+  it('sin lastre y dos sesiones bajo el mínimo no dice "baja a 0 kg"', () => {
+    const s = sugerirProgresion({
+      ...base,
+      incrementoKg: 0,
+      setsActuales: [set(0, 6), set(0, 5), set(0, 5)],
+      setsAnteriores: [set(0, 6), set(0, 6), set(0, 5)],
+    });
+    expect(s?.motivo).toBe('baja_dos_sesiones');
+    expect(s?.pesoKg).toBe(0);
+    expect(s?.texto).not.toContain('0 kg');
+  });
+
+  it('el rango sugerido nunca sale invertido y la precarga usa el mínimo del texto', () => {
+    const s = sugerirProgresion({ ...base, setsActuales: [set(30, 12, 0), set(30, 12, 0), set(30, 12, 0)] });
+    expect(s?.motivo).toBe('dentro_del_rango');
+    expect(s?.repsMin).toBe(10);
+    expect(s?.texto).toContain('30 kg × 10.');
+    const t = sugerirProgresion({ ...base, setsActuales: [set(30, 9), set(30, 9), set(30, 9)] });
+    expect(t?.repsMin).toBe(9);
+    expect(t?.texto).toContain('30 kg × 9 a 10');
+  });
+
   it('sin series completadas no sugiere nada', () => {
     expect(sugerirProgresion({ ...base, setsActuales: [] })).toBeNull();
   });

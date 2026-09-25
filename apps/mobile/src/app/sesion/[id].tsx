@@ -13,11 +13,26 @@ import {
   type WorkoutSet,
 } from '@gymtrack/shared';
 import * as Haptics from 'expo-haptics';
-import { router, useLocalSearchParams } from 'expo-router';
+import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
+import { router, useLocalSearchParams, useNavigation } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, Pressable, ScrollView, Text, Vibration, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Boton, BotonRedondo, Cabecera, Campo, Confirmar, Dato, Fila, Pantalla, Separador, Stepper, Tarjeta, Txt, Vacio } from '@/components/ui';
+import {
+  Boton,
+  BotonRedondo,
+  Cabecera,
+  CampoDiferido,
+  Confirmar,
+  Dato,
+  Fila,
+  Pantalla,
+  Separador,
+  Stepper,
+  Tarjeta,
+  Txt,
+  Vacio,
+} from '@/components/ui';
 import { resumenSets } from '@/lib/formato';
 import { useStore } from '@/store/useStore';
 
@@ -30,7 +45,7 @@ export default function Sesion() {
     return (
       <Pantalla>
         <Cabecera titulo="Sesión" atras />
-        <Vacio titulo="Esta sesión ya no existe" accion="Volver al inicio" onAccion={() => router.replace('/')} />
+        <Vacio titulo="Esta sesión ya no existe" accion="Volver al inicio" onAccion={() => router.dismissTo('/')} />
       </Pantalla>
     );
   }
@@ -43,10 +58,7 @@ function ahoraMs(): number {
   return Date.now();
 }
 
-function salir() {
-  if (router.canGoBack()) router.back();
-  else router.replace('/');
-}
+const KEEP_AWAKE_DESCANSO = 'gymtrack-descanso';
 
 function avisarFinDescanso() {
   if (Platform.OS === 'web') return;
@@ -58,6 +70,7 @@ function avisarFinDescanso() {
 
 function Bitacora({ sesion, onCerrar }: { sesion: WorkoutSession; onCerrar: () => void }) {
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation();
   const sesiones = useStore((s) => s.sesiones);
   const actualizarSet = useStore((s) => s.actualizarSet);
   const marcarSet = useStore((s) => s.marcarSet);
@@ -67,12 +80,17 @@ function Bitacora({ sesion, onCerrar }: { sesion: WorkoutSession; onCerrar: () =
   const cerrarSesion = useStore((s) => s.cerrarSesion);
   const descartarSesion = useStore((s) => s.descartarSesion);
 
-  const [idx, setIdx] = useState(0);
+  // Se retoma en el primer ejercicio con series pendientes, no siempre en el primero.
+  const [idx, setIdx] = useState(() => {
+    const n = sesion.ejercicios.findIndex((e) => e.sets.some((s) => !s.completada));
+    return n < 0 ? Math.max(0, sesion.ejercicios.length - 1) : n;
+  });
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [ahora, setAhora] = useState(ahoraMs);
   const [descanso, setDescansoEstado] = useState<{ fin: number; total: number } | null>(null);
   const descansoRef = useRef<{ fin: number; total: number } | null>(null);
   const [confirmar, setConfirmar] = useState<null | 'salir' | 'vacia'>(null);
+  const saliendo = useRef(false);
 
   const setDescanso = (d: { fin: number; total: number } | null) => {
     descansoRef.current = d;
@@ -93,6 +111,27 @@ function Bitacora({ sesion, onCerrar }: { sesion: WorkoutSession; onCerrar: () =
     return () => clearInterval(t);
   }, []);
 
+  // El botón atrás de Android (y el gesto de iOS) pasan por la misma confirmación que "Salir".
+  useEffect(() => {
+    return navigation.addListener('beforeRemove', (e) => {
+      if (saliendo.current) return;
+      e.preventDefault();
+      setConfirmar('salir');
+    });
+  }, [navigation]);
+
+  // Con la pantalla apagada Android pausa los timers: mientras corre el descanso, se mantiene encendida.
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+    if (descanso) {
+      activateKeepAwakeAsync(KEEP_AWAKE_DESCANSO).catch(() => {});
+      return () => {
+        deactivateKeepAwake(KEEP_AWAKE_DESCANSO).catch(() => {});
+      };
+    }
+    return undefined;
+  }, [descanso]);
+
   const ejercicios = sesion.ejercicios;
   const i = Math.min(idx, Math.max(0, ejercicios.length - 1));
   const ej = ejercicios[i];
@@ -107,6 +146,12 @@ function Bitacora({ sesion, onCerrar }: { sesion: WorkoutSession; onCerrar: () =
   const totalHechas = ejercicios.reduce((a, e) => a + e.sets.filter((s) => s.completada).length, 0);
   const totalSeries = ejercicios.reduce((a, e) => a + e.sets.length, 0);
 
+  function salirAhora() {
+    saliendo.current = true;
+    if (router.canGoBack()) router.back();
+    else router.dismissTo('/');
+  }
+
   if (!ej) {
     return (
       <Pantalla>
@@ -117,7 +162,7 @@ function Bitacora({ sesion, onCerrar }: { sesion: WorkoutSession; onCerrar: () =
           accion="Descartar sesión"
           onAccion={() => {
             descartarSesion(sesion.id);
-            salir();
+            salirAhora();
           }}
         />
       </Pantalla>
@@ -138,13 +183,29 @@ function Bitacora({ sesion, onCerrar }: { sesion: WorkoutSession; onCerrar: () =
     setEditandoId(null);
   }
   function marcar(set: WorkoutSet, fallo: boolean) {
-    marcarSet(sesion.id, ej!.id, set.id, fallo);
+    const editando = set.completada;
+    // Al editar una serie ya hecha se conserva su fallo, salvo que se marque "Fallé" de nuevo.
+    marcarSet(sesion.id, ej!.id, set.id, editando && !fallo ? set.fallo : fallo);
     setEditandoId(null);
+    if (editando) return;
     const quedan = ej!.sets.some((s) => !s.completada && s.id !== set.id);
     if (ej!.descansoS > 0 && (quedan || !ultimoEjercicio)) {
-      setDescanso({ fin: ahoraMs() + ej!.descansoS * 1000, total: ej!.descansoS });
+      const t0 = ahoraMs();
+      setAhora(t0);
+      setDescanso({ fin: t0 + ej!.descansoS * 1000, total: ej!.descansoS });
     }
     if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+  }
+  function limpiarFallo(set: WorkoutSet) {
+    marcarSet(sesion.id, ej!.id, set.id, false);
+    setEditandoId(null);
+  }
+  function masDescanso() {
+    const d = descansoRef.current;
+    if (!d) return;
+    const t0 = ahoraMs();
+    setAhora(t0);
+    setDescanso({ fin: Math.max(d.fin, t0) + 30_000, total: d.total + 30 });
   }
   function terminar() {
     if (totalHechas === 0) {
@@ -190,7 +251,7 @@ function Bitacora({ sesion, onCerrar }: { sesion: WorkoutSession; onCerrar: () =
               peligro={false}
               pregunta="La sesión queda guardada en curso. La retomas desde Hoy."
               si="Salir"
-              onSi={salir}
+              onSi={salirAhora}
               onNo={() => setConfirmar(null)}
             />
           </View>
@@ -202,7 +263,7 @@ function Bitacora({ sesion, onCerrar }: { sesion: WorkoutSession; onCerrar: () =
               si="Sí, descartar"
               onSi={() => {
                 descartarSesion(sesion.id);
-                salir();
+                salirAhora();
               }}
               onNo={() => setConfirmar(null)}
             />
@@ -210,7 +271,7 @@ function Bitacora({ sesion, onCerrar }: { sesion: WorkoutSession; onCerrar: () =
         ) : null}
 
         {sugerencia ? (
-          <Tarjeta className="mb-3 border-primary-soft bg-primary-soft">
+          <Tarjeta tono="primario" className="mb-3">
             <Txt v="etiquetaPrimaria" className="mb-1">Objetivo de hoy</Txt>
             <Txt>{sugerencia.texto}</Txt>
           </Tarjeta>
@@ -234,6 +295,7 @@ function Bitacora({ sesion, onCerrar }: { sesion: WorkoutSession; onCerrar: () =
                 onCambio={(p) => actualizarSet(sesion.id, ej.id, s.id, p)}
                 onMarcar={() => marcar(s, false)}
                 onFallo={() => marcar(s, true)}
+                onLimpiarFallo={() => limpiarFallo(s)}
               />
             ) : (
               <FilaSet
@@ -258,11 +320,12 @@ function Bitacora({ sesion, onCerrar }: { sesion: WorkoutSession; onCerrar: () =
         </View>
         <Boton titulo="Añadir serie" variante="fantasma" chico className="mt-3 self-start" onPress={() => agregarSet(sesion.id, ej.id)} />
 
-        <Campo
+        <CampoDiferido
+          key={ej.id}
           etiqueta="Observación o dolor en este ejercicio"
           className="mt-5"
-          value={ej.observacion}
-          onChangeText={(t) => setObservacionEjercicio(sesion.id, ej.id, t)}
+          valor={ej.observacion}
+          onConfirmar={(t) => setObservacionEjercicio(sesion.id, ej.id, t)}
           placeholder="Por ejemplo, molestia en el hombro derecho en la tercera serie"
           multiline
         />
@@ -274,10 +337,16 @@ function Bitacora({ sesion, onCerrar }: { sesion: WorkoutSession; onCerrar: () =
       >
         {descanso ? (
           <PanelDescanso
-            restante={Math.max(0, Math.ceil((descanso.fin - ahora) / 1000))}
+            restante={Math.min(descanso.total, Math.max(0, Math.ceil((descanso.fin - ahora) / 1000)))}
             total={descanso.total}
-            siguiente={proxima ? `Siguiente: serie ${proxima.serieN} · ${ej.nombre}` : ultimoEjercicio ? 'Última serie hecha' : `Siguiente: ${ejercicios[i + 1]?.nombre ?? ''}`}
-            onMas={() => setDescanso(descanso ? { fin: descanso.fin + 30_000, total: descanso.total + 30 } : null)}
+            siguiente={
+              proxima
+                ? `Siguiente: serie ${proxima.serieN} · ${ej.nombre}`
+                : ultimoEjercicio
+                  ? 'Última serie hecha'
+                  : `Siguiente: ${ejercicios[i + 1]?.nombre ?? ''}`
+            }
+            onMas={masDescanso}
             onSaltar={() => setDescanso(null)}
           />
         ) : null}
@@ -299,6 +368,7 @@ function FilaActiva({
   onCambio,
   onMarcar,
   onFallo,
+  onLimpiarFallo,
 }: {
   set: WorkoutSet;
   esTiempo: boolean;
@@ -306,6 +376,7 @@ function FilaActiva({
   onCambio: (p: Partial<WorkoutSet>) => void;
   onMarcar: () => void;
   onFallo: () => void;
+  onLimpiarFallo: () => void;
 }) {
   return (
     <View className="my-1 rounded-card border border-primary bg-primary-soft p-3">
@@ -320,11 +391,11 @@ function FilaActiva({
       </View>
       <View className="mt-2 flex-row items-center justify-between">
         <Text className="font-mono text-xs text-ink-muted">{esTiempo ? 'kg (lastre)' : 'kg'}</Text>
-        <Stepper grande valor={set.pesoKg} onCambio={(v) => onCambio({ pesoKg: v })} paso={pasoKg} min={0} max={999} formato={(v) => fmtNum(v)} />
+        <Stepper grande editable valor={set.pesoKg} onCambio={(v) => onCambio({ pesoKg: v })} paso={pasoKg} min={0} max={999} formato={(v) => fmtNum(v)} />
       </View>
       <View className="mt-2 flex-row items-center justify-between">
         <Text className="font-mono text-xs text-ink-muted">{esTiempo ? 'segundos' : 'reps'}</Text>
-        <Stepper grande valor={set.reps} onCambio={(v) => onCambio({ reps: v })} paso={esTiempo ? 5 : 1} min={0} max={999} />
+        <Stepper grande editable valor={set.reps} onCambio={(v) => onCambio({ reps: Math.round(v) })} paso={esTiempo ? 5 : 1} min={0} max={999} />
       </View>
       <View className="mt-3 flex-row items-center gap-2">
         <Text className="w-12 font-mono text-xs text-ink-muted">RIR</Text>
@@ -341,7 +412,11 @@ function FilaActiva({
       </View>
       <View className="mt-3 flex-row gap-2">
         <Boton titulo={set.completada ? 'Guardar cambios' : 'Serie hecha'} className="flex-1" onPress={onMarcar} />
-        <Boton titulo="Fallé" variante="peligro" onPress={onFallo} />
+        {set.completada && set.fallo ? (
+          <Boton titulo="Sin fallo" variante="secundario" onPress={onLimpiarFallo} />
+        ) : (
+          <Boton titulo="Fallé" variante="peligro" onPress={onFallo} />
+        )}
       </View>
     </View>
   );
@@ -390,7 +465,7 @@ function PanelDescanso({
   onMas: () => void;
   onSaltar: () => void;
 }) {
-  const pct = total > 0 ? Math.round((restante / total) * 100) : 0;
+  const pct = total > 0 ? Math.min(100, Math.round((restante / total) * 100)) : 0;
   return (
     <View className="mb-3 rounded-card bg-accent-soft p-4">
       <View className="flex-row items-center justify-between gap-3">
@@ -416,12 +491,11 @@ function PanelDescanso({
 function Resumen({ sesion, celebrar }: { sesion: WorkoutSession; celebrar: boolean }) {
   const setObservacionSesion = useStore((s) => s.setObservacionSesion);
   const cerradaAt = sesion.cerradaAt ?? sesion.iniciadaAt;
-  const reciente = celebrar;
   const series = sesion.ejercicios.reduce((a, e) => a + e.sets.length, 0);
 
   return (
     <Pantalla>
-      {reciente ? (
+      {celebrar ? (
         <View className="items-center gap-1 py-3">
           <Text className="font-mono text-[11px] uppercase tracking-widest text-accent">Felicidades</Text>
           <Txt v="titulo">Rutina completada</Txt>
@@ -457,7 +531,7 @@ function Resumen({ sesion, celebrar }: { sesion: WorkoutSession; celebrar: boole
                     <Txt v="cuerpoMedio">{pr.nombre}</Txt>
                     <Txt v="secundario">
                       {etiquetaMarca(pr.tipo)}
-                      {pr.anterior != null ? ` · antes ${fmtMarca({ tipo: pr.tipo, valor: pr.anterior })}` : ' · primera marca'}
+                      {pr.anterior != null ? ` · antes ${fmtMarca({ tipo: pr.tipo, valor: pr.anterior })}` : ' · primer récord'}
                     </Txt>
                   </>
                 }
@@ -497,18 +571,18 @@ function Resumen({ sesion, celebrar }: { sesion: WorkoutSession; celebrar: boole
         ))}
       </Tarjeta>
 
-      <Campo
+      <CampoDiferido
         etiqueta="Observación de la sesión"
         className="mt-5"
-        value={sesion.observacion}
-        onChangeText={(t) => setObservacionSesion(sesion.id, t)}
+        valor={sesion.observacion}
+        onConfirmar={(t) => setObservacionSesion(sesion.id, t)}
         placeholder="Cómo te sentiste, qué cambiarías"
         multiline
       />
 
       <View className="mt-6 gap-2">
-        <Boton titulo="Ver mi progreso" variante="acento" onPress={() => router.replace('/progreso')} />
-        <Boton titulo="Volver al inicio" variante="fantasma" onPress={() => router.replace('/')} />
+        <Boton titulo="Ver mi progreso" variante="acento" onPress={() => router.dismissTo('/progreso')} />
+        <Boton titulo="Volver al inicio" variante="fantasma" onPress={() => router.dismissTo('/')} />
       </View>
     </Pantalla>
   );

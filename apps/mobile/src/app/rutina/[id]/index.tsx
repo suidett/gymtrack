@@ -1,9 +1,8 @@
 import { METODOS, type Routine, type RoutineDay } from '@gymtrack/shared';
-import { colors } from '@gymtrack/tokens';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, Text, TextInput, View } from 'react-native';
-import { Boton, BotonRedondo, Cabecera, Campo, Chips, Confirmar, Pantalla, Separador, Stepper, Tarjeta, Txt, Vacio } from '@/components/ui';
+import { InteractionManager, Pressable, Text, View } from 'react-native';
+import { Boton, BotonRedondo, Cabecera, CampoDiferido, Chips, Confirmar, EntradaDiferida, Pantalla, Separador, Stepper, Tarjeta, Txt, Vacio } from '@/components/ui';
 import { newId } from '@/lib/ids';
 import { useStore } from '@/store/useStore';
 
@@ -19,6 +18,7 @@ export default function EditorRutina() {
   const eliminarRutina = useStore((s) => s.eliminarRutina);
   const iniciarSesion = useStore((s) => s.iniciarSesion);
   const [confirmar, setConfirmar] = useState(false);
+  const [aviso, setAviso] = useState<string | null>(null);
 
   if (!rutina) {
     return (
@@ -72,7 +72,12 @@ export default function EditorRutina() {
         atras
       />
 
-      <Campo etiqueta="Nombre" value={rutina.nombre} onChangeText={(t) => patch((r) => ({ ...r, nombre: t }))} placeholder="Nombre de la rutina" />
+      <CampoDiferido
+        etiqueta="Nombre"
+        valor={rutina.nombre}
+        onConfirmar={(t) => patch((r) => ({ ...r, nombre: t.trim() || r.nombre }))}
+        placeholder="Nombre de la rutina"
+      />
 
       <View className="mt-4 gap-2">
         <Txt v="etiqueta">Método de progresión</Txt>
@@ -98,11 +103,10 @@ export default function EditorRutina() {
           return (
             <Tarjeta key={dia.id} className="mb-3 gap-2">
               <View className="flex-row items-center gap-2">
-                <TextInput
-                  value={dia.nombre}
-                  onChangeText={(t) => patchDia(dia.id, (d) => ({ ...d, nombre: t }))}
+                <EntradaDiferida
+                  valor={dia.nombre}
+                  onConfirmar={(t) => patchDia(dia.id, (d) => ({ ...d, nombre: t.trim() || d.nombre }))}
                   placeholder="Nombre del día"
-                  placeholderTextColor={colors.ink.faint}
                   className="flex-1 font-sans-bold text-lg text-ink"
                 />
                 {rutina.dias.length > 1 ? (
@@ -154,8 +158,16 @@ export default function EditorRutina() {
       {rutina.estado === 'activa' ? (
         <Boton titulo="Archivar rutina" variante="fantasma" onPress={() => archivarRutina(rutina.id)} />
       ) : (
-        <Boton titulo="Activar rutina" onPress={() => activarRutina(rutina.id)} disabled={totalEjercicios === 0} />
+        <Boton
+          titulo="Activar rutina"
+          onPress={() => {
+            const r = activarRutina(rutina.id);
+            setAviso(r.ok ? null : (r.motivo ?? 'No se pudo activar.'));
+          }}
+          disabled={totalEjercicios === 0}
+        />
       )}
+      {aviso ? <Text className="mt-2 font-sans text-sm text-danger">{aviso}</Text> : null}
       {totalEjercicios === 0 ? (
         <Txt v="pequeno" className="mt-2">Agrega al menos un ejercicio para poder activarla.</Txt>
       ) : null}
@@ -178,9 +190,13 @@ export default function EditorRutina() {
             pregunta="¿Eliminar esta rutina? Las sesiones ya registradas se conservan."
             si="Sí, eliminar"
             onSi={() => {
-              eliminarRutina(rutina.id);
+              // Primero la vuelta y recién después el borrado, para no ver "ya no existe" durante la animación.
+              const id = rutina.id;
               if (router.canGoBack()) router.back();
-              else router.replace('/rutinas');
+              else router.dismissTo('/rutinas');
+              InteractionManager.runAfterInteractions(() => {
+                eliminarRutina(id);
+              });
             }}
             onNo={() => setConfirmar(false)}
           />

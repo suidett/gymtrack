@@ -1,7 +1,7 @@
 import { etiquetaMarca, fmtFecha, fmtMarca, marcaVigente, sesionesCerradas, type Exercise } from '@gymtrack/shared';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Text, View } from 'react-native';
+import { InteractionManager, Text, View } from 'react-native';
 import { FormularioEjercicio } from '@/components/FormularioEjercicio';
 import { Boton, Cabecera, Confirmar, Dato, Fila, Pantalla, Separador, Tarjeta, Txt, Vacio } from '@/components/ui';
 import { resumenSets } from '@/lib/formato';
@@ -20,6 +20,7 @@ export default function DetalleEjercicio() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const ex = useStore((s) => s.ejercicios.find((e) => e.id === id));
   const sesiones = useStore((s) => s.sesiones);
+  const rutinas = useStore((s) => s.rutinas);
   const editarEjercicio = useStore((s) => s.editarEjercicio);
   const eliminarEjercicio = useStore((s) => s.eliminarEjercicio);
   const [editando, setEditando] = useState(false);
@@ -65,7 +66,7 @@ export default function DetalleEjercicio() {
     <Pantalla>
       <Cabecera titulo={ex.nombre} subtitulo={`${ex.grupo} · ${ex.equipo} · ${NOMBRE_PATRON[ex.patron]}`} atras />
       <View className="flex-row gap-2">
-        <Dato valor={marca ? fmtMarca(marca) : '–'} etiqueta={marca ? `PR · ${etiquetaMarca(marca.tipo)}` : 'sin PR todavía'} />
+        <Dato valor={marca ? fmtMarca(marca) : '–'} etiqueta={marca ? `récord · ${etiquetaMarca(marca.tipo)}` : 'sin récord todavía'} />
         <Dato valor={String(historial.length)} etiqueta="sesiones registradas" />
       </View>
 
@@ -95,7 +96,7 @@ export default function DetalleEjercicio() {
                   <Txt v="cuerpoMedio">
                     {fmtFecha(s.cerradaAt ?? s.iniciadaAt)} · {s.nombreDia}
                   </Txt>
-                  <Txt v="mono" className="mt-0.5">{resumenSets(ej.sets, ex.tipoCarga)}</Txt>
+                  <Txt v="mono" className="mt-0.5">{resumenSets(ej.sets, ej.tipoCarga)}</Txt>
                   {ej.observacion ? <Txt v="secundario" className="mt-0.5">{ej.observacion}</Txt> : null}
                 </>
               }
@@ -113,12 +114,19 @@ export default function DetalleEjercicio() {
               pregunta="¿Eliminar este ejercicio de tu biblioteca?"
               si="Sí, eliminar"
               onSi={() => {
-                const r = eliminarEjercicio(ex.id);
-                if (r.ok) router.back();
-                else {
-                  setError(r.motivo ?? 'No se pudo eliminar.');
+                // Se comprueba antes de borrar: si está en una rutina no se navega, se explica.
+                const usado = rutinas.some((r) => r.dias.some((d) => d.ejercicios.some((re) => re.exerciseId === ex.id)));
+                if (usado) {
+                  setError('Está en una rutina (activa o archivada). Quítalo de la rutina primero.');
                   setConfirmar(false);
+                  return;
                 }
+                // Primero la vuelta y recién después el borrado, para no ver "ya no existe" durante la animación.
+                const id = ex.id;
+                router.back();
+                InteractionManager.runAfterInteractions(() => {
+                  eliminarEjercicio(id);
+                });
               }}
               onNo={() => setConfirmar(false)}
             />

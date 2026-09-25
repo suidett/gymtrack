@@ -34,10 +34,10 @@ export default function Ejercicios() {
           return m ? (
             <View className="items-end">
               <Txt v="mono">{fmtMarca(m)}</Txt>
-              <Txt v="monoSecundario">PR</Txt>
+              <Txt v="monoSecundario">récord</Txt>
             </View>
           ) : (
-            <Txt v="monoSecundario">sin PR</Txt>
+            <Txt v="monoSecundario">sin récord</Txt>
           );
         }}
       />

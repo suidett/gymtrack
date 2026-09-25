@@ -1,6 +1,6 @@
 import { colors } from '@gymtrack/tokens';
 import { router } from 'expo-router';
-import type { ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   Pressable,
   ScrollView,
@@ -13,6 +13,7 @@ import {
   type ViewProps,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { parseNumero } from '@/lib/tiempo';
 
 // Texto con variantes. Las clases de fuente llevan el peso en el nombre
 // porque en React Native cada peso cargado es una familia distinta.
@@ -73,8 +74,19 @@ export function Boton({
   );
 }
 
-export function Tarjeta({ className = '', ...p }: ViewProps & { className?: string }) {
-  return <View className={`rounded-card border border-line bg-surface p-4 ${className}`} {...p} />;
+// El tono es un prop y no una clase que compite: en NativeWind dos bg-* en el mismo
+// className se resuelven por el orden del CSS generado, no por el orden escrito.
+const TONOS = {
+  normal: 'border-line bg-surface',
+  primario: 'border-primary-soft bg-primary-soft',
+  acento: 'border-accent bg-accent-soft',
+  peligro: 'border-danger bg-danger-soft',
+} as const;
+
+export type TonoTarjeta = keyof typeof TONOS;
+
+export function Tarjeta({ tono = 'normal', className = '', ...p }: ViewProps & { tono?: TonoTarjeta; className?: string }) {
+  return <View className={`rounded-card border p-4 ${TONOS[tono]} ${className}`} {...p} />;
 }
 
 export function Chip({ titulo, activo, onPress }: { titulo: string; activo: boolean; onPress: () => void }) {
@@ -133,6 +145,7 @@ export function Stepper({
   max = 9999,
   formato,
   grande = false,
+  editable = false,
 }: {
   valor: number;
   onCambio: (v: number) => void;
@@ -141,18 +154,42 @@ export function Stepper({
   max?: number;
   formato?: (v: number) => string;
   grande?: boolean;
+  /** Permite tocar la cifra y escribirla, para no dar 32 toques hasta llegar a 80 kg. */
+  editable?: boolean;
 }) {
   const redondear = (n: number) => Math.round(n * 100) / 100;
+  const borrador = useRef<string | null>(null);
+  const confirmar = () => {
+    if (borrador.current == null) return;
+    const n = parseNumero(borrador.current);
+    borrador.current = null;
+    if (n != null) onCambio(Math.min(max, Math.max(min, redondear(n))));
+  };
   const btn = `items-center justify-center rounded-full bg-primary-soft active:opacity-70 ${grande ? 'h-14 w-14' : 'h-10 w-10'}`;
   const txt = `font-sans-bold text-primary-deep ${grande ? 'text-2xl' : 'text-lg'}`;
+  const cifra = `text-center font-mono-semibold text-ink ${grande ? 'min-w-[96px] text-3xl' : 'min-w-[64px] text-lg'}`;
   return (
     <View className="flex-row items-center gap-2">
       <Pressable accessibilityLabel={`bajar ${paso}`} className={btn} onPress={() => onCambio(Math.max(min, redondear(valor - paso)))}>
         <Text className={txt}>−</Text>
       </Pressable>
-      <Text className={`text-center font-mono-semibold text-ink ${grande ? 'min-w-[96px] text-3xl' : 'min-w-[64px] text-lg'}`}>
-        {formato ? formato(valor) : String(valor).replace('.', ',')}
-      </Text>
+      {editable ? (
+        <TextInput
+          key={valor}
+          defaultValue={String(valor).replace('.', ',')}
+          onChangeText={(t) => {
+            borrador.current = t;
+          }}
+          onBlur={confirmar}
+          onSubmitEditing={confirmar}
+          keyboardType="decimal-pad"
+          selectTextOnFocus
+          accessibilityLabel="escribir el valor"
+          className={`${cifra} rounded-field border border-line bg-surface px-2 py-1`}
+        />
+      ) : (
+        <Text className={cifra}>{formato ? formato(valor) : String(valor).replace('.', ',')}</Text>
+      )}
       <Pressable accessibilityLabel={`subir ${paso}`} className={btn} onPress={() => onCambio(Math.min(max, redondear(valor + paso)))}>
         <Text className={txt}>+</Text>
       </Pressable>
@@ -205,7 +242,7 @@ export function Cabecera({
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="volver"
-          onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
+          onPress={() => (router.canGoBack() ? router.back() : router.dismissTo('/'))}
           className="h-10 w-10 items-center justify-center rounded-full bg-surface border border-line"
         >
           <Text className="font-sans-bold text-xl text-ink">‹</Text>
@@ -255,7 +292,7 @@ export function Confirmar({
   peligro?: boolean;
 }) {
   return (
-    <Tarjeta className={`gap-3 ${peligro ? 'border-danger bg-danger-soft' : 'border-accent bg-accent-soft'}`}>
+    <Tarjeta tono={peligro ? 'peligro' : 'acento'} className="gap-3">
       <Txt v="cuerpoMedio">{pregunta}</Txt>
       <View className="flex-row gap-2">
         <Boton titulo={si} variante={peligro ? 'peligro' : 'acento'} chico onPress={onSi} className="flex-1" />
@@ -330,6 +367,77 @@ export function Etiqueta({ texto, acento = false }: { texto: string; acento?: bo
   return (
     <View className={`rounded-full px-2.5 py-1 ${acento ? 'bg-accent-soft' : 'bg-field'}`}>
       <Text className={`font-mono text-[11px] ${acento ? 'text-accent-deep' : 'text-ink-muted'}`}>{texto}</Text>
+    </View>
+  );
+}
+
+/**
+ * TextInput que confirma al perder el foco, al enviar o al desmontarse, en vez de
+ * escribir en el store persistido con cada tecla.
+ */
+export function EntradaDiferida({
+  valor,
+  onConfirmar,
+  className = '',
+  ...p
+}: Omit<TextInputProps, 'value' | 'onChangeText'> & {
+  valor: string;
+  onConfirmar: (texto: string) => void;
+  className?: string;
+}) {
+  const [texto, setTexto] = useState(valor);
+  const ultimo = useRef(valor);
+  const confirmado = useRef(valor);
+  const onConfirmarRef = useRef(onConfirmar);
+  useEffect(() => {
+    onConfirmarRef.current = onConfirmar;
+  });
+
+  const confirmar = () => {
+    if (ultimo.current === confirmado.current) return;
+    confirmado.current = ultimo.current;
+    onConfirmarRef.current(ultimo.current);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (ultimo.current !== confirmado.current) {
+        confirmado.current = ultimo.current;
+        onConfirmarRef.current(ultimo.current);
+      }
+    };
+  }, []);
+
+  return (
+    <TextInput
+      value={texto}
+      onChangeText={(t) => {
+        ultimo.current = t;
+        setTexto(t);
+      }}
+      onBlur={confirmar}
+      onSubmitEditing={confirmar}
+      placeholderTextColor={colors.ink.faint}
+      className={className}
+      {...p}
+    />
+  );
+}
+
+export function CampoDiferido({
+  etiqueta,
+  className = '',
+  ...p
+}: Omit<TextInputProps, 'value' | 'onChangeText'> & {
+  etiqueta?: string;
+  valor: string;
+  onConfirmar: (texto: string) => void;
+  className?: string;
+}) {
+  return (
+    <View className={`gap-1.5 ${className}`}>
+      {etiqueta ? <Txt v="etiqueta">{etiqueta}</Txt> : null}
+      <EntradaDiferida className="rounded-field border border-line bg-surface px-4 py-3.5 font-sans text-base text-ink" {...p} />
     </View>
   );
 }

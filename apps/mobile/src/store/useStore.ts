@@ -34,6 +34,8 @@ export interface Estado {
   sesiones: WorkoutSession[];
   sembrado: boolean;
   hidratado: boolean;
+  /** true si no se pudieron leer los datos guardados: no se escribe nada hasta reiniciar. */
+  errorCarga: boolean;
 
   sembrar: () => void;
   restablecerDatos: () => void;
@@ -45,7 +47,7 @@ export interface Estado {
 
   crearRutina: (nombre: string) => Routine;
   guardarRutina: (r: Routine) => void;
-  activarRutina: (id: string) => void;
+  activarRutina: (id: string) => { ok: boolean; motivo?: string };
   archivarRutina: (id: string) => void;
   duplicarRutina: (id: string) => Routine | null;
   eliminarRutina: (id: string) => void;
@@ -81,6 +83,7 @@ export const useStore = create<Estado>()(
         sesiones: [],
         sembrado: false,
         hidratado: false,
+        errorCarga: false,
 
         sembrar() {
           set({
@@ -103,13 +106,22 @@ export const useStore = create<Estado>()(
           return ex;
         },
         editarEjercicio(id, d) {
-          set({ ejercicios: get().ejercicios.map((e) => (e.id === id ? { ...e, ...d } : e)) });
+          // El tipo de carga define cómo se miden las sesiones ya registradas: con historial no se cambia.
+          const conHistorial = get().sesiones.some(
+            (s) => s.estado === 'cerrada' && s.ejercicios.some((e) => e.exerciseId === id),
+          );
+          const cambios = conHistorial ? { ...d, tipoCarga: undefined } : d;
+          set({
+            ejercicios: get().ejercicios.map((e) => {
+              if (e.id !== id) return e;
+              const { tipoCarga, ...resto } = cambios;
+              return { ...e, ...resto, ...(tipoCarga ? { tipoCarga } : {}) };
+            }),
+          });
         },
         eliminarEjercicio(id) {
-          const usado = get().rutinas.some(
-            (r) => r.estado !== 'archivada' && r.dias.some((d) => d.ejercicios.some((re) => re.exerciseId === id)),
-          );
-          if (usado) return { ok: false, motivo: 'Está en una rutina. Quítalo de la rutina primero.' };
+          const usado = get().rutinas.some((r) => r.dias.some((d) => d.ejercicios.some((re) => re.exerciseId === id)));
+          if (usado) return { ok: false, motivo: 'Está en una rutina (activa o archivada). Quítalo de la rutina primero.' };
           set({ ejercicios: get().ejercicios.filter((e) => e.id !== id) });
           return { ok: true };
         },
@@ -124,6 +136,7 @@ export const useStore = create<Estado>()(
             estado: 'borrador',
             dias: [{ id: newId(), nombre: 'Día 1', orden: 0, ejercicios: [] }],
             creadoAt: ahora,
+            activadaAt: null,
             actualizadoAt: ahora,
           };
           set({ rutinas: [...get().rutinas, r] });
@@ -133,14 +146,23 @@ export const useStore = create<Estado>()(
           set({ rutinas: get().rutinas.map((x) => (x.id === r.id ? { ...r, actualizadoAt: ahoraIso() } : x)) });
         },
         activarRutina(id) {
+          const { rutinas, ejercicios } = get();
+          const rutina = rutinas.find((r) => r.id === id);
+          if (!rutina) return { ok: false, motivo: 'La rutina ya no existe.' };
+          const ids = new Set(ejercicios.map((e) => e.id));
+          const faltan = rutina.dias.flatMap((d) => d.ejercicios).filter((re) => !ids.has(re.exerciseId));
+          if (faltan.length > 0) {
+            return { ok: false, motivo: 'La rutina tiene ejercicios que ya no existen en tu biblioteca. Quítalos antes de activarla.' };
+          }
           const ahora = ahoraIso();
           set({
-            rutinas: get().rutinas.map((r) => {
-              if (r.id === id) return { ...r, estado: 'activa', actualizadoAt: ahora };
+            rutinas: rutinas.map((r) => {
+              if (r.id === id) return { ...r, estado: 'activa', activadaAt: r.activadaAt ?? ahora, actualizadoAt: ahora };
               if (r.estado === 'activa') return { ...r, estado: 'archivada', actualizadoAt: ahora };
               return r;
             }),
           });
+          return { ok: true };
         },
         archivarRutina(id) {
           set({
@@ -157,6 +179,7 @@ export const useStore = create<Estado>()(
             nombre: `${orig.nombre} (copia)`,
             estado: 'borrador',
             creadoAt: ahora,
+            activadaAt: null,
             actualizadoAt: ahora,
             dias: orig.dias.map((d) => ({
               ...d,
@@ -320,11 +343,19 @@ export const useStore = create<Estado>()(
         sesiones: s.sesiones,
         sembrado: s.sembrado,
       }),
-      onRehydrateStorage: () => () => {
+      onRehydrateStorage: () => (_estado, error) => {
         // Corre cuando termina de leer el almacenamiento (haya datos o no).
-        const st = useStore.getState();
-        if (!st.sembrado) st.sembrar();
-        useStore.setState({ hidratado: true });
+        if (error) {
+          // No se pudo leer lo guardado: sembrar ahora pisaría los datos reales en disco.
+          useStore.setState({ hidratado: true, errorCarga: true });
+          return;
+        }
+        try {
+          const st = useStore.getState();
+          if (!st.sembrado) st.sembrar();
+        } finally {
+          useStore.setState({ hidratado: true });
+        }
       },
     },
   ),

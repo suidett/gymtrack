@@ -58,9 +58,9 @@ export function proximoDia(rutina: Routine, sesiones: readonly WorkoutSession[])
   return dias[(idx + 1) % dias.length] ?? dias[0] ?? null;
 }
 
-/** Semana en curso de la rutina, de 1 a `semanas`, contada desde que se creó. */
+/** Semana en curso de la rutina, de 1 a `semanas`, contada desde que se activó (o se creó, si nunca se activó). */
 export function semanaDeRutina(rutina: Routine, ahora: Date = new Date()): number {
-  const inicio = new Date(rutina.creadoAt).getTime();
+  const inicio = new Date(rutina.activadaAt ?? rutina.creadoAt).getTime();
   const semanas = Math.floor((ahora.getTime() - inicio) / (7 * 86_400_000)) + 1;
   return Math.max(1, Math.min(rutina.semanas, semanas));
 }

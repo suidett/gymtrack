@@ -1,8 +1,8 @@
 import { fmtKg, type RoutineExercise } from '@gymtrack/shared';
 import { router, useLocalSearchParams } from 'expo-router';
 import type { ReactNode } from 'react';
-import { View } from 'react-native';
-import { Boton, Cabecera, Campo, Pantalla, Stepper, Tarjeta, Txt, Vacio } from '@/components/ui';
+import { InteractionManager, View } from 'react-native';
+import { Boton, Cabecera, CampoDiferido, Pantalla, Stepper, Tarjeta, Txt, Vacio } from '@/components/ui';
 import { useStore } from '@/store/useStore';
 
 function Ajuste({ etiqueta, children }: { etiqueta: string; children: ReactNode }) {
@@ -42,15 +42,19 @@ export default function ConfigEjercicio() {
       ),
     });
   const quitar = () => {
-    guardarRutina({
+    // Primero la vuelta y recién después el cambio, para no ver "ya no está" durante la animación.
+    const sinEste = {
       ...rutina,
       dias: rutina.dias.map((d) =>
         d.id !== dia.id
           ? d
           : { ...d, ejercicios: d.ejercicios.filter((x) => x.id !== re.id).map((x, i) => ({ ...x, orden: i })) },
       ),
-    });
+    };
     router.back();
+    InteractionManager.runAfterInteractions(() => {
+      guardarRutina(sinEste);
+    });
   };
 
   return (
@@ -90,24 +94,31 @@ export default function ConfigEjercicio() {
           </Ajuste>
         ) : null}
         {!esTiempo ? (
-          <Ajuste etiqueta="Peso inicial">
-            <Stepper
-              valor={re.pesoInicialKg ?? 0}
-              onCambio={(v) => patch({ pesoInicialKg: v })}
-              min={0}
-              max={500}
-              paso={re.incrementoKg > 0 ? re.incrementoKg : 2.5}
-              formato={(v) => (re.pesoInicialKg == null ? 'sin definir' : fmtKg(v))}
-            />
-          </Ajuste>
+          <View className="gap-2">
+            <Ajuste etiqueta="Peso inicial">
+              <Stepper
+                editable
+                valor={re.pesoInicialKg ?? 0}
+                onCambio={(v) => patch({ pesoInicialKg: v })}
+                min={0}
+                max={500}
+                paso={re.incrementoKg > 0 ? re.incrementoKg : 2.5}
+              />
+            </Ajuste>
+            {re.pesoInicialKg == null ? (
+              <Txt v="pequeno">Sin definir: la primera sesión parte de 0 y lo escribes ahí.</Txt>
+            ) : (
+              <Boton titulo="Quitar peso inicial" variante="fantasma" chico className="self-start" onPress={() => patch({ pesoInicialKg: null })} />
+            )}
+          </View>
         ) : null}
       </Tarjeta>
 
-      <Campo
+      <CampoDiferido
         etiqueta="Nota para este ejercicio"
         className="mt-4"
-        value={re.nota ?? ''}
-        onChangeText={(t) => patch({ nota: t })}
+        valor={re.nota ?? ''}
+        onConfirmar={(t) => patch({ nota: t })}
         placeholder="Tempo, agarre, indicaciones"
         multiline
       />
