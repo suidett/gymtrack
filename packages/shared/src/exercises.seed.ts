@@ -1,7 +1,34 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// Biblioteca base de ejercicios · Zona: Datos
+//
+// Qué hace: la lista de ejercicios con la que parte todo alumno (67 hoy), cada uno con su grupo
+// muscular, equipo, patrón de movimiento, tipo de carga y cuántos kilos sube por defecto cuando la
+// progresión lo indica. El store la copia al teléfono la primera vez que se abre la app.
+// Tócalo cuando: falte un ejercicio, un nombre esté mal escrito o un incremento por defecto no
+// tenga sentido para el equipo. Un ejercicio nuevo es una línea `ex(...)` bajo su grupo. Ojo con
+// dos cosas: el id (la primera parte, sin "base-") no se cambia una vez publicado, porque las
+// rutinas y las sesiones guardadas apuntan a él; y la copia al teléfono ocurre solo al sembrar
+// (primera vez o "restablecer datos" en useStore.ts), así que quien ya tiene datos no ve un
+// ejercicio nuevo hasta que exista una migración.
+// No lo toques para: cambiar qué campos tiene un ejercicio (types.ts), cómo se calcula la
+// progresión (progression.ts) ni la rutina de ejemplo (rutina-ejemplo.ts).
+// Depende de: types.ts (los tipos Exercise, GrupoMuscular, Equipo, Patron y TipoCarga).
+// ─────────────────────────────────────────────────────────────────────────────
 import type { Equipo, Exercise, GrupoMuscular, Patron, TipoCarga } from './types';
 
+// ── Fecha fija y ayudante ────────────────────────────────────────────────────
+
+// Todos los ejercicios base llevan la misma fecha de creación, fija y en el pasado: así, al ordenar
+// por fecha, la biblioteca queda antes que los ejercicios propios, y el resultado es el mismo en
+// todos los teléfonos.
 const CREADO = '2026-09-23T00:00:00.000Z';
 
+/**
+ * Arma un Exercise de la biblioteca base escribiendo solo lo que cambia entre uno y otro.
+ * Recibe el id corto (se le antepone "base-"), el nombre que ve el alumno, grupo, equipo, patrón,
+ * el incremento por defecto en kilos y el tipo de carga ('kg' si no se indica).
+ * Siempre deja propio en false y la fecha fija de arriba.
+ */
 function ex(
   id: string,
   nombre: string,
@@ -14,7 +41,18 @@ function ex(
   return { id: `base-${id}`, nombre, grupo, equipo, patron, tipoCarga, incrementoKg, propio: false, creadoAt: CREADO };
 }
 
-/** Biblioteca base: 66 ejercicios con grupo, equipo, patrón e incremento por defecto. No se editan; se copian si alguien quiere una variante. */
+// ── La biblioteca ────────────────────────────────────────────────────────────
+
+/**
+ * Biblioteca base: 67 ejercicios con grupo, equipo, patrón e incremento por defecto. No se editan;
+ * se copian si alguien quiere una variante.
+ *
+ * El incremento sigue el salto real del equipo: 2,5 kg en barra (un disco chico por lado), 1 o 2 kg
+ * en mancuerna (el salto entre una mancuerna y la siguiente), 5 kg en máquina (una placa), 2,5 o
+ * 5 kg en polea según el aparato, 4 kg en kettlebell. Un 0 le dice al motor que el ejercicio
+ * progresa en repeticiones y no en kilos (ver progression.ts); los de peso corporal con incremento
+ * mayor a 0 (dominadas, fondos) son los que progresan agregando lastre (el motor sugiere subir kilos); en los demás el lastre se puede anotar igual, pero se progresa en repeticiones.
+ */
 export const EJERCICIOS_BASE: readonly Exercise[] = [
   // Piernas
   ex('sentadilla-trasera', 'Sentadilla trasera', 'Piernas', 'Barra', 'rodilla', 2.5),
@@ -36,6 +74,7 @@ export const EJERCICIOS_BASE: readonly Exercise[] = [
   ex('abductores-maquina', 'Abductores en máquina', 'Piernas', 'Máquina', 'cadera', 5),
   ex('elevacion-talones-pie', 'Elevación de talones de pie', 'Piernas', 'Máquina', 'aislamiento', 5),
   ex('elevacion-talones-sentado', 'Elevación de talones sentado', 'Piernas', 'Máquina', 'aislamiento', 5),
+  // Sin lastre: incremento 0, así el motor sugiere subir repeticiones y nunca inventa kilos.
   ex('sentadilla-peso-corporal', 'Sentadilla con peso corporal', 'Piernas', 'Peso corporal', 'rodilla', 0, 'peso_corporal'),
   ex('puente-de-gluteo', 'Puente de glúteo', 'Piernas', 'Peso corporal', 'cadera', 0, 'peso_corporal'),
   // Pecho
@@ -44,12 +83,15 @@ export const EJERCICIOS_BASE: readonly Exercise[] = [
   ex('press-con-mancuernas', 'Press con mancuernas', 'Pecho', 'Mancuerna', 'empuje', 2),
   ex('press-inclinado-mancuernas', 'Press inclinado con mancuernas', 'Pecho', 'Mancuerna', 'empuje', 2),
   ex('press-en-maquina', 'Press en máquina', 'Pecho', 'Máquina', 'empuje', 5),
+  // Peso corporal con lastre: el peso que se anota es el del cinturón o la mancuerna entre las
+  // piernas, y el 2,5 es cuánto sube ese lastre.
   ex('fondos-en-paralelas', 'Fondos en paralelas', 'Pecho', 'Peso corporal', 'empuje', 2.5, 'peso_corporal'),
   ex('flexiones', 'Flexiones', 'Pecho', 'Peso corporal', 'empuje', 0, 'peso_corporal'),
   ex('aperturas-con-mancuernas', 'Aperturas con mancuernas', 'Pecho', 'Mancuerna', 'aislamiento', 2),
   ex('cruce-de-poleas', 'Cruce de poleas', 'Pecho', 'Polea', 'aislamiento', 2.5),
   ex('pec-deck', 'Pec deck', 'Pecho', 'Máquina', 'aislamiento', 5),
   // Espalda
+  // Igual que los fondos: aceptan lastre, por eso suben de a 2,5.
   ex('dominadas', 'Dominadas', 'Espalda', 'Peso corporal', 'tiron', 2.5, 'peso_corporal'),
   ex('jalon-al-pecho', 'Jalón al pecho', 'Espalda', 'Polea', 'tiron', 5),
   ex('remo-con-barra', 'Remo con barra', 'Espalda', 'Barra', 'tiron', 2.5),
@@ -81,12 +123,15 @@ export const EJERCICIOS_BASE: readonly Exercise[] = [
   ex('fondos-en-banco', 'Fondos en banco', 'Brazos', 'Peso corporal', 'empuje', 0, 'peso_corporal'),
   ex('press-cerrado', 'Press cerrado', 'Brazos', 'Barra', 'empuje', 2.5),
   // Core
+  // De tiempo: en la bitácora se anotan segundos donde van las repeticiones, y no suman al volumen.
   ex('plancha-frontal', 'Plancha frontal', 'Core', 'Peso corporal', 'core', 0, 'tiempo'),
   ex('plancha-lateral', 'Plancha lateral', 'Core', 'Peso corporal', 'core', 0, 'tiempo'),
   ex('crunch-en-polea', 'Crunch en polea', 'Core', 'Polea', 'core', 2.5),
   ex('elevacion-piernas-colgado', 'Elevación de piernas colgado', 'Core', 'Peso corporal', 'core', 0, 'peso_corporal'),
   ex('rueda-abdominal', 'Rueda abdominal', 'Core', 'Peso corporal', 'core', 0, 'peso_corporal'),
+  // De tiempo pero con pesa: se anotan segundos, y el incremento de 4 kg sube el peso de la kettlebell.
   ex('paseo-del-granjero', 'Paseo del granjero', 'Core', 'Kettlebell', 'core', 4, 'tiempo'),
-  ex('pallof-press', 'Pallof press', 'Core', 'Banda', 'core', 0),
+  // Con banda no hay kilos que anotar; el incremento 0 hace que progrese en repeticiones.
+  ex('pallof-press', 'Pallof press', 'Core', 'Banda', 'core', 0, 'peso_corporal'),
   ex('dead-bug', 'Dead bug', 'Core', 'Peso corporal', 'core', 0, 'peso_corporal'),
 ];

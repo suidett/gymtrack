@@ -7,7 +7,7 @@ Cómo está armado GymTrack, dónde se toca cada cosa y qué revisar antes de su
 1. Instala Node 22 y pnpm (`npm install -g pnpm`).
 2. Clona el repo y en la raíz: `pnpm install`.
 3. `pnpm dev` levanta el servidor y muestra un QR. Escanéalo con Expo Go (mismo wifi). `pnpm web` lo abre en el navegador.
-4. Antes de subir: `pnpm typecheck`, `pnpm lint` y `pnpm test`. Los tres tienen que pasar; el CI de GitHub corre lo mismo.
+4. Antes de subir: `pnpm typecheck`, `pnpm lint` y `pnpm test`. Los tres tienen que pasar; el CI de GitHub corre lo mismo. El lint cubre la app; shared se cuida con tipos y pruebas.
 
 ## El mapa: qué zona toca cada cosa
 
@@ -25,7 +25,7 @@ Cómo está armado GymTrack, dónde se toca cada cosa y qué revisar antes de su
 | Agregar o corregir ejercicios de la biblioteca | Datos | `packages/shared/src/exercises.seed.ts` |
 | Cambiar la rutina de ejemplo | Datos | `packages/shared/src/rutina-ejemplo.ts` |
 | Cambiar un color, una fuente o un radio | Diseño | `packages/tokens/index.js` |
-| Cambiar un tipo (qué campos tiene una rutina, una serie, una sesión) | Tipos | `packages/shared/src/types.ts` |
+| Cambiar un tipo (qué campos tiene una rutina, una serie, una sesión) | Datos | `packages/shared/src/types.ts` |
 
 Regla general: las pantallas (`src/app`) se mantienen delgadas. Si una pantalla crece, su lógica se va a `src/features/<zona>/` y la ruta solo importa.
 
@@ -52,6 +52,10 @@ pantalla  ->  useStore (acciones)  ->  estado en memoria  ->  AsyncStorage (se g
 - **Confirmaciones**: `<Confirmar>` en línea. `Alert.alert` con botones no funciona en web.
 - **Fechas y números**: `fmtFecha`, `fmtKg`, `fmtNum` de shared. Coma decimal, kilos.
 - **Reglas del compilador de React** (las marca el lint): nada de `Date.now()` en el cuerpo de un componente (usa `ahoraMs()` o un efecto), nada de `setState` directo dentro de un efecto, nada de escribir una ref durante el render.
+
+## Cómo están comentados los archivos
+
+Cada archivo empieza con una cabecera que dice su zona (Rutas, Sesión, Kit de interfaz, Store, Motor, Datos, Diseño, Configuración o Utilidades), qué hace, cuándo tocarlo y de qué depende. Adentro, los bloques van separados con `// ── Nombre ──…` de 80 columnas (la sangría va aparte). Cuando agregues un archivo, copia la cabecera de uno vecino.
 
 ## Cómo agregar cosas
 

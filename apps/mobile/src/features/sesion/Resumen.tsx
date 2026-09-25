@@ -1,3 +1,15 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// Resumen · Zona: Sesión
+//
+// Qué hace: la pantalla de una sesión ya cerrada: series hechas, volumen, tiempo, calorías, los récords
+// de hoy, la sugerencia para la próxima sesión por ejercicio, lo que se hizo y una observación general.
+// Recién terminada muestra la celebración; abierta desde el historial, la cabecera normal con la fecha.
+// Tócalo cuando: cambies qué se muestra al cerrar o cómo se leen los récords y las sugerencias.
+// No lo toques para: calcular récords, volumen o sugerencias; eso ya viene calculado dentro de la sesión
+// desde packages/shared/src/cierre.ts (calcularCierre). Esta pantalla solo lo muestra.
+// Depende de: @gymtrack/shared (etiquetaMarca, fmtDuracion, fmtFecha, fmtMarca, fmtVolumen), @/components/ui,
+// @/lib/formato (resumenSets), @/store/useStore (setObservacionSesion).
+// ─────────────────────────────────────────────────────────────────────────────
 import { etiquetaMarca, fmtDuracion, fmtFecha, fmtMarca, fmtVolumen, type WorkoutSession } from '@gymtrack/shared';
 import { router } from 'expo-router';
 import { Text, View } from 'react-native';
@@ -5,13 +17,23 @@ import { Boton, Cabecera, CampoDiferido, Dato, Fila, Pantalla, Separador, Tarjet
 import { resumenSets } from '@/lib/formato';
 import { useStore } from '@/store/useStore';
 
+/**
+ * Resumen de una sesión cerrada.
+ * Recibe la sesión (ya cerrada, con prs, sugerencias y totales llenos) y `celebrar`: true solo cuando se
+ * cerró recién en esta misma pantalla (lo decide app/sesion/[id].tsx). Muestra la pantalla completa.
+ */
 export function Resumen({ sesion, celebrar }: { sesion: WorkoutSession; celebrar: boolean }) {
+  // ── Store y totales ──────────────────────────────────────────────────────────
   const setObservacionSesion = useStore((s) => s.setObservacionSesion);
+  // Una sesión cerrada siempre debería traer cerradaAt; el respaldo a iniciadaAt es por datos viejos.
   const cerradaAt = sesion.cerradaAt ?? sesion.iniciadaAt;
+  // Al cerrar, calcularCierre ya descartó las series pendientes: esto cuenta solo las hechas.
   const series = sesion.ejercicios.reduce((a, e) => a + e.sets.length, 0);
 
+  // ── Render ───────────────────────────────────────────────────────────────────
   return (
     <Pantalla>
+      {/* Arriba: celebración si se acaba de cerrar; si no, cabecera con fecha y botón de volver */}
       {celebrar ? (
         <View className="items-center gap-1 py-3">
           <Text className="font-mono text-[11px] uppercase tracking-widest text-accent">Felicidades</Text>
@@ -29,12 +51,15 @@ export function Resumen({ sesion, celebrar }: { sesion: WorkoutSession; celebrar
         </View>
       </View>
 
+      {/* Totales. Las kcal solo existen si el alumno tiene peso corporal en el perfil */}
       <View className="mt-2 flex-row gap-2">
         <Dato valor={fmtVolumen(sesion.volumenKg ?? 0)} etiqueta="volumen total" />
         <Dato valor={fmtDuracion(sesion.duracionS ?? 0)} etiqueta="tiempo" />
         {sesion.kcalEstimadas != null ? <Dato valor={String(sesion.kcalEstimadas)} etiqueta="kcal estimadas" /> : null}
       </View>
 
+      {/* Récords: una fila por ejercicio y tipo de marca (1RM estimado, reps o segundos).
+          La key combina ambos porque un ejercicio tiene a lo más un récord por tipo */}
       {sesion.prs.length > 0 ? (
         <>
           <Separador titulo="Récords de hoy" />
@@ -59,6 +84,7 @@ export function Resumen({ sesion, celebrar }: { sesion: WorkoutSession; celebrar
         </>
       ) : null}
 
+      {/* Sugerencias que el motor dejó guardadas en la sesión; la bitácora las mostrará la próxima vez */}
       {sesion.sugerencias.length > 0 ? (
         <>
           <Separador titulo="Para la próxima sesión" />
@@ -71,6 +97,7 @@ export function Resumen({ sesion, celebrar }: { sesion: WorkoutSession; celebrar
         </>
       ) : null}
 
+      {/* Detalle por ejercicio: series en formato "60×8 · 60×8" más la observación que se anotó */}
       <Separador titulo="Lo que hiciste" />
       <Tarjeta className="py-1">
         {sesion.ejercicios.map((e, i) => (
@@ -97,6 +124,7 @@ export function Resumen({ sesion, celebrar }: { sesion: WorkoutSession; celebrar
         multiline
       />
 
+      {/* dismissTo saca la sesión de la pila: al tocar atrás después no se vuelve al resumen */}
       <View className="mt-6 gap-2">
         <Boton titulo="Ver mi progreso" variante="acento" onPress={() => router.dismissTo('/progreso')} />
         <Boton titulo="Volver al inicio" variante="fantasma" onPress={() => router.dismissTo('/')} />

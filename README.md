@@ -5,7 +5,7 @@ App móvil para que un personal trainer arme, siga y ajuste las rutinas de sus a
 ## Qué hay en esta versión (0.1)
 
 - Cinco pestañas: Hoy, Rutinas, Progreso, Ejercicios, Perfil.
-- Biblioteca de 66 ejercicios con búsqueda y filtro por grupo, más ejercicios propios que se crean, editan y eliminan.
+- Biblioteca de 67 ejercicios con búsqueda y filtro por grupo, más ejercicios propios que se crean, editan y eliminan.
 - Editor de rutinas: días, ejercicios por día con series, rango de repeticiones, RIR objetivo, descanso, incremento de carga y peso inicial; método de progresión por rutina; activar, duplicar, archivar y eliminar.
 - Bitácora de sesión: tabla serie / kg / reps / RIR editable, marcar serie o fallo, añadir y quitar series, descanso automático con +30 s y saltar, observación por ejercicio, salir y retomar.
 - Cierre de sesión: volumen, tiempo, kcal (si hay peso corporal), récords y la sugerencia de la próxima sesión por ejercicio (doble progresión y lineal; el resto se calcula como doble progresión y lo dice).
