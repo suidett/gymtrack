@@ -1,0 +1,14 @@
+node_modules/
+.pnpm-store/
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+*.log
+.DS_Store
+.env
+.env.*
+apps/mobile/android/
+apps/mobile/ios/
+apps/mobile/.expo-shared/
+*.tsbuildinfo

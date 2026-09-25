@@ -1,0 +1,9 @@
+packages:
+  - apps/*
+  - packages/*
+
+# Expo necesita node_modules plano (como npm) para que Metro resuelva todo.
+nodeLinker: hoisted
+autoInstallPeers: true
+allowBuilds:
+  unrs-resolver: set this to true or false

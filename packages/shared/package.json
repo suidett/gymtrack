@@ -1,0 +1,16 @@
+{
+  "name": "@gymtrack/shared",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Tipos, biblioteca base de ejercicios, formulas y motor de progresion compartidos entre la app y la API",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.1"
+  }
+}
