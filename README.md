@@ -12,11 +12,20 @@ App móvil para que un personal trainer arme, siga y ajuste las rutinas de sus a
 - Progreso: volumen por semana, récords por ejercicio e historial de sesiones.
 - Los datos se guardan en el teléfono (AsyncStorage). No hay cuentas, servidor, entrenador, fotos ni notificaciones todavía: eso viene en las fases 1, 3 y 4 del PRD.
 
+## Para el equipo
+
+Lee [GUIA-DEL-EQUIPO.md](GUIA-DEL-EQUIPO.md): el mapa de zonas, las convenciones y qué revisar antes de subir.
+
 ## Estructura
 
 ```
 apps/
-  mobile/        Expo SDK 57 + Expo Router + NativeWind 4 (Tailwind 3). Rutas en src/app.
+  mobile/        Expo SDK 57 + Expo Router + NativeWind 4 (Tailwind 3).
+    src/app/         rutas: una pantalla por archivo, delgadas
+    src/features/    la lógica grande por zona (hoy: sesion/)
+    src/components/  kit de interfaz (ui/) y componentes compartidos
+    src/store/       estado persistido (zustand) y selectores
+    src/lib/         ids, tiempo, formato
 packages/
   shared/        Tipos, biblioteca de ejercicios, fórmulas, motor de progresión, cierre de sesión. Con pruebas.
   tokens/        Colores, fuentes y radios: objeto JS y preset de Tailwind.
@@ -62,7 +71,8 @@ Tres colores (menta `#45B392` para acción, violeta `#8B7BE8` para celebración 
 | Quiero cambiar | Archivo |
 | --- | --- |
 | Una pantalla | `apps/mobile/src/app/...` (una ruta por archivo) |
-| Un componente de interfaz | `apps/mobile/src/components/ui.tsx` |
+| La bitácora de sesión | `apps/mobile/src/features/sesion/` |
+| Un componente de interfaz | `apps/mobile/src/components/ui/` |
 | Cómo se guardan y cambian los datos | `apps/mobile/src/store/useStore.ts` |
 | La regla de progresión o el 1RM | `packages/shared/src/progression.ts` y `formulas.ts` (con sus pruebas al lado) |
 | La biblioteca de ejercicios | `packages/shared/src/exercises.seed.ts` |
