@@ -1,0 +1,224 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2200" height="1440" viewBox="0 0 2200 1440">
+<rect width="2200" height="1440" fill="#FFFFFF"/>
+<text x="40" y="78" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="44" font-weight="bold" fill="#131A17">GymTrack · Construcción del símbolo</text>
+<text x="40" y="122" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="22" fill="#5E6D67">Grilla de 64 unidades. Todo sale de dos módulos: el renglón (7) y la interlínea (4). Las cotas van en unidades de grilla.</text>
+<rect x="60" y="190" width="1024" height="1024" fill="#F5F7F5"/>
+<line x1="60" y1="190" x2="60" y2="1214" stroke="#C5CEC9" stroke-width="1.1"/>
+<line x1="60" y1="190" x2="1084" y2="190" stroke="#C5CEC9" stroke-width="1.1"/>
+<line x1="76" y1="190" x2="76" y2="1214" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="60" y1="206" x2="1084" y2="206" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="92" y1="190" x2="92" y2="1214" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="60" y1="222" x2="1084" y2="222" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="108" y1="190" x2="108" y2="1214" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="60" y1="238" x2="1084" y2="238" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="124" y1="190" x2="124" y2="1214" stroke="#C5CEC9" stroke-width="1.1"/>
+<line x1="60" y1="254" x2="1084" y2="254" stroke="#C5CEC9" stroke-width="1.1"/>
+<line x1="140" y1="190" x2="140" y2="1214" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="60" y1="270" x2="1084" y2="270" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="156" y1="190" x2="156" y2="1214" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="60" y1="286" x2="1084" y2="286" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="172" y1="190" x2="172" y2="1214" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="60" y1="302" x2="1084" y2="302" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="188" y1="190" x2="188" y2="1214" stroke="#C5CEC9" stroke-width="1.1"/>
+<line x1="60" y1="318" x2="1084" y2="318" stroke="#C5CEC9" stroke-width="1.1"/>
+<line x1="204" y1="190" x2="204" y2="1214" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="60" y1="334" x2="1084" y2="334" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="220" y1="190" x2="220" y2="1214" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="60" y1="350" x2="1084" y2="350" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="236" y1="190" x2="236" y2="1214" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="60" y1="366" x2="1084" y2="366" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="252" y1="190" x2="252" y2="1214" stroke="#C5CEC9" stroke-width="1.1"/>
+<line x1="60" y1="382" x2="1084" y2="382" stroke="#C5CEC9" stroke-width="1.1"/>
+<line x1="268" y1="190" x2="268" y2="1214" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="60" y1="398" x2="1084" y2="398" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="284" y1="190" x2="284" y2="1214" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="60" y1="414" x2="1084" y2="414" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="300" y1="190" x2="300" y2="1214" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="60" y1="430" x2="1084" y2="430" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="316" y1="190" x2="316" y2="1214" stroke="#C5CEC9" stroke-width="1.1"/>
+<line x1="60" y1="446" x2="1084" y2="446" stroke="#C5CEC9" stroke-width="1.1"/>
+<line x1="332" y1="190" x2="332" y2="1214" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="60" y1="462" x2="1084" y2="462" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="348" y1="190" x2="348" y2="1214" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="60" y1="478" x2="1084" y2="478" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="364" y1="190" x2="364" y2="1214" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="60" y1="494" x2="1084" y2="494" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="380" y1="190" x2="380" y2="1214" stroke="#C5CEC9" stroke-width="1.1"/>
+<line x1="60" y1="510" x2="1084" y2="510" stroke="#C5CEC9" stroke-width="1.1"/>
+<line x1="396" y1="190" x2="396" y2="1214" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="60" y1="526" x2="1084" y2="526" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="412" y1="190" x2="412" y2="1214" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="60" y1="542" x2="1084" y2="542" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="428" y1="190" x2="428" y2="1214" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="60" y1="558" x2="1084" y2="558" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="444" y1="190" x2="444" y2="1214" stroke="#C5CEC9" stroke-width="1.1"/>
+<line x1="60" y1="574" x2="1084" y2="574" stroke="#C5CEC9" stroke-width="1.1"/>
+<line x1="460" y1="190" x2="460" y2="1214" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="60" y1="590" x2="1084" y2="590" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="476" y1="190" x2="476" y2="1214" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="60" y1="606" x2="1084" y2="606" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="492" y1="190" x2="492" y2="1214" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="60" y1="622" x2="1084" y2="622" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="508" y1="190" x2="508" y2="1214" stroke="#C5CEC9" stroke-width="1.1"/>
+<line x1="60" y1="638" x2="1084" y2="638" stroke="#C5CEC9" stroke-width="1.1"/>
+<line x1="524" y1="190" x2="524" y2="1214" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="60" y1="654" x2="1084" y2="654" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="540" y1="190" x2="540" y2="1214" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="60" y1="670" x2="1084" y2="670" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="556" y1="190" x2="556" y2="1214" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="60" y1="686" x2="1084" y2="686" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="572" y1="190" x2="572" y2="1214" stroke="#C5CEC9" stroke-width="1.1"/>
+<line x1="60" y1="702" x2="1084" y2="702" stroke="#C5CEC9" stroke-width="1.1"/>
+<line x1="588" y1="190" x2="588" y2="1214" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="60" y1="718" x2="1084" y2="718" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="604" y1="190" x2="604" y2="1214" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="60" y1="734" x2="1084" y2="734" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="620" y1="190" x2="620" y2="1214" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="60" y1="750" x2="1084" y2="750" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="636" y1="190" x2="636" y2="1214" stroke="#C5CEC9" stroke-width="1.1"/>
+<line x1="60" y1="766" x2="1084" y2="766" stroke="#C5CEC9" stroke-width="1.1"/>
+<line x1="652" y1="190" x2="652" y2="1214" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="60" y1="782" x2="1084" y2="782" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="668" y1="190" x2="668" y2="1214" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="60" y1="798" x2="1084" y2="798" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="684" y1="190" x2="684" y2="1214" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="60" y1="814" x2="1084" y2="814" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="700" y1="190" x2="700" y2="1214" stroke="#C5CEC9" stroke-width="1.1"/>
+<line x1="60" y1="830" x2="1084" y2="830" stroke="#C5CEC9" stroke-width="1.1"/>
+<line x1="716" y1="190" x2="716" y2="1214" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="60" y1="846" x2="1084" y2="846" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="732" y1="190" x2="732" y2="1214" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="60" y1="862" x2="1084" y2="862" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="748" y1="190" x2="748" y2="1214" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="60" y1="878" x2="1084" y2="878" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="764" y1="190" x2="764" y2="1214" stroke="#C5CEC9" stroke-width="1.1"/>
+<line x1="60" y1="894" x2="1084" y2="894" stroke="#C5CEC9" stroke-width="1.1"/>
+<line x1="780" y1="190" x2="780" y2="1214" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="60" y1="910" x2="1084" y2="910" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="796" y1="190" x2="796" y2="1214" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="60" y1="926" x2="1084" y2="926" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="812" y1="190" x2="812" y2="1214" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="60" y1="942" x2="1084" y2="942" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="828" y1="190" x2="828" y2="1214" stroke="#C5CEC9" stroke-width="1.1"/>
+<line x1="60" y1="958" x2="1084" y2="958" stroke="#C5CEC9" stroke-width="1.1"/>
+<line x1="844" y1="190" x2="844" y2="1214" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="60" y1="974" x2="1084" y2="974" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="860" y1="190" x2="860" y2="1214" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="60" y1="990" x2="1084" y2="990" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="876" y1="190" x2="876" y2="1214" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="60" y1="1006" x2="1084" y2="1006" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="892" y1="190" x2="892" y2="1214" stroke="#C5CEC9" stroke-width="1.1"/>
+<line x1="60" y1="1022" x2="1084" y2="1022" stroke="#C5CEC9" stroke-width="1.1"/>
+<line x1="908" y1="190" x2="908" y2="1214" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="60" y1="1038" x2="1084" y2="1038" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="924" y1="190" x2="924" y2="1214" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="60" y1="1054" x2="1084" y2="1054" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="940" y1="190" x2="940" y2="1214" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="60" y1="1070" x2="1084" y2="1070" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="956" y1="190" x2="956" y2="1214" stroke="#C5CEC9" stroke-width="1.1"/>
+<line x1="60" y1="1086" x2="1084" y2="1086" stroke="#C5CEC9" stroke-width="1.1"/>
+<line x1="972" y1="190" x2="972" y2="1214" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="60" y1="1102" x2="1084" y2="1102" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="988" y1="190" x2="988" y2="1214" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="60" y1="1118" x2="1084" y2="1118" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="1004" y1="190" x2="1004" y2="1214" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="60" y1="1134" x2="1084" y2="1134" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="1020" y1="190" x2="1020" y2="1214" stroke="#C5CEC9" stroke-width="1.1"/>
+<line x1="60" y1="1150" x2="1084" y2="1150" stroke="#C5CEC9" stroke-width="1.1"/>
+<line x1="1036" y1="190" x2="1036" y2="1214" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="60" y1="1166" x2="1084" y2="1166" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="1052" y1="190" x2="1052" y2="1214" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="60" y1="1182" x2="1084" y2="1182" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="1068" y1="190" x2="1068" y2="1214" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="60" y1="1198" x2="1084" y2="1198" stroke="#DCE2DE" stroke-width="0.6"/>
+<line x1="1084" y1="190" x2="1084" y2="1214" stroke="#C5CEC9" stroke-width="1.1"/>
+<line x1="60" y1="1214" x2="1084" y2="1214" stroke="#C5CEC9" stroke-width="1.1"/>
+<rect x="140" y="270" width="864" height="864" fill="none" stroke="#45B392" stroke-width="2.5" stroke-dasharray="10 7"/>
+<rect x="252" y="382" width="640" height="640" fill="none" stroke="#5E6D67" stroke-width="1.2"/>
+<g transform="translate(60 190) scale(16)" opacity="0.9"><path fill="#131A17" d="M14 12H46A2 2 0 0 1 48 14V17A2 2 0 0 1 46 19H14A2 2 0 0 1 12 17V14A2 2 0 0 1 14 12ZM14 23H22A2 2 0 0 1 24 25V28A2 2 0 0 1 22 30H14A2 2 0 0 1 12 28V25A2 2 0 0 1 14 23ZM14 34H22A2 2 0 0 1 24 36V39A2 2 0 0 1 22 41H14A2 2 0 0 1 12 39V36A2 2 0 0 1 14 34ZM45 38H51.5V41H52V50A2 2 0 0 1 50 52H14A2 2 0 0 1 12 50V47A2 2 0 0 1 14 45H44A1 1 0 0 0 45 44V42A1 1 0 0 0 44 41H45Z"/>
+  <path fill="#45B392" d="M34 34H50A2 2 0 0 1 52 36V41H34A2 2 0 0 1 32 39V36A2 2 0 0 1 34 34Z"/></g>
+<line x1="252" y1="359.6" x2="828" y2="359.6" stroke="#B03A2E" stroke-width="1.6"/><line x1="252" y1="353.6" x2="252" y2="365.6" stroke="#B03A2E" stroke-width="1.6"/><line x1="828" y1="353.6" x2="828" y2="365.6" stroke="#B03A2E" stroke-width="1.6"/><text x="540" y="351.6" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="17" font-weight="bold" fill="#B03A2E">36</text>
+<line x1="828" y1="359.6" x2="892" y2="359.6" stroke="#B03A2E" stroke-width="1.6"/><line x1="828" y1="353.6" x2="828" y2="365.6" stroke="#B03A2E" stroke-width="1.6"/><line x1="892" y1="353.6" x2="892" y2="365.6" stroke="#B03A2E" stroke-width="1.6"/><text x="860" y="351.6" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="17" font-weight="bold" fill="#B03A2E">4</text>
+<line x1="252" y1="535.6" x2="444" y2="535.6" stroke="#B03A2E" stroke-width="1.6"/><line x1="252" y1="529.6" x2="252" y2="541.6" stroke="#B03A2E" stroke-width="1.6"/><line x1="444" y1="529.6" x2="444" y2="541.6" stroke="#B03A2E" stroke-width="1.6"/><text x="348" y="527.6" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="17" font-weight="bold" fill="#B03A2E">12</text>
+<line x1="444" y1="718" x2="572" y2="718" stroke="#B03A2E" stroke-width="1.6"/><line x1="444" y1="712" x2="444" y2="724" stroke="#B03A2E" stroke-width="1.6"/><line x1="572" y1="712" x2="572" y2="724" stroke="#B03A2E" stroke-width="1.6"/><text x="508" y="710" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="17" font-weight="bold" fill="#B03A2E">8</text>
+<line x1="572" y1="711.6" x2="892" y2="711.6" stroke="#B03A2E" stroke-width="1.6"/><line x1="572" y1="705.6" x2="572" y2="717.6" stroke="#B03A2E" stroke-width="1.6"/><line x1="892" y1="705.6" x2="892" y2="717.6" stroke="#B03A2E" stroke-width="1.6"/><text x="732" y="703.6" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="17" font-weight="bold" fill="#B03A2E">20</text>
+<line x1="252" y1="1057.2" x2="892" y2="1057.2" stroke="#B03A2E" stroke-width="1.6"/><line x1="252" y1="1051.2" x2="252" y2="1063.2" stroke="#B03A2E" stroke-width="1.6"/><line x1="892" y1="1051.2" x2="892" y2="1063.2" stroke="#B03A2E" stroke-width="1.6"/><text x="572" y="1079.2" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="17" font-weight="bold" fill="#B03A2E">40</text>
+<line x1="213.6" y1="382" x2="213.6" y2="494" stroke="#B03A2E" stroke-width="1.6"/><line x1="207.6" y1="382" x2="219.6" y2="382" stroke="#B03A2E" stroke-width="1.6"/><line x1="207.6" y1="494" x2="219.6" y2="494" stroke="#B03A2E" stroke-width="1.6"/><text x="203.6" y="444" text-anchor="end" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="17" font-weight="bold" fill="#B03A2E">7</text>
+<line x1="213.6" y1="494" x2="213.6" y2="558" stroke="#B03A2E" stroke-width="1.6"/><line x1="207.6" y1="494" x2="219.6" y2="494" stroke="#B03A2E" stroke-width="1.6"/><line x1="207.6" y1="558" x2="219.6" y2="558" stroke="#B03A2E" stroke-width="1.6"/><text x="203.6" y="532" text-anchor="end" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="17" font-weight="bold" fill="#B03A2E">4</text>
+<line x1="213.6" y1="558" x2="213.6" y2="670" stroke="#B03A2E" stroke-width="1.6"/><line x1="207.6" y1="558" x2="219.6" y2="558" stroke="#B03A2E" stroke-width="1.6"/><line x1="207.6" y1="670" x2="219.6" y2="670" stroke="#B03A2E" stroke-width="1.6"/><text x="203.6" y="620" text-anchor="end" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="17" font-weight="bold" fill="#B03A2E">7</text>
+<line x1="213.6" y1="670" x2="213.6" y2="734" stroke="#B03A2E" stroke-width="1.6"/><line x1="207.6" y1="670" x2="219.6" y2="670" stroke="#B03A2E" stroke-width="1.6"/><line x1="207.6" y1="734" x2="219.6" y2="734" stroke="#B03A2E" stroke-width="1.6"/><text x="203.6" y="708" text-anchor="end" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="17" font-weight="bold" fill="#B03A2E">4</text>
+<line x1="213.6" y1="734" x2="213.6" y2="846" stroke="#B03A2E" stroke-width="1.6"/><line x1="207.6" y1="734" x2="219.6" y2="734" stroke="#B03A2E" stroke-width="1.6"/><line x1="207.6" y1="846" x2="219.6" y2="846" stroke="#B03A2E" stroke-width="1.6"/><text x="203.6" y="796" text-anchor="end" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="17" font-weight="bold" fill="#B03A2E">7</text>
+<line x1="213.6" y1="846" x2="213.6" y2="910" stroke="#B03A2E" stroke-width="1.6"/><line x1="207.6" y1="846" x2="219.6" y2="846" stroke="#B03A2E" stroke-width="1.6"/><line x1="207.6" y1="910" x2="219.6" y2="910" stroke="#B03A2E" stroke-width="1.6"/><text x="203.6" y="884" text-anchor="end" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="17" font-weight="bold" fill="#B03A2E">4</text>
+<line x1="213.6" y1="910" x2="213.6" y2="1022" stroke="#B03A2E" stroke-width="1.6"/><line x1="207.6" y1="910" x2="219.6" y2="910" stroke="#B03A2E" stroke-width="1.6"/><line x1="207.6" y1="1022" x2="219.6" y2="1022" stroke="#B03A2E" stroke-width="1.6"/><text x="203.6" y="972" text-anchor="end" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="17" font-weight="bold" fill="#B03A2E">7</text>
+<line x1="933.6" y1="382" x2="933.6" y2="1022" stroke="#B03A2E" stroke-width="1.6"/><line x1="927.6" y1="382" x2="939.6" y2="382" stroke="#B03A2E" stroke-width="1.6"/><line x1="927.6" y1="1022" x2="939.6" y2="1022" stroke="#B03A2E" stroke-width="1.6"/><text x="943.6" y="708" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="17" font-weight="bold" fill="#B03A2E">40</text>
+<line x1="882.4" y1="1012.4" x2="972" y2="1110.0" stroke="#5E6D67" stroke-width="1.4"/><circle cx="882.4" cy="1012.4" r="4" fill="#5E6D67"/><text x="978" y="1116" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="17" fill="#5E6D67">radio exterior 2</text>
+<line x1="775.2" y1="898.8" x2="932.0" y2="950.0" stroke="#5E6D67" stroke-width="1.4"/><circle cx="775.2" cy="898.8" r="4" fill="#5E6D67"/><text x="938" y="956" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="17" fill="#5E6D67">radio interior 1</text>
+<line x1="836.0" y1="846" x2="932.0" y2="814" stroke="#5E6D67" stroke-width="1.4"/><circle cx="836.0" cy="846" r="4" fill="#5E6D67"/><text x="938" y="820" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="17" fill="#5E6D67">corte menta / papel: y 41</text>
+<line x1="860" y1="878" x2="932.0" y2="886.0" stroke="#5E6D67" stroke-width="1.4"/><circle cx="860" cy="878" r="4" fill="#5E6D67"/><text x="938" y="892" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="17" fill="#5E6D67">trazo que baja: 7 de ancho</text>
+<text x="140" y="260" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="17" font-weight="bold" fill="#2E8A6E">área de respeto: 7 (un renglón) por lado</text>
+<text x="1154" y="200" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="28" font-weight="bold" fill="#131A17">Módulos</text>
+<text x="1154" y="244" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="20" fill="#131A17">Renglón (alto de barra): 7. Es la unidad de todo.</text>
+<text x="1154" y="278" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="20" fill="#131A17">Interlínea: 4. Cuatro filas: 4 × 7 + 3 × 4 = 40.</text>
+<text x="1154" y="312" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="20" fill="#131A17">Caja del símbolo: 40 × 40, de x12 a x52 y de y12 a y52.</text>
+<text x="1154" y="346" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="20" fill="#131A17">Radio exterior: 2 (canto de libreta, no píldora).</text>
+<text x="1154" y="380" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="20" fill="#131A17">Radio interior: 1, solo en los dos ángulos del gancho.</text>
+<text x="1154" y="414" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="20" fill="#131A17">Trazo que baja: 7 de ancho, igual que un renglón.</text>
+<text x="1154" y="472" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="28" font-weight="bold" fill="#131A17">Largo de cada renglón</text>
+<text x="1154" y="516" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="20" fill="#131A17">1 · arriba: 36 (x12–48). Deja una abertura de 4.</text>
+<text x="1154" y="550" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="20" fill="#131A17">2 · margen: 12 (x12–24).</text>
+<text x="1154" y="584" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="20" fill="#131A17">3 · margen: 12; aire de 8; travesaño menta: 20 (x32–52).</text>
+<text x="1154" y="618" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="20" fill="#131A17">4 · base: 40 (x12–52), unida al travesaño por el trazo.</text>
+<text x="1154" y="652" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="20" fill="#131A17">Corte del menta: línea recta en y41, ancho completo.</text>
+<text x="1154" y="710" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="28" font-weight="bold" fill="#131A17">Área de respeto</text>
+<text x="1154" y="754" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="20" fill="#131A17">Un renglón (7 de grilla, 17,5 % del lado del símbolo)</text>
+<text x="1154" y="788" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="20" fill="#131A17">libre por los cuatro lados. Nada entra ahí: ni texto,</text>
+<text x="1154" y="822" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="20" fill="#131A17">ni bordes, ni otra marca. Con el símbolo a 40 px,</text>
+<text x="1154" y="856" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="20" fill="#131A17">son 7 px.</text>
+<text x="1154" y="914" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="28" font-weight="bold" fill="#131A17">Tamaño mínimo</text>
+<text x="1154" y="958" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="20" fill="#131A17">Principal: con el símbolo de 30 px de ancho o más</text>
+<text x="1154" y="992" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="20" fill="#131A17">(ícono o favicon de 48 px en adelante).</text>
+<text x="1154" y="1026" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="20" fill="#131A17">Versión chica: solo en cuadros de 16 y 32 px exactos</text>
+<text x="1154" y="1060" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="20" fill="#131A17">(símbolo de 11 y 22 px). Otros tamaños bajo 48 px</text>
+<text x="1154" y="1094" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="20" fill="#131A17">se redondean a 32 o a 48. Bajo 16 px no se usa.</text>
+<rect x="1154" y="1148" width="224" height="224" fill="#F5F7F5"/>
+<line x1="1154" y1="1148" x2="1154" y2="1372" stroke="#DCE2DE" stroke-width="0.8"/>
+<line x1="1154" y1="1148" x2="1378" y2="1148" stroke="#DCE2DE" stroke-width="0.8"/>
+<line x1="1168" y1="1148" x2="1168" y2="1372" stroke="#DCE2DE" stroke-width="0.8"/>
+<line x1="1154" y1="1162" x2="1378" y2="1162" stroke="#DCE2DE" stroke-width="0.8"/>
+<line x1="1182" y1="1148" x2="1182" y2="1372" stroke="#DCE2DE" stroke-width="0.8"/>
+<line x1="1154" y1="1176" x2="1378" y2="1176" stroke="#DCE2DE" stroke-width="0.8"/>
+<line x1="1196" y1="1148" x2="1196" y2="1372" stroke="#DCE2DE" stroke-width="0.8"/>
+<line x1="1154" y1="1190" x2="1378" y2="1190" stroke="#DCE2DE" stroke-width="0.8"/>
+<line x1="1210" y1="1148" x2="1210" y2="1372" stroke="#DCE2DE" stroke-width="0.8"/>
+<line x1="1154" y1="1204" x2="1378" y2="1204" stroke="#DCE2DE" stroke-width="0.8"/>
+<line x1="1224" y1="1148" x2="1224" y2="1372" stroke="#DCE2DE" stroke-width="0.8"/>
+<line x1="1154" y1="1218" x2="1378" y2="1218" stroke="#DCE2DE" stroke-width="0.8"/>
+<line x1="1238" y1="1148" x2="1238" y2="1372" stroke="#DCE2DE" stroke-width="0.8"/>
+<line x1="1154" y1="1232" x2="1378" y2="1232" stroke="#DCE2DE" stroke-width="0.8"/>
+<line x1="1252" y1="1148" x2="1252" y2="1372" stroke="#DCE2DE" stroke-width="0.8"/>
+<line x1="1154" y1="1246" x2="1378" y2="1246" stroke="#DCE2DE" stroke-width="0.8"/>
+<line x1="1266" y1="1148" x2="1266" y2="1372" stroke="#DCE2DE" stroke-width="0.8"/>
+<line x1="1154" y1="1260" x2="1378" y2="1260" stroke="#DCE2DE" stroke-width="0.8"/>
+<line x1="1280" y1="1148" x2="1280" y2="1372" stroke="#DCE2DE" stroke-width="0.8"/>
+<line x1="1154" y1="1274" x2="1378" y2="1274" stroke="#DCE2DE" stroke-width="0.8"/>
+<line x1="1294" y1="1148" x2="1294" y2="1372" stroke="#DCE2DE" stroke-width="0.8"/>
+<line x1="1154" y1="1288" x2="1378" y2="1288" stroke="#DCE2DE" stroke-width="0.8"/>
+<line x1="1308" y1="1148" x2="1308" y2="1372" stroke="#DCE2DE" stroke-width="0.8"/>
+<line x1="1154" y1="1302" x2="1378" y2="1302" stroke="#DCE2DE" stroke-width="0.8"/>
+<line x1="1322" y1="1148" x2="1322" y2="1372" stroke="#DCE2DE" stroke-width="0.8"/>
+<line x1="1154" y1="1316" x2="1378" y2="1316" stroke="#DCE2DE" stroke-width="0.8"/>
+<line x1="1336" y1="1148" x2="1336" y2="1372" stroke="#DCE2DE" stroke-width="0.8"/>
+<line x1="1154" y1="1330" x2="1378" y2="1330" stroke="#DCE2DE" stroke-width="0.8"/>
+<line x1="1350" y1="1148" x2="1350" y2="1372" stroke="#DCE2DE" stroke-width="0.8"/>
+<line x1="1154" y1="1344" x2="1378" y2="1344" stroke="#DCE2DE" stroke-width="0.8"/>
+<line x1="1364" y1="1148" x2="1364" y2="1372" stroke="#DCE2DE" stroke-width="0.8"/>
+<line x1="1154" y1="1358" x2="1378" y2="1358" stroke="#DCE2DE" stroke-width="0.8"/>
+<line x1="1378" y1="1148" x2="1378" y2="1372" stroke="#DCE2DE" stroke-width="0.8"/>
+<line x1="1154" y1="1372" x2="1378" y2="1372" stroke="#DCE2DE" stroke-width="0.8"/>
+<g transform="translate(1154 1148) scale(14)" opacity="0.9"><path fill="#131A17" d="M3.5 2H11.5A0.5 0.5 0 0 1 12 2.5V3.5A0.5 0.5 0 0 1 11.5 4H3.5A0.5 0.5 0 0 1 3 3.5V2.5A0.5 0.5 0 0 1 3.5 2ZM3.5 5H5.5A0.5 0.5 0 0 1 6 5.5V6.5A0.5 0.5 0 0 1 5.5 7H3.5A0.5 0.5 0 0 1 3 6.5V5.5A0.5 0.5 0 0 1 3.5 5ZM3.5 8H5.5A0.5 0.5 0 0 1 6 8.5V9.5A0.5 0.5 0 0 1 5.5 10H3.5A0.5 0.5 0 0 1 3 9.5V8.5A0.5 0.5 0 0 1 3.5 8ZM12 9H13.5V10H14V12.5A.5 .5 0 0 1 13.5 13H3.5A.5 .5 0 0 1 3 12.5V11.5A.5 .5 0 0 1 3.5 11H12Z"/>
+  <path fill="#45B392" d="M8.5 8H13.5A.5 .5 0 0 1 14 8.5V10H8.5A.5 .5 0 0 1 8 9.5V8.5A.5 .5 0 0 1 8.5 8Z"/></g>
+<text x="1402" y="1178" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="20" font-weight="bold" fill="#131A17">Versión chica, grilla de 16</text>
+<text x="1402" y="1210" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="19" fill="#5E6D67">Caja de 11 × 11 px, 1 px corrida</text>
+<text x="1402" y="1238" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="19" fill="#5E6D67">a la derecha y arriba.</text>
+<text x="1402" y="1266" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="19" fill="#5E6D67">Se usa solo a 16 y 32 px.</text>
+</svg>

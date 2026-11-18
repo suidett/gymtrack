@@ -1,0 +1,300 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# API · borrador
+#
+# Corre en cada PR y en cada push a main, cuando exista apps/api (Fastify, Prisma
+# y el worker). Prueba cada endpoint contra PostgreSQL 16 de verdad y MinIO como
+# bucket, revisa las migraciones de Prisma, el contrato OpenAPI y que la imagen
+# de la API arranque.
+# Checks obligatorios: «api-integracion», «migraciones», «contrato» y «api-build».
+# Pruebas del plan: INT, WRK sin volumen, CON, SEG en INT, SYNC en INT.
+# ─────────────────────────────────────────────────────────────────────────────
+name: API
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: api-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# Todo lo de aquí es de prueba y vive solo en esta corrida. Las claves de MinIO
+# son las del contenedor local, no un secreto. JWT_SECRET y SEMILLA_CLAVE se
+# generan al empezar cada job (paso «Secretos de esta corrida»).
+env:
+  NODE_ENV: test
+  TZ: UTC
+  RELOJ_FIJO: "2026-11-17T13:00:00Z"   # martes 17 de noviembre, 10:00 en Santiago (datos-de-prueba.md)
+  DATABASE_URL: postgresql://gymtrack:gymtrack@localhost:5432/gymtrack_plantilla
+  SHADOW_DATABASE_URL: postgresql://gymtrack:gymtrack@localhost:5432/gymtrack_sombra
+  S3_ENDPOINT: http://localhost:9000
+  S3_BUCKET: gymtrack-pruebas
+  S3_ACCESS_KEY: minio-ci
+  S3_SECRET_KEY: minio-ci-clave
+  CORREO_DRIVER: memoria
+  PUSH_DRIVER: buzon
+
+jobs:
+  cambios:
+    runs-on: ubuntu-latest
+    outputs:
+      api: ${{ steps.filtro.outputs.api }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filtro
+        with:
+          filters: |
+            api:
+              - 'apps/api/**'
+              - 'packages/shared/**'
+              - 'pnpm-lock.yaml'
+              - 'package.json'
+              - 'pnpm-workspace.yaml'
+              - 'tsconfig.base.json'
+              - '.github/workflows/api.yml'
+              - '.github/actions/**'
+
+  api-integracion:
+    needs: cambios
+    # !cancelled() y «result != 'success'»: si el job «cambios» falla, este job corre igual.
+    # Sin eso se saltaría, y un check obligatorio saltado cuenta como aprobado.
+    if: ${{ !cancelled() && (needs.cambios.result != 'success' || needs.cambios.outputs.api == 'true' || github.event_name == 'push') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: gymtrack
+          POSTGRES_PASSWORD: gymtrack
+          POSTGRES_DB: gymtrack_plantilla
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U gymtrack"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/preparar
+
+      - name: Secretos de esta corrida
+        run: |
+          echo "JWT_SECRET=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "SEMILLA_CLAVE=$(openssl rand -base64 18)" >> "$GITHUB_ENV"
+
+      # MinIO pide el argumento «server /data», que un servicio de Actions no acepta;
+      # por eso se levanta aquí con docker run.
+      - name: Levantar MinIO
+        run: |
+          docker run -d --name minio -p 9000:9000 \
+            -e MINIO_ROOT_USER="$S3_ACCESS_KEY" -e MINIO_ROOT_PASSWORD="$S3_SECRET_KEY" \
+            minio/minio server /data
+          for i in $(seq 1 30); do curl -fsS http://localhost:9000/minio/health/live && break; sleep 1; done
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/prisma
+          key: prisma-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - name: Base sombra para comparar migraciones
+        run: PGPASSWORD=gymtrack psql -h localhost -U gymtrack -d postgres -c 'CREATE DATABASE gymtrack_sombra'
+
+      - name: Aplicar las migraciones
+        run: pnpm --filter api exec prisma migrate deploy
+
+      # Falla si alguien cambió schema.prisma sin crear la migración (o al revés).
+      - name: El esquema y las migraciones dicen lo mismo
+        run: |
+          pnpm --filter api exec prisma migrate diff \
+            --from-migrations prisma/migrations \
+            --to-schema-datamodel prisma/schema.prisma \
+            --shadow-database-url "$SHADOW_DATABASE_URL" \
+            --exit-code
+
+      # La plantilla queda con la biblioteca y los consejos; cada worker de Vitest
+      # la copia a su propia base (datos-de-prueba.md, «Cómo se deja la base limpia»).
+      # PENDIENTE: script «semilla» en apps/api.
+      - name: Catálogo en la base plantilla
+        run: pnpm --filter api run semilla base
+
+      # PENDIENTE: proyectos «integracion» y «worker» en vitest.workspace de apps/api.
+      - name: Integración y worker
+        run: |
+          pnpm --filter api exec vitest run --project integracion --project worker --coverage \
+            --reporter=default --reporter=junit --outputFile=reportes/junit.xml
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: api-reportes
+          path: |
+            apps/api/reportes/
+            apps/api/coverage/
+          retention-days: 14
+
+  # Aplica las migraciones del PR sobre una base que ya tiene datos con el esquema
+  # de main. Atrapa la migración que pasa en una base vacía pero rompe la de staging.
+  migraciones:
+    needs: cambios
+    if: ${{ !cancelled() && github.event_name == 'pull_request' && (needs.cambios.result != 'success' || needs.cambios.outputs.api == 'true') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: gymtrack
+          POSTGRES_PASSWORD: gymtrack
+          POSTGRES_DB: gymtrack_plantilla
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U gymtrack"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: ./.github/actions/preparar
+
+      - name: Secretos de esta corrida
+        run: echo "SEMILLA_CLAVE=$(openssl rand -base64 18)" >> "$GITHUB_ENV"
+
+      # La primera vez (cuando main todavía no tiene apps/api) este paso no tiene qué
+      # migrar: el PR que crea la API activa este job en un segundo PR.
+      - name: Base con el esquema de main y la semilla piloto
+        run: |
+          git worktree add "$RUNNER_TEMP/main" origin/main
+          cd "$RUNNER_TEMP/main"
+          pnpm install --frozen-lockfile
+          pnpm --filter api exec prisma migrate deploy
+          pnpm --filter api run semilla piloto
+
+      - name: Migraciones del PR encima
+        run: pnpm --filter api exec prisma migrate deploy
+
+      # PENDIENTE: proyecto «humo» con unas pocas pruebas de lectura sobre la semilla piloto.
+      - name: La API lee bien los datos migrados
+        run: pnpm --filter api exec vitest run --project humo
+
+  contrato:
+    needs: cambios
+    if: ${{ !cancelled() && (needs.cambios.result != 'success' || needs.cambios.outputs.api == 'true' || github.event_name == 'push') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    # CON-011 cierra 30 sesiones por POST /sessions/:id/finish: necesita la base.
+    # CON-002 y CON-004 son ganchos de la suite INT y corren en «api-integracion».
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: gymtrack
+          POSTGRES_PASSWORD: gymtrack
+          POSTGRES_DB: gymtrack_plantilla
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U gymtrack"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: ./.github/actions/preparar
+
+      # CON-003: el OpenAPI commiteado tiene que ser el que sale de los esquemas Zod.
+      # PENDIENTE: script «openapi:generar» en packages/shared.
+      - name: Generar el OpenAPI desde los esquemas
+        run: |
+          pnpm --filter @gymtrack/shared run openapi:generar
+          git diff --exit-code packages/shared/openapi.json \
+            || (echo "::error::Corre pnpm --filter @gymtrack/shared run openapi:generar y commitea el resultado." && exit 1)
+
+      # Un cambio que rompe la app instalada (campo quitado, tipo cambiado, ruta borrada)
+      # falla salvo que el PR lleve la etiqueta «contrato-cambia».
+      - name: Cambios que rompen frente a main
+        if: github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'contrato-cambia')
+        run: |
+          git show origin/main:packages/shared/openapi.json > "$RUNNER_TEMP/openapi-main.json" || exit 0
+          docker run --rm -v "$RUNNER_TEMP:/a" -v "$PWD/packages/shared:/b" tufin/oasdiff \
+            breaking /a/openapi-main.json /b/openapi.json --fail-on ERR | tee "$RUNNER_TEMP/oasdiff.txt"
+
+      # CON-001, CON-003 y CON-005 a CON-015: esquemas, fixtures de la app y mismo cálculo
+      # en celular y servidor. PENDIENTE: script «test:contrato» en la raíz.
+      - name: Pruebas de contrato
+        run: |
+          export JWT_SECRET="$(openssl rand -hex 32)"
+          export SEMILLA_CLAVE="$(openssl rand -base64 18)"
+          pnpm --filter api exec prisma migrate deploy
+          pnpm --filter api run semilla base
+          pnpm test:contrato
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: contrato
+          path: ${{ runner.temp }}/oasdiff.txt
+          if-no-files-found: ignore
+          retention-days: 14
+
+  api-build:
+    needs: cambios
+    if: ${{ !cancelled() && (needs.cambios.result != 'success' || needs.cambios.outputs.api == 'true' || github.event_name == 'push') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: gymtrack
+          POSTGRES_PASSWORD: gymtrack
+          POSTGRES_DB: gymtrack_plantilla
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U gymtrack"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/preparar
+
+      - name: Compilar la API
+        run: pnpm --filter api run build
+
+      - uses: docker/setup-buildx-action@v3
+
+      # PENDIENTE: apps/api/Dockerfile (la misma imagen sirve para la API y el worker).
+      - name: Imagen de la API
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          tags: gymtrack-api:ci
+          load: true
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # La imagen arranca, migra y responde /health (EP-60).
+      - name: La imagen arranca
+        run: |
+          docker run -d --name api --network host \
+            -e NODE_ENV=test -e DATABASE_URL="$DATABASE_URL" -e JWT_SECRET="$(openssl rand -hex 32)" \
+            -e CORREO_DRIVER=memoria -e PUSH_DRIVER=buzon -e PORT=3000 \
+            gymtrack-api:ci sh -c "npx prisma migrate deploy && node dist/servidor.js"
+          for i in $(seq 1 30); do curl -fsS http://localhost:3000/health && exit 0; sleep 2; done
+          docker logs api
+          exit 1

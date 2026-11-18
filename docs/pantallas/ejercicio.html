@@ -1,0 +1,746 @@
+<!doctype html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GymTrack · Detalle de ejercicio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="sistema.css">
+<style>
+  /* ── Barra superior: volver y, si es propio, editar ────────────────────── */
+  .barra-sup { flex: 0 0 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 4px; }
+  .barra-sup .btn-fantasma { margin-right: 4px; }
+
+  /* ── Referencia visual: marco 16:9 pensado para una animación en bucle ─── */
+  .ref { position: relative; aspect-ratio: 16 / 9; margin-top: 4px; border-radius: var(--radio); overflow: hidden;
+    background: var(--sup); border: 1px solid var(--sup-alta); }
+  .escena { display: block; width: 100%; height: 100%; }
+  .escena .suelo { stroke: var(--borde); stroke-width: 2; }
+  .escena .guia { stroke: var(--borde); stroke-width: 1.5; stroke-dasharray: 4 6; }
+  .escena .banco { fill: none; stroke: var(--texto-2); stroke-width: 6; stroke-linecap: round; }
+  .escena .cuerpo { fill: none; stroke: var(--texto); stroke-width: 9; stroke-linecap: round; stroke-linejoin: round; }
+  .escena .brazo { fill: none; stroke: var(--texto); stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; }
+  .escena .torso { fill: none; stroke: var(--texto); stroke-width: 14; stroke-linecap: round; }
+  .escena .atras { stroke: var(--texto-2); }
+  .escena .cab { fill: var(--texto); }
+  .escena .disco { fill: var(--hecho-fondo); stroke: var(--hecho-borde); stroke-width: 2; }
+  .escena .eje { fill: var(--sup); }
+  .ref-etq { position: absolute; top: 10px; left: 12px; font: 600 12px/1 var(--letra); color: var(--texto-2); }
+  .ref .btn-icono { position: absolute; bottom: 8px; background: var(--sup-alta); }
+  .ref .btn-icono:active { background: var(--fantasma-pres); }
+  .ref .ref-play { left: 8px; }
+  .ref .ref-full { right: 8px; }
+  .ref .relleno { fill: currentColor; }
+  .ref.vacia, .ref.sin-senal { display: flex; flex-direction: column; justify-content: center; align-items: flex-start; padding: 16px 20px; }
+  .ref.vacia { background: transparent; border: 2px dashed var(--borde); }
+  .ref.vacia .sec, .ref.sin-senal .sec { margin-top: 4px; max-width: 300px; }
+  .ref.vacia .btn, .ref.sin-senal .btn { margin-top: 12px; }
+
+  /* ── Cabeza del ejercicio ──────────────────────────────────────────────── */
+  .ej-cabeza { margin-top: 16px; }
+  .ej-cabeza .titulo { margin-top: 4px; }
+  .ej-cabeza .sec { margin-top: 4px; }
+
+  /* ── Técnica y músculos ────────────────────────────────────────────────── */
+  .pasos { list-style: none; margin: 0; padding: 0; }
+  .pasos li { display: flex; gap: 12px; padding: 10px 0; border-top: 1px solid var(--sup-alta); font-size: 15px; line-height: 1.45; }
+  .pasos li:first-child { border-top: 0; padding-top: 0; }
+  .pasos li:last-child { padding-bottom: 0; }
+  .pasos .n { flex: 0 0 24px; height: 24px; margin-top: 0; border-radius: 4px; background: var(--sup-alta);
+    display: flex; align-items: center; justify-content: center; font: 700 13px/1 var(--mono); }
+  .musculos { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .musculos + .ceja { margin-top: 14px; }
+  .musculo { display: inline-flex; align-items: center; height: 32px; padding: 0 12px; border-radius: var(--radio);
+    border: 2px solid var(--texto); font: 700 14px/1 var(--letra); }
+  .musculo.ayuda { border: 1.5px solid var(--borde); color: var(--texto-2); font-weight: 600; }
+
+  /* ── Historial ─────────────────────────────────────────────────────────── */
+  .mes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .dato { background: var(--sup); border: 1px solid var(--sup-alta); border-radius: var(--radio); padding: 12px; }
+  .dato .cifra { display: block; font-size: 22px; line-height: 1.1; white-space: nowrap; }
+  .dato .cifra small { font-size: 13px; margin-left: 2px; color: var(--texto-2); }
+  .dato .sec { font-size: 13px; margin-top: 4px; }
+  .mas { color: var(--acento-texto); }
+  .dato .delta { font: 700 13px/1 var(--mono); color: var(--acento-texto); white-space: nowrap; }
+
+  .graf { margin-top: 8px; }
+  .graf .chips { justify-content: flex-start; }
+  .graf .chip { flex: 0 0 auto; }
+  .lectura { margin-top: 8px; }
+  .lectura .valor { margin: 2px 0 0; font: 700 32px/1.1 var(--mono); }
+  .lectura .valor small { font: 500 15px/1 var(--letra); color: var(--texto-2); margin-left: 4px; }
+  .lectura .sec { margin-top: 2px; }
+  .graf svg { display: block; width: 100%; height: auto; margin-top: 8px; cursor: pointer; }
+  .graf .grilla { stroke: var(--sup-alta); stroke-width: 1; }
+  .graf .eje-txt { font: 500 11px var(--mono); fill: var(--texto-2); }
+  .graf .cambio-txt { font: 600 11px var(--letra); fill: var(--texto-2); }
+  .graf .linea { fill: none; stroke: var(--acento-texto); stroke-width: 2.5; stroke-linejoin: round; }
+  .graf .punto { fill: var(--sup); stroke: var(--acento-texto); stroke-width: 2; }
+  .graf .punto.sel { fill: var(--hecho-fondo); stroke: var(--hecho-borde); stroke-width: 2.5; }
+  .graf .marca-sel { stroke: var(--borde); stroke-width: 1; }
+  .graf .cambio { stroke: var(--borde); stroke-width: 1.5; stroke-dasharray: 3 4; }
+  .explica { margin: 10px 0 0; font-size: 13px; line-height: 1.4; color: var(--texto-2); }
+  .graf-vacio { padding: 20px 16px; text-align: left; }
+  .graf-vacio .sec { margin-top: 4px; }
+
+  .ses-lista { margin-top: 8px; padding-top: 4px; padding-bottom: 4px; }
+  .ses-cabeza { display: flex; justify-content: space-between; padding: 8px 0; font: 600 12px/1 var(--letra); color: var(--texto-2); }
+  .ses { display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 8px 0; border-top: 1px solid var(--sup-alta); }
+  .ses .f { flex: 0 0 52px; font-size: 13px; font-weight: 500; color: var(--texto-2); }
+  .ses .mid { flex: 1; min-width: 0; }
+  .ses .series { display: block; font-size: 15px; }
+  .ses .series .x { color: var(--texto-2); font-weight: 500; }
+  .ses .mid .sec { font-size: 13px; margin-top: 2px; }
+  .ses .der { flex: 0 0 auto; text-align: right; }
+  .ses .der .cifra { display: block; font-size: 16px; }
+  .ses .der .etiqueta { margin-top: 4px; }
+  .ver-todas { width: 100%; margin-top: 4px; }
+
+  .fila-cli { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 64px; padding: 8px 0; border: 0;
+    background: transparent; color: var(--texto); text-align: left; cursor: pointer; font: inherit; }
+  .fila-cli:active { background: var(--fantasma-pres); }
+  /* Avatar (el mismo en todas las pantallas): 40 dp, radio 8. */
+  .avatar { flex: 0 0 40px; width: 40px; height: 40px; border-radius: var(--radio); background: var(--sup-alta); color: var(--texto);
+    display: inline-flex; align-items: center; justify-content: center; font: 700 14px/1 var(--mono); }
+  .fila-cli .mid { flex: 1; min-width: 0; }
+  .fila-cli .n { display: block; font-weight: 600; }
+  .fila-cli .sec { font-size: 13px; }
+  .fila-cli .der { text-align: right; }
+  .fila-cli .der .cifra { display: block; font-size: 16px; }
+  .fila-cli .der small { font-size: 12px; color: var(--texto-2); }
+
+  /* ── Observaciones y dolores ───────────────────────────────────────────── */
+  .obs { padding: 14px 0; border-top: 1px solid var(--sup-alta); }
+  .obs:first-child { border-top: 0; padding-top: 0; }
+  .obs:last-child { padding-bottom: 0; }
+  .obs-cabeza { display: flex; align-items: center; gap: 8px; }
+  .obs-cabeza .sec { font-size: 13px; }
+  /* Etiqueta chica (la misma en todas las pantallas): 24 dp, radio 4. */
+  .etiqueta { display: inline-flex; align-items: center; height: 24px; padding: 0 8px; border-radius: 4px; background: transparent;
+    border: 1px solid var(--borde); font: 600 12px/1 var(--letra); color: var(--texto-2); white-space: nowrap; }
+  .etiqueta.acento { color: var(--acento-texto); border-color: var(--hecho-borde); }
+  .etiqueta.llena { background: var(--hecho-fondo); border-color: var(--hecho-borde); color: var(--visto); }
+  .etiqueta.peligro { color: var(--peligro); border-color: var(--peligro); }
+  .obs-meta { margin: 8px 0 0; font-size: 14px; font-weight: 600; }
+  .obs-txt { margin: 6px 0 0; font-size: 15px; line-height: 1.45; }
+  .respuesta { margin: 12px 0 0; padding: 2px 0 2px 12px; border-left: 4px solid var(--hecho-fondo); }
+  .respuesta .sec { font-size: 13px; }
+  .respuesta .obs-txt { margin-top: 4px; }
+  .obs .btn-fantasma { margin: 6px 0 -8px -12px; }
+  .nueva { animation: aparece 160ms var(--curva); }
+  @keyframes aparece { from { background: var(--fila-hecha); } }
+  @media (prefers-reduced-motion: reduce) { .nueva { animation: none; } }
+
+  /* ── Hojas ─────────────────────────────────────────────────────────────── */
+  .hoja { max-height: calc(100% - 48px); overflow-y: auto; }
+  .rot-campo { margin: 16px 0 8px; font: 600 14px/1.3 var(--letra); }
+  .chips-envuelve { display: flex; flex-wrap: wrap; gap: 0 6px; }
+  .chips-envuelve .chip, .hoja .chips .chip { flex: 0 0 auto; }
+  .hoja .area { margin-top: 12px; }
+  .hoja .nota-hoja { margin-top: 8px; font-size: 13px; }
+  .error-txt { margin: 6px 0 0; font: 600 14px/1.3 var(--letra); color: var(--peligro); }
+  /* No es un error: solo cuenta qué pasa con un dolor fuerte. */
+  .aviso-dolor { margin: 8px 0 0; font-size: 13px; line-height: 1.4; color: var(--texto-2); }
+  .opciones { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+
+  .notas-maqueta { max-width: 860px; margin: 32px auto 0; color: var(--p-texto-2); font-size: 14px; }
+  .notas-maqueta h2 { color: var(--p-texto); font-size: 16px; margin: 0 0 8px; }
+  .notas-maqueta ul { margin: 0; padding-left: 18px; }
+  .notas-maqueta li { margin: 4px 0; }
+</style>
+</head>
+<body>
+<main class="maqueta">
+  <header class="maqueta-cabeza">
+    <h1>Pantalla 10 · Detalle de ejercicio</h1>
+    <p>Dirección Más · 412 × 892 dp · <a href="ejercicios.html">Ejercicios</a> · <a href="index.html">todas las pantallas</a></p>
+  </header>
+
+  <div class="controles" role="group" aria-label="Controles de la maqueta">
+    <label class="grupo"><span class="rot">Estado</span>
+      <select class="ctl" data-ctl="estado">
+        <option value="historial">Con historial</option>
+        <option value="sin-historial">Sin historial</option>
+        <option value="propio">Ejercicio propio</option>
+        <option value="observar">Registrar observación (hoja)</option>
+        <option value="referencia">Subir referencia (hoja)</option>
+        <option value="sin-senal">Sin señal: la referencia no carga</option>
+      </select></label>
+    <label class="grupo"><span class="rot">Rol</span>
+      <select class="ctl" data-ctl="rol">
+        <option value="alumno">Alumna</option>
+        <option value="entrenador">Entrenadora</option>
+      </select></label>
+    <label class="grupo"><span class="rot">Tema</span>
+      <select class="ctl" data-ctl="tema">
+        <option value="gimnasio">Modo gimnasio</option>
+        <option value="clara">Clara</option>
+        <option value="ambos">Las dos</option>
+      </select></label>
+    <label class="grupo"><span class="rot">Tamaño</span>
+      <select class="ctl" data-ctl="zoom">
+        <option value="ajustar">Ajustar al ancho</option>
+        <option value="100">Real (1 dp = 1 px)</option>
+        <option value="150">150 %</option>
+      </select></label>
+    <label class="grupo"><input type="checkbox" data-ctl="medidas"><span>Medidas de toque</span></label>
+  </div>
+
+  <div class="escenario" id="escenario"></div>
+
+  <section class="notas-maqueta">
+    <h2>Qué mirar</h2>
+    <ul>
+      <li>Arriba va el espacio para la animación en bucle. Por ahora es una figura de trazo con los colores de la marca: el disco en ámbar y, en la sentadilla, la línea punteada del medio del pie. El rótulo de arriba explica la línea. El botón de abajo a la izquierda la pausa.</li>
+      <li>Toca el gráfico para ver cada sesión. Cambia entre 1RM estimado y kilos de la mejor serie. La línea punteada marca el cambio de rutina, que explica la baja del 3 de noviembre.</li>
+      <li>El 1RM estimado se explica en una línea, sin jerga. El récord vigente va con la etiqueta ámbar.</li>
+      <li>«Registrar observación» abre la hoja: con «Dolor» pide dónde y cuánto molesta (de 1 a 10), con las zonas en el orden de la encuesta, y recuerda que con 7 o más Camila recibe un aviso al instante. Al guardar, la nota aparece arriba de la lista.</li>
+      <li>El ejercicio propio no tiene referencia: el marco punteado invita a subir una. Con menos de 3 sesiones no hay gráfico, solo el aviso de cuánto falta.</li>
+      <li>Con el rol de entrenadora, el historial pasa a ser «Tus clientes» (la fila de Martina abre su ficha; las demás avisan, porque solo la de ella está maquetada) y puede responder observaciones.</li>
+      <li>Para ver más abajo sin bajar a mano: agrega <code>&amp;seccion=historial</code> u <code>&amp;seccion=observaciones</code> a la dirección.</li>
+    </ul>
+  </section>
+</main>
+
+<script src="maqueta.js"></script>
+<script>
+// ── Datos de prueba ──────────────────────────────────────────────────────────
+// d: días desde el 28 de septiembre, para ubicar cada sesión en el gráfico.
+const SESIONES = [
+  { f: '10 nov', d: 43, dia: 'Pierna A', rut: 'Fuerza 4 días', kg: 80, reps: [8, 8, 8, 7] },
+  { f: '3 nov', d: 36, dia: 'Pierna A', rut: 'Fuerza 4 días', kg: 77.5, reps: [8, 8, 7, 7] },
+  { f: '29 oct', d: 31, dia: 'Día C', rut: 'Adaptación', kg: 75, reps: [10, 9, 9] },
+  { f: '26 oct', d: 28, dia: 'Día A', rut: 'Adaptación', kg: 75, reps: [9, 9, 8] },
+  { f: '22 oct', d: 24, dia: 'Día C', rut: 'Adaptación', kg: 72.5, reps: [10, 10, 10] },
+  { f: '19 oct', d: 21, dia: 'Día A', rut: 'Adaptación', kg: 72.5, reps: [10, 9, 9] },
+  { f: '15 oct', d: 17, dia: 'Día C', rut: 'Adaptación', kg: 70, reps: [10, 10, 10] },
+  { f: '12 oct', d: 14, dia: 'Día A', rut: 'Adaptación', kg: 70, reps: [10, 10, 9] },
+  { f: '8 oct', d: 10, dia: 'Día C', rut: 'Adaptación', kg: 67.5, reps: [10, 10, 10] },
+  { f: '5 oct', d: 7, dia: 'Día A', rut: 'Adaptación', kg: 67.5, reps: [10, 9, 8] },
+  { f: '1 oct', d: 3, dia: 'Día C', rut: 'Básica 3 días', kg: 65, reps: [10, 10, 10] },
+  { f: '28 sep', d: 0, dia: 'Día A', rut: 'Básica 3 días', kg: 65, reps: [9, 9, 8] },
+];
+
+const EJERCICIOS = {
+  sentadilla: {
+    n: 'Sentadilla', g: 'Piernas', e: 'Barra', origen: 'Biblioteca GymTrack', pose: 'sentadilla',
+    tecnica: [
+      'Apoya la barra en la parte alta de la espalda, no en el cuello.',
+      'Pies al ancho de los hombros, puntas un poco hacia afuera.',
+      'Baja llevando la cadera atrás y abajo, con las rodillas en la línea de los pies.',
+      'Llega al menos a muslos paralelos al suelo, con la espalda recta.',
+      'Sube empujando el suelo con todo el pie. La barra sube y baja en línea recta, sobre el medio del pie.',
+    ],
+    musculos: [['Cuádriceps', 'Glúteos'], ['Aductores', 'Espalda baja', 'Abdomen']],
+    sesiones: SESIONES,
+  },
+  bulgara: {
+    n: 'Sentadilla búlgara', g: 'Piernas', e: 'Mancuernas', origen: 'Biblioteca GymTrack', pose: 'bulgara',
+    tecnica: [
+      'Pie de atrás sobre el banco, con el empeine apoyado.',
+      'Pie de adelante a un paso largo del banco.',
+      'Baja recto hasta que la rodilla de atrás quede cerca del suelo.',
+      'Sube empujando con el talón de adelante. Haz todas las repeticiones y cambia de pierna.',
+    ],
+    musculos: [['Cuádriceps', 'Glúteos'], ['Aductores', 'Isquiotibiales']],
+    sesiones: [],
+  },
+  puente: {
+    n: 'Puente de glúteo con banda', g: 'Piernas', e: 'Banda', origen: 'Creado por ti el 19 oct', propio: true, mide: 'reps',
+    tecnica: [
+      'Acuéstate de espalda, rodillas dobladas y la banda sobre las rodillas.',
+      'Empuja con los talones y sube la cadera hasta alinear hombros, cadera y rodillas.',
+      'Aprieta 2 segundos arriba y baja lento.',
+    ],
+    musculos: null,
+    sesiones: [
+      { f: '29 oct', d: 31, dia: 'Día C', rut: 'Adaptación', reps: [20, 20, 18] },
+      { f: '22 oct', d: 24, dia: 'Día C', rut: 'Adaptación', reps: [15, 15, 15] },
+    ],
+  },
+  pausa: {
+    n: 'Sentadilla con pausa', g: 'Piernas', e: 'Barra', origen: 'Creado por ti el 20 oct', propio: true,
+    tecnica: [
+      'Igual que la sentadilla, con 15 a 20 % menos de peso.',
+      'Abajo, quédate quieto 2 segundos sin rebotar.',
+      'Sube rápido y sin perder la espalda recta.',
+    ],
+    musculos: null, sesiones: [],
+  },
+};
+
+const CLIENTES = {
+  sentadilla: [
+    { n: 'Diego Araya', i: 'DA', f: '12 nov', kg: 110, r: 9 },
+    { n: 'Ignacio Soto', i: 'IS', f: '13 nov', kg: 95, r: 10 },
+    { n: 'Matías Contreras', i: 'MC', f: '9 nov', kg: 90, r: 8 },
+    { n: 'Martina Fuentes', i: 'MF', f: '10 nov', kg: 80, r: 8 },
+    { n: 'Catalina Pérez', i: 'CP', f: '11 nov', kg: 60, r: 6 },
+  ],
+  bulgara: [],
+  pausa: [
+    { n: 'Diego Araya', i: 'DA', f: '12 nov', kg: 100, r: 5 },
+    { n: 'Ignacio Soto', i: 'IS', f: '13 nov', kg: 85, r: 6 },
+  ],
+};
+
+// Observaciones: autor 'yo' es quien mira la pantalla.
+const OBS_ALUMNA = [
+  { tipo: 'consejo', autor: 'Camila Rojas', f: '15 nov', texto: 'Hoy sube a 82,5. Si la última serie se pone fea, vuelve a 80.' },
+  { tipo: 'dolor', autor: 'yo', f: '10 nov', zona: 'Rodilla derecha', int: 3, texto: 'Sentí la rodilla derecha en la bajada de la última serie.',
+    resp: { autor: 'Camila Rojas', f: '11 nov', texto: 'Baja más lento y lleva las rodillas hacia afuera, en la línea de la punta del pie. Si sigue, me avisas y la cambiamos por prensa.' } },
+  { tipo: 'observacion', autor: 'yo', f: '22 oct', texto: 'Con zapatillas planas me siento más estable.' },
+];
+const OBS_ENTRENADORA = [
+  { tipo: 'observacion', autor: 'Diego Araya', f: '12 nov', texto: 'Con 110 la barra se me va hacia adelante al subir.', responder: true },
+  { tipo: 'dolor', autor: 'Martina Fuentes', f: '10 nov', zona: 'Rodilla derecha', int: 3, texto: 'Sentí la rodilla derecha en la bajada de la última serie.',
+    resp: { autor: 'yo', f: '11 nov', texto: 'Baja más lento y lleva las rodillas hacia afuera, en la línea de la punta del pie. Si sigue, me avisas y la cambiamos por prensa.' } },
+];
+// Zonas en el mismo orden que la encuesta (pregunta 9) y que Completada y Ficha.
+const ZONAS = ['Hombro', 'Rodilla', 'Espalda baja', 'Muñeca', 'Cadera', 'Otra'];
+
+// ── Formatos y cálculos ──────────────────────────────────────────────────────
+const fmt1 = (n) => fmtKg(Math.round(n * 10) / 10);
+const mejorReps = (s) => Math.max(...s.reps);
+const e1rm = (s) => s.kg * (1 + mejorReps(s) / 30); // Epley, como en el PRD
+
+// ── Íconos de trazo ──────────────────────────────────────────────────────────
+const icoVolver = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H5M11 5l-7 7 7 7"/></svg>';
+const icoPausa = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg>';
+const icoPlay = '<svg viewBox="0 0 24 24" aria-hidden="true"><path class="relleno" d="M7 4.5l12.5 7.5L7 19.5z"/></svg>';
+const icoExpandir = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg>';
+
+// ── Figura animada (SMIL): dos poses y un bucle de 3,6 s ─────────────────────
+const POSES = {
+  sentadilla: {
+    peso: 'disco', guia: 172,
+    a: { cuerpo: [[186, 164], [162, 164], [164, 124], [166, 84], [170, 38]], brazo: [[170, 38], [158, 53], [166, 40]], cab: [171.5, 21], peso: [168, 40] },
+    b: { cuerpo: [[186, 164], [162, 164], [182, 130], [143, 131], [173, 96]], brazo: [[173, 96], [162, 111], [170, 98]], cab: [184, 83], peso: [170, 98] },
+  },
+  bulgara: {
+    peso: 'mancuerna', banco: true,
+    a: { cuerpo: [[212, 164], [190, 164], [182, 126], [164, 90], [167, 44]], pierna: [[164, 90], [134, 116], [100, 119], [86, 123]],
+      brazo: [[167, 44], [166, 68], [165, 90]], cab: [168, 27], peso: [165, 96] },
+    b: { cuerpo: [[212, 164], [190, 164], [206, 129], [168, 124], [174, 79]], pierna: [[168, 124], [130, 136], [100, 119], [86, 123]],
+      brazo: [[174, 79], [172, 102], [170, 122]], cab: [176, 62], peso: [170, 128] },
+  },
+};
+const TIEMPO = 'dur="3.6s" repeatCount="indefinite" keyTimes="0;0.4;0.5;0.9;1" calcMode="spline" keySplines="0.45 0 0.55 1;0 0 1 1;0.45 0 0.55 1;0 0 1 1"';
+const bucle = (a, b) => `${a};${b};${b};${a};${a}`;
+const pts = (l) => l.map((p) => p.join(',')).join(' ');
+const linea = (cls, a, b) => `<polyline class="${cls}" points="${pts(a)}"><animate attributeName="points" values="${bucle(pts(a), pts(b))}" ${TIEMPO}/></polyline>`;
+const mover = (a, b, dentro) => `<g>${dentro}<animateTransform attributeName="transform" type="translate" values="${bucle('0 0', `${b[0] - a[0]} ${b[1] - a[1]}`)}" ${TIEMPO}/></g>`;
+
+function escena(clave, nombre) {
+  const P = POSES[clave], a = P.a, b = P.b;
+  const r = P.peso === 'disco' ? 17 : 9;
+  const peso = mover(a.peso, b.peso, `<circle class="disco" cx="${a.peso[0]}" cy="${a.peso[1]}" r="${r}"/><circle class="eje" cx="${a.peso[0]}" cy="${a.peso[1]}" r="${P.peso === 'disco' ? 4 : 3}"/>`);
+  const cab = mover(a.cab, b.cab, `<circle class="cab" cx="${a.cab[0]}" cy="${a.cab[1]}" r="12"/>`);
+  return `<svg class="escena" viewBox="0 0 320 180" role="img" aria-label="${nombre}, vista lateral, en bucle">
+    <path class="suelo" d="M64 166H256"/>
+    ${P.guia ? `<path class="guia" d="M${P.guia} 14V164"/>` : ''}
+    ${P.banco ? '<path class="banco" d="M60 124H118M68 124V164M110 124V164"/>' : ''}
+    ${P.peso === 'disco' ? peso : ''}
+    ${linea('brazo atras', a.brazo, b.brazo)}
+    ${a.pierna ? linea('cuerpo atras', a.pierna, b.pierna) : ''}
+    ${linea('cuerpo', a.cuerpo, b.cuerpo)}
+    ${linea('torso', a.cuerpo.slice(-2), b.cuerpo.slice(-2))}
+    ${cab}
+    ${P.peso === 'mancuerna' ? peso : ''}
+  </svg>`;
+}
+
+// ── Estado de la pantalla ────────────────────────────────────────────────────
+let m = null;
+let R;
+function prepararEstado(estado) {
+  R = { pausado: matchMedia('(prefers-reduced-motion: reduce)').matches, metrica: 'e1rm', sel: 0, todas: false, hoja: null,
+    obs: null, O: { tipo: 'observacion', zona: 'Rodilla', int: 3, texto: '', error: '' } };
+  if (estado === 'observar') { R.hoja = 'observar'; R.O = { tipo: 'dolor', zona: 'Rodilla', int: 3, texto: '', error: '' }; }
+  if (estado === 'referencia') R.hoja = 'referencia';
+  // Al elegir otro estado desde la barra, se olvida el ejercicio recién creado.
+  if (m) ['nuevo', 'nombre', 'grupo', 'equipo', 'mide', 'seccion'].forEach((k) => delete m.ctl[k]);
+}
+
+function ejercicioDe(ctl) {
+  const ent = ctl.rol === 'entrenador';
+  if (ctl.nuevo === 'si' && ctl.nombre) {
+    return { n: ctl.nombre, g: ctl.grupo || 'Piernas', e: ctl.equipo || 'Peso corporal', origen: 'Recién creado', propio: true, nuevo: true,
+      mide: ctl.mide, tecnica: [], musculos: null, sesiones: [] };
+  }
+  if (ctl.estado === 'sin-historial') return EJERCICIOS.bulgara;
+  if (ctl.estado === 'propio' || ctl.estado === 'referencia') return ent ? EJERCICIOS.pausa : EJERCICIOS.puente;
+  return EJERCICIOS.sentadilla;
+}
+const claveDe = (ej) => Object.keys(EJERCICIOS).find((k) => EJERCICIOS[k] === ej);
+
+// ── Piezas ───────────────────────────────────────────────────────────────────
+function referencia(ej, ctl) {
+  const ent = ctl.rol === 'entrenador';
+  if (ej.propio) {
+    return `<div class="ref vacia">
+      <p class="h3">Sin referencia todavía</p>
+      <p class="sec">Sube una foto o un video corto para recordar cómo se hace.</p>
+      <button class="btn btn-secundario" data-accion="hoja" data-hoja="referencia" data-toque>Subir foto o video</button>
+    </div>`;
+  }
+  if (ctl.estado === 'sin-senal') {
+    return `<div class="ref sin-senal">
+      <p class="h3">Sin señal</p>
+      <p class="sec">La animación se carga cuando vuelvas a tener conexión. La técnica de abajo está guardada en tu teléfono.</p>
+      <button class="btn btn-secundario" data-accion="reintentar" data-toque>Reintentar</button>
+    </div>`;
+  }
+  return `<div class="ref">
+    ${escena(ej.pose, ej.n)}
+    <span class="ref-etq">${POSES[ej.pose].guia ? 'Vista lateral · la línea es el medio del pie' : 'Vista lateral · en bucle'}</span>
+    <button class="btn-icono ref-play" data-accion="play" aria-label="${R.pausado ? 'Reproducir' : 'Pausar'}" data-toque>${R.pausado ? icoPlay : icoPausa}</button>
+    <button class="btn-icono ref-full" data-accion="aviso" data-aviso="${ent ? 'Se ve en pantalla completa. Puedes cambiarla por un video tuyo.' : 'Se ve en pantalla completa, con el teléfono de lado.'}" aria-label="Ver en pantalla completa" data-toque>${icoExpandir}</button>
+  </div>`;
+}
+
+function tecnica(ej) {
+  const titulo = ej.propio ? (ej.nuevo ? 'Cómo se hace' : 'Cómo se hace · lo escribiste tú') : 'Cómo se hace';
+  const cuerpo = ej.tecnica.length
+    ? `<ol class="pasos">${ej.tecnica.map((t, i) => `<li><span class="n">${i + 1}</span><span>${t}</span></li>`).join('')}</ol>`
+    : `<p class="sec">No agregaste pasos. Puedes sumarlos cuando quieras.</p>
+       <button class="btn btn-fantasma" style="margin:8px 0 -8px -12px" data-accion="aviso" data-aviso="Aquí editas el nombre, el grupo, el equipo y los pasos." data-toque>Agregar pasos</button>`;
+  return `<div class="seccion-cabeza"><h2 class="h3">${titulo}</h2></div><div class="tarjeta">${cuerpo}</div>`;
+}
+
+function musculos(ej) {
+  if (!ej.musculos) {
+    return `<div class="seccion-cabeza"><h2 class="h3">Grupo</h2></div>
+      <div class="musculos" style="margin-top:0"><span class="musculo">${ej.g}</span></div>`;
+  }
+  const [pri, ayu] = ej.musculos;
+  return `<div class="seccion-cabeza"><h2 class="h3">Músculos</h2></div>
+    <p class="ceja">Trabajan más</p><div class="musculos">${pri.map((x) => `<span class="musculo">${x}</span>`).join('')}</div>
+    <p class="ceja">Ayudan</p><div class="musculos">${ayu.map((x) => `<span class="musculo ayuda">${x}</span>`).join('')}</div>`;
+}
+
+function grafico(ses) {
+  const datos = ses.slice().reverse();
+  const kg = R.metrica === 'kg';
+  const val = (s) => (kg ? s.kg : e1rm(s));
+  const [vmin, vmax, marcas] = kg ? [60, 85, [60, 70, 80]] : [80, 105, [80, 90, 100]];
+  const X0 = 36, X1 = 334, Y0 = 18, Y1 = 142, DMAX = 43;
+  const x = (d) => X0 + (d / DMAX) * (X1 - X0);
+  const y = (v) => Y1 - ((v - vmin) / (vmax - vmin)) * (Y1 - Y0);
+  const sel = datos[datos.length - 1 - R.sel];
+  const grilla = marcas.map((v) => `<line class="grilla" x1="${X0}" x2="${X1}" y1="${y(v)}" y2="${y(v)}"/><text class="eje-txt" x="${X0 - 8}" y="${y(v) + 4}" text-anchor="end">${v}</text>`).join('');
+  const meses = datos.map((s, i) => {
+    const [dia, mes] = s.f.split(' ');
+    const cambia = i === 0 || datos[i - 1].f.split(' ')[1] !== mes;
+    // El mes va alineado con su día; si el mes siguiente queda muy cerca, este se alinea por la derecha.
+    const sig = datos[i + 1], medio = dia.length * 3.3;
+    const choca = sig && sig.f.split(' ')[1] !== mes && x(sig.d) - x(s.d) < 30;
+    const mesTxt = choca ? `x="${x(s.d) + medio}" text-anchor="end"` : `x="${x(s.d) - medio}" text-anchor="start"`;
+    return `<line class="grilla" x1="${x(s.d)}" x2="${x(s.d)}" y1="${Y1}" y2="${Y1 + 4}"/><text class="eje-txt" x="${x(s.d)}" y="${Y1 + 17}" text-anchor="middle">${dia}</text>${cambia ? `<text class="eje-txt" ${mesTxt} y="${Y1 + 31}">${mes}</text>` : ''}`;
+  }).join('');
+  const cambio = `<line class="cambio" x1="${x(35)}" x2="${x(35)}" y1="${Y0 - 6}" y2="${Y1}"/><text class="cambio-txt" x="${x(35) - 6}" y="${Y0 + 2}" text-anchor="end">Fuerza 4 días</text>`;
+  const puntos = datos.map((s) => `<circle class="punto${s === sel ? ' sel' : ''}" cx="${x(s.d)}" cy="${y(val(s))}" r="${s === sel ? 6 : 3.5}"/>`).join('');
+  const linea = `<polyline class="linea" points="${datos.map((s) => `${x(s.d)},${y(val(s))}`).join(' ')}"/>`;
+  const marcaSel = `<line class="marca-sel" x1="${x(sel.d)}" x2="${x(sel.d)}" y1="${Y0 - 6}" y2="${Y1}"/>`;
+  const record = Math.max(...ses.map(e1rm));
+  const esRecord = Math.abs(e1rm(sel) - record) < 0.01;
+  const chips = [['e1rm', '1RM estimado'], ['kg', 'Mejor serie']].map(([v, t]) =>
+    `<button class="chip texto" data-accion="metrica" data-v="${v}" aria-pressed="${R.metrica === v}" data-toque><span>${t}</span></button>`).join('');
+  return `<div class="tarjeta graf">
+    <div class="chips" role="group" aria-label="Qué mostrar">${chips}</div>
+    <div class="lectura" aria-live="polite">
+      <p class="ceja">${sel.f} · ${sel.dia}</p>
+      <p class="valor">${fmt1(val(sel))}<small>kg</small></p>
+      <p class="sec">${kg ? `${fmtKg(sel.kg)} kg × ${mejorReps(sel)} · 1RM estimado ${fmt1(e1rm(sel))} kg` : `Mejor serie ${fmtKg(sel.kg)} kg × ${mejorReps(sel)}`}${esRecord ? ' · <span class="mas">récord</span>' : ''}</p>
+    </div>
+    <svg viewBox="0 0 346 178" data-accion="grafico" role="img" aria-label="${kg ? 'Kilos de la mejor serie' : '1RM estimado'} en el tiempo, ${ses.length} sesiones">
+      ${grilla}${meses}${cambio}${marcaSel}${linea}${puntos}
+      <rect x="0" y="0" width="346" height="178" fill="transparent"/>
+    </svg>
+    <p class="explica">${kg ? 'Los kilos de tu mejor serie en cada sesión.' : '1RM estimado: lo que podrías levantar una vez, calculado con tu mejor serie de cada sesión.'} Toca el gráfico para ver cada sesión.</p>
+  </div>`;
+}
+
+function filaSesion(s, ej, record) {
+  const reps = s.reps.join('<span class="x"> · </span>');
+  if (ej.mide === 'reps') {
+    return `<li class="ses"><span class="f cifra">${s.f}</span>
+      <span class="mid"><span class="series cifra">${reps}<span class="x"> reps</span></span><span class="sec">${s.dia} · ${s.rut}</span></span>
+      <span class="der"><span class="cifra">${mejorReps(s)}</span></span></li>`;
+  }
+  const esRecord = Math.abs(e1rm(s) - record) < 0.01;
+  return `<li class="ses"><span class="f cifra">${s.f}</span>
+    <span class="mid"><span class="series cifra">${fmtKg(s.kg)}<span class="x"> × </span>${reps}</span><span class="sec">${s.dia} · ${s.rut}</span></span>
+    <span class="der"><span class="cifra">${fmt1(e1rm(s))}</span>${esRecord ? '<span class="etiqueta llena">Récord</span>' : ''}</span></li>`;
+}
+
+function historial(ej) {
+  const ses = ej.sesiones;
+  const cabeza = `<div class="seccion-cabeza" data-seccion="historial"><h2 class="h3">Tu historial</h2>${ses.length ? `<span class="sec"><span class="cifra">${ses.length}</span> ${ses.length === 1 ? 'sesión' : 'sesiones'}</span>` : ''}</div>`;
+  if (!ses.length) {
+    return `${cabeza}<div class="tarjeta graf-vacio"><p class="h3" style="font-size:16px">Todavía no ${ej.nuevo || ej.propio ? 'lo' : 'la'} registras</p>
+      <p class="sec">Cuando ${ej.nuevo || ej.propio ? 'lo' : 'la'} hagas en una sesión, aquí verás cada serie, tu récord y cómo avanzas.</p></div>`;
+  }
+  if (ej.mide === 'reps') {
+    const mejor = Math.max(...ses.map(mejorReps));
+    return `${cabeza}
+      <div class="mes" style="grid-template-columns:repeat(2,1fr)">
+        <div class="dato"><span class="cifra">${mejor}<small>reps</small></span><p class="sec">récord</p></div>
+        <div class="dato"><span class="cifra">${ses.length}</span><p class="sec">sesiones</p></div>
+      </div>
+      <div class="tarjeta graf-vacio" style="margin-top:8px"><p class="h3" style="font-size:16px">Con una sesión más verás tu gráfico</p>
+        <p class="sec">El gráfico aparece desde la tercera sesión.</p></div>
+      <div class="tarjeta ses-lista"><div class="ses-cabeza"><span>Sesión · repeticiones por serie</span><span>Mejor</span></div>
+        <ol class="lista-filas" style="list-style:none">${ses.map((s) => filaSesion(s, ej, 0)).join('')}</ol></div>`;
+  }
+  const record = Math.max(...ses.map(e1rm));
+  const previo = Math.max(...ses.slice(1).map(e1rm));
+  const mejor = ses.find((s) => Math.abs(e1rm(s) - record) < 0.01);
+  const visibles = R.todas ? ses : ses.slice(0, 5);
+  return `${cabeza}
+    <div class="mes">
+      <div class="dato"><span class="cifra">${fmt1(record)}<small>kg</small></span><p class="sec">récord 1RM est. <span class="delta">+${fmt1(record - previo)}</span></p></div>
+      <div class="dato"><span class="cifra">${fmtKg(mejor.kg)}<small>×</small>${mejorReps(mejor)}</span><p class="sec">mejor serie</p></div>
+      <div class="dato"><span class="cifra">${ses.length}</span><p class="sec">sesiones</p></div>
+    </div>
+    ${ses.length >= 3 ? grafico(ses) : ''}
+    <div class="tarjeta ses-lista">
+      <div class="ses-cabeza"><span>Sesión · kg × reps por serie</span><span>1RM est.</span></div>
+      <ol class="lista-filas" style="list-style:none">${visibles.map((s) => filaSesion(s, ej, record)).join('')}</ol>
+      ${ses.length > 5 ? `<button class="btn btn-fantasma ver-todas" data-accion="todas" data-toque>${R.todas ? 'Ver menos' : `Ver las ${ses.length} sesiones`}</button>` : ''}
+    </div>`;
+}
+
+function clientes(ej) {
+  const lista = CLIENTES[claveDe(ej)] || [];
+  const cabeza = `<div class="seccion-cabeza" data-seccion="historial"><h2 class="h3">Tus clientes</h2>${lista.length ? `<span class="sec"><span class="cifra">${lista.length}</span> lo hacen</span>` : ''}</div>`;
+  if (!lista.length) {
+    return `${cabeza}<div class="tarjeta graf-vacio"><p class="h3" style="font-size:16px">Ninguno lo hace todavía</p>
+      <p class="sec">Cuando lo pongas en una rutina, aquí verás cómo le va a cada uno.</p></div>`;
+  }
+  return `${cabeza}<div class="tarjeta" style="padding-top:4px;padding-bottom:4px">
+    <div class="ses-cabeza"><span>Última sesión · mejor serie</span><span>1RM est.</span></div>
+    <ul class="lista-filas">${lista.map((c) => `<li><button class="fila-cli" ${c.i === 'MF' ? 'data-ir="ficha.html"'
+      : `data-accion="aviso" data-aviso="Aquí se abre la ficha de ${c.n}. En la maqueta, prueba con Martina."`} data-toque>
+      <span class="avatar cifra">${c.i}</span>
+      <span class="mid"><span class="n">${c.n}</span><span class="sec"><span class="cifra">${fmtKg(c.kg)} × ${c.r}</span> · ${c.f}</span></span>
+      <span class="der"><span class="cifra">${fmt1(c.kg * (1 + c.r / 30))}</span></span></button></li>`).join('')}</ul></div>`;
+}
+
+function observaciones(ej, ctl) {
+  const ent = ctl.rol === 'entrenador';
+  const lista = R.obs || [];
+  const nombreAutor = (a) => (a === 'yo' ? 'Tú' : a);
+  const items = lista.map((o, k) => `<article class="obs${o.nueva ? ' nueva' : ''}">
+      <div class="obs-cabeza"><span class="etiqueta${{ dolor: ' peligro', consejo: ' llena', observacion: '' }[o.tipo]}">${{ dolor: 'Dolor', consejo: 'Consejo', observacion: 'Observación' }[o.tipo]}</span>
+        <span class="sec">${nombreAutor(o.autor)} · ${o.f}</span></div>
+      ${o.zona ? `<p class="obs-meta">${o.zona} · <span class="cifra">${o.int}</span> de 10</p>` : ''}
+      ${o.texto ? `<p class="obs-txt">${o.texto}</p>` : ''}
+      ${o.resp ? `<div class="respuesta"><p class="sec"><b>${o.resp.autor === 'yo' ? 'Tu respuesta' : o.resp.autor}</b> · ${o.resp.f}</p><p class="obs-txt">${o.resp.texto}</p></div>` : ''}
+      ${ent && o.responder && !o.resp ? `<button class="btn btn-fantasma" data-accion="responder" data-k="${k}" data-toque>Responder a ${o.autor.split(' ')[0]}</button>` : ''}
+    </article>`).join('');
+  const vacio = ent
+    ? '<p class="sec">Tus clientes no han dejado notas en este ejercicio.</p>'
+    : `<p class="sec">Si algo te molesta o quieres recordar un detalle, anótalo aquí. ${ej.propio ? '' : 'Camila lo verá en tu ficha.'}</p>`;
+  return `<div class="seccion-cabeza" data-seccion="observaciones"><h2 class="h3">${ent ? 'Notas de tus clientes' : 'Observaciones y dolores'}</h2>
+      ${lista.length ? `<span class="sec"><span class="cifra">${lista.length}</span> ${lista.length === 1 ? 'nota' : 'notas'}</span>` : ''}</div>
+    <div class="tarjeta">${items || vacio}</div>`;
+}
+
+function hojaObservar(tema, ej, ctl) {
+  const O = R.O, ent = ctl.rol === 'entrenador';
+  if (ent) {
+    const o = (R.obs || [])[R.responderA] || OBS_ENTRENADORA[0];
+    return `<div class="velo${R.hoja === 'observar' ? ' ver' : ''}" data-hoja="observar"><div class="hoja" role="dialog" aria-modal="true" aria-labelledby="t-obs-${tema}">
+      <h2 class="h2" id="t-obs-${tema}">Responder a ${o.autor.split(' ')[0]}</h2>
+      <p class="sec" style="margin-top:8px">«${o.texto}»</p>
+      <textarea class="area${O.error ? ' error' : ''}" data-campo="texto" aria-label="Tu consejo" placeholder="Tu consejo, corto y claro">${O.texto}</textarea>
+      ${O.error ? `<p class="error-txt">${O.error}</p>` : ''}
+      <p class="sec nota-hoja">${o.autor.split(' ')[0]} lo verá junto al ejercicio y en su pantalla de hoy.</p>
+      <div class="acciones"><button class="btn btn-secundario" data-accion="cerrar-hoja" data-toque>Cancelar</button>
+        <button class="btn btn-primario" data-accion="guardar-obs" data-toque>Enviar</button></div>
+    </div></div>`;
+  }
+  const tipos = [['observacion', 'Observación'], ['dolor', 'Dolor']].map(([v, t]) =>
+    `<button class="chip texto" data-accion="o-tipo" data-v="${v}" aria-pressed="${O.tipo === v}" data-toque><span>${t}</span></button>`).join('');
+  const zonas = ZONAS.map((z) => `<button class="chip texto" data-accion="o-zona" data-v="${z}" aria-pressed="${O.zona === z}" data-toque><span>${z}</span></button>`).join('');
+  const dolor = O.tipo === 'dolor' ? `
+      <p class="rot-campo">Dónde</p>
+      <div class="chips-envuelve" role="group" aria-label="Dónde">${zonas}</div>
+      <p class="rot-campo">Cuánto molesta</p>
+      <div class="paso">
+        <button class="btn-paso${O.int <= 1 ? ' limite' : ''}" data-accion="o-int" data-v="-1" aria-label="Molesta menos" data-toque><span class="barra-menos"></span></button>
+        <div class="campo"><span class="valor" data-valor="int">${O.int}</span><span class="unidad">de 10</span></div>
+        <button class="btn-paso${O.int >= 10 ? ' limite' : ''}" data-accion="o-int" data-v="1" aria-label="Molesta más" data-toque>${simbolo('simbolo', '')}</button>
+      </div>
+      <p class="aviso-dolor">Con 7 o más, Camila recibe un aviso al instante.</p>` : '';
+  return `<div class="velo${R.hoja === 'observar' ? ' ver' : ''}" data-hoja="observar"><div class="hoja" role="dialog" aria-modal="true" aria-labelledby="t-obs-${tema}">
+    <h2 class="h2" id="t-obs-${tema}">Anotar en ${ej.n}</h2>
+    <div class="chips" role="group" aria-label="Tipo" style="justify-content:flex-start;margin-top:12px">${tipos}</div>
+    ${dolor}
+    <textarea class="area" data-campo="texto" aria-label="${O.tipo === 'dolor' ? 'Qué dolor sentiste' : 'Tu observación'}" placeholder="${O.tipo === 'dolor' ? 'Por ejemplo: molesta al bajar, en la última serie' : 'Por ejemplo: con zapatillas planas me siento más estable'}">${O.texto}</textarea>
+    ${O.error ? `<p class="error-txt">${O.error}</p>` : ''}
+    <p class="sec nota-hoja">${ej.propio ? 'Queda en tu historial de este ejercicio.' : 'Camila la ve en tu ficha y te puede responder.'}</p>
+    <div class="acciones"><button class="btn btn-secundario" data-accion="cerrar-hoja" data-toque>Cancelar</button>
+      <button class="btn btn-primario" data-accion="guardar-obs" data-toque>Guardar</button></div>
+  </div></div>`;
+}
+
+function hojaReferencia(tema, ctl) {
+  const ent = ctl.rol === 'entrenador';
+  return `<div class="velo${R.hoja === 'referencia' ? ' ver' : ''}" data-hoja="referencia"><div class="hoja" role="dialog" aria-modal="true" aria-labelledby="t-ref-${tema}">
+    <h2 class="h2" id="t-ref-${tema}">Subir referencia</h2>
+    <p class="sec" style="margin-top:8px">Un video corto, de hasta 50 MB, o una foto. ${ent ? 'La ven tú y tus clientes.' : 'Solo la ven tú y tu entrenadora.'}</p>
+    <div class="opciones">
+      <button class="btn btn-secundario ancho alto" data-accion="subir" data-aviso="Se abre la cámara para grabar. Con 10 segundos basta." data-toque>Grabar video</button>
+      <button class="btn btn-secundario ancho alto" data-accion="subir" data-aviso="Se abre la cámara para tomar la foto." data-toque>Tomar foto</button>
+      <button class="btn btn-secundario ancho alto" data-accion="subir" data-aviso="Se abre la galería del teléfono." data-toque>Elegir de la galería</button>
+    </div>
+    <div class="acciones" style="margin-top:8px"><button class="btn btn-fantasma" data-accion="cerrar-hoja" data-toque>Cancelar</button></div>
+  </div></div>`;
+}
+
+function telefono(tema, ctl) {
+  const ent = ctl.rol === 'entrenador';
+  const ej = ejercicioDe(ctl);
+  // Las notas dependen del ejercicio y del rol; se rearman si cambia cualquiera de los dos.
+  const clave = `${ctl.rol}|${ej.n}`;
+  if (R.obsDe !== clave) {
+    R.obsDe = clave;
+    R.obs = ej.propio || ctl.estado === 'sin-historial' ? [] : (ent ? OBS_ENTRENADORA : OBS_ALUMNA).map((o) => ({ ...o }));
+  }
+  const volver = ent ? 'ejercicios.html#rol=entrenador' : 'ejercicios.html';
+  const accion = ent
+    ? '<button class="btn btn-primario ancho alto" data-ir="nueva-rutina.html#rol=entrenador" data-toque>Usar en una rutina</button>'
+    : '<button class="btn btn-primario ancho alto" data-accion="hoja" data-hoja="observar" data-toque>Registrar observación</button>';
+  return `<div class="tel" data-tema="${tema}">
+    <div class="tel-estado"><span class="cifra" style="font-weight:600">9:41</span><span>${ctl.estado === 'sin-senal' ? 'Sin señal' : '5G'} · 82 %</span></div>
+    <div class="barra-sup">
+      <button class="btn-icono" data-ir="${volver}" aria-label="Volver a Ejercicios" data-toque>${icoVolver}</button>
+      ${ej.propio ? '<button class="btn btn-fantasma" data-accion="aviso" data-aviso="Aquí editas el nombre, el grupo, el equipo y los pasos." data-toque>Editar</button>' : ''}
+    </div>
+    <div class="tel-contenido">
+      ${referencia(ej, ctl)}
+      <div class="ej-cabeza">
+        <p class="ceja${ej.nuevo ? ' acento' : ''}">${ej.origen}</p>
+        <h1 class="titulo">${ej.n}</h1>
+        <p class="sec">${ej.g} · ${ej.e}</p>
+      </div>
+      ${tecnica(ej)}
+      ${musculos(ej)}
+      ${ent ? clientes(ej) : historial(ej)}
+      ${observaciones(ej, ctl)}
+    </div>
+    <div class="tel-accion">${accion}</div>
+    <div class="tel-gesto"></div>
+    <div class="aviso" role="status"></div>
+    ${hojaObservar(tema, ej, ctl)}
+    ${hojaReferencia(tema, ctl)}
+  </div>`;
+}
+
+// ── Maqueta ──────────────────────────────────────────────────────────────────
+m = iniciarMaqueta({
+  telefono, porDefecto: { estado: 'historial', rol: 'alumno' }, alCambiarEstado: prepararEstado,
+  alPintar: () => {
+    // La animación respeta la pausa al repintar.
+    escenario().querySelectorAll('svg.escena').forEach((s) => { if (R.pausado) { s.setCurrentTime(1.6); s.pauseAnimations(); } });
+  },
+});
+const { ctl } = m;
+function escenario() { return document.getElementById('escenario'); }
+const todos = (sel) => escenario().querySelectorAll(sel);
+const avisarTodos = (t) => todos('.tel').forEach((tel) => avisar(tel, t));
+
+function repintar() {
+  const scroll = [...todos('.tel-contenido')].map((c) => c.scrollTop);
+  m.pintar();
+  todos('.tel-contenido').forEach((c, k) => { c.scrollTop = scroll[k] || 0; });
+}
+function bajarA(seccion) {
+  todos('.tel').forEach((tel) => {
+    const c = tel.querySelector('.tel-contenido'), s = tel.querySelector(`[data-seccion="${seccion}"]`);
+    if (s) c.scrollTop = s.offsetTop - c.offsetTop - 8;
+  });
+}
+// Al llegar: baja a una sección si la dirección lo pide, y avisa si el ejercicio es recién creado.
+document.fonts.ready.then(() => {
+  if (ctl.seccion) bajarA(ctl.seccion);
+  if (ctl.nuevo === 'si' && ctl.nombre) avisarTodos(`Creaste «${ctl.nombre}». Ya puedes usarlo en tus rutinas.`);
+});
+
+escenario().addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-accion]'); if (!b || b.disabled) return;
+  const tel = b.closest('.tel');
+  switch (b.dataset.accion) {
+    case 'play':
+      R.pausado = !R.pausado;
+      todos('svg.escena').forEach((s) => (R.pausado ? s.pauseAnimations() : s.unpauseAnimations()));
+      todos('.ref-play').forEach((x) => { x.innerHTML = R.pausado ? icoPlay : icoPausa; x.setAttribute('aria-label', R.pausado ? 'Reproducir' : 'Pausar'); });
+      break;
+    case 'aviso': avisar(tel, b.dataset.aviso); break;
+    case 'reintentar': avisar(tel, 'Sigues sin señal. Lo intentamos solos cuando vuelva.'); break;
+    case 'metrica': R.metrica = b.dataset.v; repintar(); break;
+    case 'grafico': {
+      const svg = b.closest('svg'), r = svg.getBoundingClientRect();
+      const xVB = ((ev.clientX - r.left) / r.width) * 346;
+      const datos = SESIONES.slice().reverse();
+      let mejor = 0, dist = Infinity;
+      datos.forEach((s, i) => { const dx = Math.abs(36 + (s.d / 43) * 298 - xVB); if (dx < dist) { dist = dx; mejor = i; } });
+      R.sel = datos.length - 1 - mejor; repintar();
+      break;
+    }
+    case 'todas': R.todas = !R.todas; repintar(); break;
+    case 'hoja':
+      R.hoja = b.dataset.hoja; R.O.error = '';
+      if (R.hoja === 'observar') R.O = { tipo: 'observacion', zona: 'Rodilla', int: 3, texto: '', error: '' };
+      repintar();
+      break;
+    case 'responder':
+      R.responderA = +b.dataset.k; R.hoja = 'observar'; R.O = { tipo: 'consejo', texto: '', error: '' }; repintar();
+      break;
+    case 'cerrar-hoja': R.hoja = null; repintar(); break;
+    case 'o-tipo': R.O.tipo = b.dataset.v; R.O.error = ''; repintar(); break;
+    case 'o-zona': R.O.zona = b.dataset.v; repintar(); break;
+    case 'o-int': {
+      const v = Math.min(10, Math.max(1, R.O.int + +b.dataset.v));
+      if (v === R.O.int) { avisar(tel, v === 10 ? 'Es el máximo: 10 de 10.' : 'Es el mínimo: 1 de 10.'); break; }
+      R.O.int = v; repintar();
+      break;
+    }
+    case 'subir': R.hoja = null; repintar(); avisarTodos(b.dataset.aviso); break;
+    case 'guardar-obs': guardarObs(); break;
+  }
+});
+
+function guardarObs() {
+  const O = R.O, ent = ctl.rol === 'entrenador';
+  const texto = O.texto.trim();
+  if (!texto && O.tipo !== 'dolor') { O.error = ent ? 'Escribe tu respuesta.' : 'Escribe qué quieres anotar.'; repintar(); return; }
+  if (ent) {
+    const o = R.obs[R.responderA ?? 0];
+    o.resp = { autor: 'yo', f: 'hoy', texto };
+    R.hoja = null; repintar(); bajarA('observaciones');
+    avisarTodos(`Enviado. ${o.autor.split(' ')[0]} lo verá en su pantalla de hoy.`);
+    return;
+  }
+  const zona = O.zona === 'Otra' ? 'Otra zona' : O.zona;
+  R.obs.forEach((o) => { o.nueva = false; });
+  R.obs.unshift({ tipo: O.tipo, autor: 'yo', f: 'hoy', texto, nueva: true, ...(O.tipo === 'dolor' ? { zona, int: O.int } : {}) });
+  R.hoja = null; repintar(); bajarA('observaciones');
+  avisarTodos(ejercicioDe(ctl).propio ? 'Guardado en tu historial.' : 'Guardado. Camila lo verá en tu ficha.');
+}
+
+// Escape cierra la hoja (maqueta.js la oculta; aquí se olvida para que no vuelva al repintar).
+document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') R.hoja = null; });
+
+escenario().addEventListener('input', (ev) => {
+  if (!ev.target.matches('[data-campo="texto"]')) return;
+  R.O.texto = ev.target.value;
+  todos('[data-campo="texto"]').forEach((x) => { if (x !== ev.target) x.value = ev.target.value; });
+});
+</script>
+</body>
+</html>

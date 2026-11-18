@@ -1,0 +1,759 @@
+<!doctype html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GymTrack · Nueva rutina</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="sistema.css">
+<style>
+  /* ── Barra superior: volver y título ───────────────────────────────────── */
+  .barra-sup { flex: 0 0 56px; display: flex; align-items: center; gap: 4px; padding: 0 4px; }
+  .barra-sup .h3 { flex: 1; min-width: 0; }
+  .ico { flex: 0 0 24px; width: 24px; height: 24px; }
+  .ico path { stroke: currentColor; fill: none; stroke-width: 2.5; stroke-linecap: square; }
+  .btn-icono rect { fill: currentColor; }
+
+  /* ── Campos ────────────────────────────────────────────────────────────── */
+  .rot-campo { display: block; margin: 20px 0 8px; font: 600 14px/1.3 var(--letra); color: var(--texto-2); }
+  .rot-campo:first-child { margin-top: 8px; }
+  .entrada { width: 100%; height: 56px; padding: 0 14px; border-radius: var(--radio); border: 2px solid var(--campo-borde);
+    background: var(--campo-fondo); color: var(--texto); font: 600 18px/1 var(--letra); }
+  .entrada::placeholder { color: var(--texto-2); font-weight: 500; }
+  .entrada:focus { outline: none; border-color: var(--accion); }
+  [data-tema="clara"] .entrada:focus { border-color: var(--texto); }
+  .entrada.error { border-color: var(--peligro); }
+  .msj-error { margin: 6px 0 0; font: 600 14px/1.35 var(--letra); color: var(--peligro); }
+  .msj-error[hidden] { display: none; }
+
+  .selector { width: 100%; display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 10px 10px 10px 14px;
+    border: 2px solid var(--campo-borde); border-radius: var(--radio); background: var(--campo-fondo); color: var(--texto);
+    text-align: left; cursor: pointer; font: inherit; }
+  .selector:active { background: var(--sec-pres-fondo); }
+  .selector:focus-visible { outline: 2px solid var(--foco); outline-offset: 2px; }
+  .selector .txt { flex: 1; min-width: 0; }
+  .selector .txt b { display: block; font: 600 17px/1.3 var(--letra); }
+  .selector .txt small { display: block; margin-top: 2px; font-size: 13px; line-height: 1.35; color: var(--texto-2); }
+  .selector .ico { color: var(--texto-2); }
+
+  /* Más y menos compacto: rótulo a la izquierda, 56 dp a la derecha. */
+  .fila-paso { display: flex; align-items: center; gap: 12px; min-height: 56px; }
+  .fila-paso + .fila-paso { margin-top: 8px; }
+  .fila-paso .rot { flex: 1; min-width: 0; }
+  .fila-paso .rot b { display: block; font: 600 16px/1.25 var(--letra); }
+  .fila-paso .rot small { display: block; margin-top: 2px; font-size: 12px; line-height: 1.3; color: var(--texto-2); }
+  .fila-paso .paso { flex: 0 0 216px; }
+  .fila-paso .campo .valor { font-size: 24px; }
+  .fila-paso .campo .unidad { margin-top: 6px; font-size: 12px; }
+  .semanas-fila { margin-top: 20px; }
+
+  /* ── Días ──────────────────────────────────────────────────────────────── */
+  .dias-cabeza { display: flex; align-items: center; justify-content: space-between; margin: 24px 0 8px; }
+  .dias-cabeza .h3 { font-size: 16px; }
+  .dias-cabeza .h3 .cifra { color: var(--texto-2); margin-left: 6px; font-size: 14px; }
+  .dias-cabeza .btn { margin-right: -12px; }
+  .dia-card { background: var(--sup); border: 1px solid var(--sup-alta); border-radius: var(--radio); }
+  .dia-card + .dia-card { margin-top: 8px; }
+  .dia-card.error { border: 2px solid var(--peligro); }
+  .dia-cabeza { display: flex; align-items: center; }
+  .dia-abrir { flex: 1; min-width: 0; min-height: 64px; display: flex; align-items: center; gap: 12px; padding: 10px 0 10px 16px;
+    border: 0; background: transparent; color: var(--texto); text-align: left; cursor: pointer; font: inherit; border-radius: var(--radio); }
+  .dia-abrir:active { background: var(--fantasma-pres); }
+  .dia-abrir:focus-visible { outline: 2px solid var(--foco); outline-offset: -2px; }
+  .dia-abrir .orden { flex: 0 0 14px; font: 700 13px/1 var(--mono); color: var(--texto-2); }
+  .dia-abrir .txt { flex: 1; min-width: 0; }
+  .dia-abrir .txt b { display: block; font: 700 17px/1.3 var(--letra); }
+  .dia-abrir .txt small { display: block; margin-top: 2px; font-size: 13px; color: var(--texto-2); }
+  .dia-abrir .ico { color: var(--texto-2); }
+  .dia-cabeza > .btn-icono { margin-right: 4px; }
+  .dia-cabeza .flechas { display: flex; margin-right: 4px; }
+  .dia-error { margin: 0 16px 12px; }
+
+  .ej-lista { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--sup-alta); }
+  .ej-fila { display: flex; align-items: center; }
+  .ej-fila + .ej-fila { border-top: 1px solid var(--sup-alta); }
+  .ej-tocar { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 8px 16px;
+    border: 0; background: transparent; color: var(--texto); text-align: left; cursor: pointer; font: inherit; }
+  .ej-tocar:active { background: var(--fantasma-pres); }
+  .ej-tocar:focus-visible { outline: 2px solid var(--foco); outline-offset: -2px; }
+  .ej-tocar .n { flex: 0 0 14px; font: 500 13px/1 var(--mono); color: var(--texto-2); }
+  .ej-tocar .cuerpo { flex: 1; min-width: 0; }
+  .ej-tocar .nombre { display: block; font-size: 16px; line-height: 1.3; }
+  .ej-tocar .meta { display: block; margin-top: 3px; font: 500 12px/1.3 var(--mono); color: var(--texto-2); white-space: nowrap; }
+  .ej-tocar .dato { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; white-space: nowrap; }
+  .ej-tocar .dato .sr { font-size: 15px; }
+  .ej-tocar .dato .sr .x { color: var(--texto-2); font-weight: 500; margin: 0 2px; }
+  .ej-tocar .dato .kg { font-size: 13px; color: var(--texto-2); }
+  .ej-fila .flechas { display: flex; margin-right: 4px; }
+  .sin-ej { margin: 0; padding: 14px 16px 4px; font-size: 14px; color: var(--texto-2); border-top: 1px solid var(--sup-alta); }
+  .agregar-ej { display: flex; padding: 4px 4px 8px; }
+  .agregar-ej .btn { flex: 1; justify-content: flex-start; padding-left: 12px; }
+  .agregar-ej .btn .simbolo { width: 20px; height: 20px; }
+  .agregar-dia { margin-top: 12px; }
+  .agregar-dia .simbolo, .btn-secundario .simbolo { width: 20px; height: 20px; }
+  .btn .simbolo .h { fill: currentColor; }
+  .btn .simbolo .v { fill: var(--simb-v); }
+  [data-tema="clara"] .btn .simbolo .v { fill: currentColor; }
+
+  .vacio-dias { padding: 20px 16px; border: 2px dashed var(--borde); border-radius: var(--radio); }
+  .vacio-dias .h3 { font-size: 17px; }
+  .vacio-dias .sec { margin-top: 4px; }
+  .vacio-dias .btn { margin-top: 16px; }
+  .vacio-dias.error { border-style: solid; border-color: var(--peligro); }
+
+  /* Resumen de errores: la misma pieza de mensaje que Ingreso (barra izquierda en rojo). */
+  .mensaje { position: relative; overflow: hidden; margin: 8px 0 4px; padding: 12px 14px 12px 18px;
+    border-radius: var(--radio); background: var(--sup); border: 1px solid var(--sup-alta); }
+  .mensaje::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--peligro); }
+  .mensaje .h3 { font-size: 16px; }
+  .mensaje ul { margin: 4px 0 0; padding-left: 18px; font-size: 14px; line-height: 1.45; color: var(--texto-2); }
+  .mensaje li { margin: 2px 0; }
+  .banda { display: flex; gap: 10px; padding: 12px 14px; margin-top: 8px; border-radius: var(--radio);
+    background: var(--sup); border: 1px solid var(--sup-alta); border-left: 4px solid var(--hecho-fondo); font-size: 14px; line-height: 1.4; }
+  .para { margin: 4px 0 0; }
+
+  /* Botón deshabilitado (sistema.css todavía no lo trae). */
+  .btn:disabled, .btn:disabled:active { background: var(--desh-fondo); color: var(--desh-texto); border-color: transparent; cursor: not-allowed; }
+  /* ── Hojas ─────────────────────────────────────────────────────────────── */
+  .hoja.alta { max-height: calc(100% - 40px); display: flex; flex-direction: column; padding-bottom: 20px; }
+  .hoja.fija { height: calc(100% - 40px); }
+  .hoja-cuerpo { flex: 1; min-height: 0; overflow-y: auto; margin: 0 -16px; padding: 0 16px 4px; scrollbar-width: none; }
+  .hoja-cuerpo::-webkit-scrollbar { display: none; }
+  .hoja .h2 { font-size: 22px; }
+  .hoja-cabeza { padding-bottom: 12px; border-bottom: 1px solid var(--sup-alta); margin: 0 -16px; padding-left: 16px; padding-right: 16px; }
+  .hoja-cabeza .sec { margin-top: 4px; }
+  .hoja .acciones { margin-top: 16px; }
+  .hoja .rot-campo { margin-top: 16px; }
+  .ayuda { margin: 8px 0 0; font-size: 13px; line-height: 1.4; color: var(--texto-2); }
+  .chips.semana .chip { flex: 1; }
+  .chips.esquema .chip { flex: 1; }
+  .btn-secundario.peligro { color: var(--peligro); border-color: var(--peligro); }
+  .menu { list-style: none; margin: 16px -16px 0; padding: 0; border-top: 1px solid var(--sup-alta); }
+  .menu li { border-bottom: 1px solid var(--sup-alta); }
+  .menu-fila { width: 100%; min-height: 56px; display: flex; align-items: center; padding: 8px 16px; border: 0; background: transparent;
+    color: var(--texto); text-align: left; font: 600 17px/1.25 var(--letra); cursor: pointer; }
+  .menu-fila:active { background: var(--fantasma-pres); }
+  .menu-fila.peligro { color: var(--peligro); }
+
+  .opcion { width: 100%; display: flex; align-items: flex-start; gap: 14px; padding: 14px 0; border: 0; border-top: 1px solid var(--sup-alta);
+    background: transparent; color: var(--texto); text-align: left; cursor: pointer; font: inherit; }
+  .opcion:first-child { border-top: 0; }
+  .opcion:active { background: var(--fantasma-pres); }
+  .opcion:focus-visible { outline: 2px solid var(--foco); outline-offset: -2px; }
+  .opcion .txt b { display: flex; align-items: center; gap: 8px; font: 600 17px/1.3 var(--letra); }
+  .opcion .txt small { display: block; margin-top: 4px; font-size: 14px; line-height: 1.4; color: var(--texto-2); }
+  /* Casilla de lista (la misma en todas las pantallas): 32 dp, radio 8. */
+  .check { flex: 0 0 32px; height: 32px; border-radius: var(--radio); border: 2px solid var(--marcar-borde);
+    display: flex; align-items: center; justify-content: center; }
+  .check svg { width: 20px; height: 20px; }
+  .check path { stroke: var(--visto); }
+  [aria-checked="true"] > .check { background: var(--hecho-fondo); border-color: var(--hecho-borde); }
+  /* Etiqueta chica (la misma en todas las pantallas): 24 dp, radio 4. */
+  .etiqueta { display: inline-flex; align-items: center; height: 24px; padding: 0 8px; border-radius: 4px; background: transparent;
+    border: 1px solid var(--borde); font: 600 12px/1 var(--letra); color: var(--texto-2); white-space: nowrap; }
+  .etiqueta.acento { color: var(--acento-texto); border-color: var(--hecho-borde); }
+  .etiqueta.llena { background: var(--hecho-fondo); border-color: var(--hecho-borde); color: var(--visto); }
+  .etiqueta.peligro { color: var(--peligro); border-color: var(--peligro); }
+
+  .buscar { position: relative; margin-top: 12px; }
+  .buscar .entrada { height: 48px; padding-left: 44px; font-size: 16px; font-weight: 500; }
+  .buscar .ico { position: absolute; left: 12px; top: 12px; color: var(--texto-2); pointer-events: none; }
+  .buscar .ico circle { stroke: currentColor; fill: none; stroke-width: 2.5; }
+  .chips-scroll { display: flex; gap: 6px; overflow-x: auto; margin: 8px -16px 0; padding: 0 16px; scrollbar-width: none; }
+  .chips-scroll::-webkit-scrollbar { display: none; }
+  .chips-scroll .chip { flex: 0 0 auto; }
+  .ej-lib { width: 100%; min-height: 60px; display: flex; align-items: center; gap: 12px; padding: 8px 0; border: 0;
+    border-top: 1px solid var(--sup-alta); background: transparent; color: var(--texto); text-align: left; cursor: pointer; font: inherit; }
+  .ej-lib:first-child { border-top: 0; }
+  .ej-lib:active { background: var(--fantasma-pres); }
+  .ej-lib:disabled { cursor: default; background: transparent; }
+  .ej-lib:disabled .check { background: var(--sup-alta); border-color: var(--sup-alta); }
+  .ej-lib:disabled .check path { stroke: var(--texto-2); }
+  .ej-lib .quien { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .ej-lib .quien span:first-child { font-size: 16px; display: flex; align-items: center; gap: 8px; }
+  .ej-lib .quien small { font-size: 13px; color: var(--texto-2); }
+  .ej-lib[hidden] { display: none; }
+  .sin-resultados { padding: 20px 0 8px; }
+  .sin-resultados[hidden] { display: none; }
+  .sin-resultados .sec { margin-bottom: 12px; }
+
+  .notas-maqueta { max-width: 860px; margin: 32px auto 0; color: var(--p-texto-2); font-size: 14px; }
+  .notas-maqueta h2 { color: var(--p-texto); font-size: 16px; margin: 0 0 8px; }
+  .notas-maqueta ul { margin: 0; padding-left: 18px; }
+  .notas-maqueta li { margin: 4px 0; }
+</style>
+</head>
+<body>
+<main class="maqueta">
+  <header class="maqueta-cabeza">
+    <h1>Pantalla 7 · Nueva rutina</h1>
+    <p>Dirección Más · 412 × 892 dp · <a href="rutinas.html">Rutinas</a> · <a href="rutina.html">Detalle</a> · <a href="index.html">todas las pantallas</a></p>
+  </header>
+
+  <div class="controles" role="group" aria-label="Controles de la maqueta">
+    <label class="grupo"><span class="rot">Estado</span>
+      <select class="ctl" data-ctl="estado">
+        <option value="vacia">Vacía</option>
+        <option value="armando">Armando, con días y ejercicios</option>
+        <option value="editando">Editando un ejercicio (hoja)</option>
+        <option value="biblioteca">Agregando ejercicios (hoja)</option>
+        <option value="metodo">Eligiendo el método (hoja)</option>
+        <option value="dia">Editando un día (hoja)</option>
+        <option value="ordenar">Ordenando días y ejercicios</option>
+        <option value="error">Con errores al guardar</option>
+        <option value="editar">Editando la rutina activa</option>
+      </select></label>
+    <label class="grupo"><span class="rot">Tema</span>
+      <select class="ctl" data-ctl="tema">
+        <option value="gimnasio">Modo gimnasio</option>
+        <option value="clara">Clara</option>
+        <option value="ambos">Las dos</option>
+      </select></label>
+    <label class="grupo"><span class="rot">Tamaño</span>
+      <select class="ctl" data-ctl="zoom">
+        <option value="ajustar">Ajustar al ancho</option>
+        <option value="100">Real (1 dp = 1 px)</option>
+        <option value="150">150 %</option>
+      </select></label>
+    <label class="grupo"><input type="checkbox" data-ctl="medidas"><span>Medidas de toque</span></label>
+  </div>
+
+  <div class="escenario" id="escenario"></div>
+
+  <section class="notas-maqueta">
+    <h2>Qué mirar</h2>
+    <ul>
+      <li>Todo funciona: escribe el nombre, elige el método, suma semanas, abre un día, toca un ejercicio y cambia series, repeticiones, RIR, descanso, incremento y carga con más y menos (mantén presionado para que avance solo).</li>
+      <li>Los días se abren de a uno para que la pantalla no crezca sin fin. «Ordenar» cambia los menús por flechas para subir y bajar días y ejercicios; con flechas no hace falta arrastrar.</li>
+      <li>«Agregar ejercicio» abre la biblioteca con buscador y filtros por grupo. Los que ya están en el día salen marcados en gris. Si buscas algo que no existe, ofrece crearlo.</li>
+      <li>«Guardar rutina» revisa antes de guardar: si falta el nombre o un día no tiene ejercicios, lo dice arriba y marca cada lugar en rojo. Con todo bien, lleva al detalle de la rutina recién creada.</li>
+      <li>Series descendentes y cluster quedaron como esquema de cada ejercicio, no como método de la rutina, porque así está en el modelo de datos del PRD.</li>
+      <li>La escala de RIR sigue pendiente: puse 0 a 4+ como en el registro. Con <code>#rol=entrenador</code> la rutina se guarda en la biblioteca de Camila y cada ejercicio lleva una nota para los clientes.</li>
+    </ul>
+  </section>
+</main>
+
+<script src="maqueta.js"></script>
+<script>
+// ── Datos de prueba: biblioteca de ejercicios ────────────────────────────────
+const GRUPOS = ['Todos', 'Piernas', 'Pecho', 'Espalda', 'Hombros', 'Brazos', 'Core'];
+const BIBLIOTECA = [
+  ['sentadilla', 'Sentadilla', 'Piernas', 'Barra'], ['pmr', 'Peso muerto rumano', 'Piernas', 'Barra'],
+  ['prensa', 'Prensa', 'Piernas', 'Máquina'], ['zancadas', 'Zancadas con mancuernas', 'Piernas', 'Mancuernas'],
+  ['femoral', 'Curl femoral', 'Piernas', 'Máquina'], ['gemelos', 'Gemelos de pie', 'Piernas', 'Máquina'],
+  ['hip', 'Hip thrust con barra', 'Piernas', 'Barra'], ['extcuad', 'Extensión de cuádriceps', 'Piernas', 'Máquina'],
+  ['bulgara', 'Sentadilla búlgara', 'Piernas', 'Mancuernas', true],
+  ['banca', 'Press de banca', 'Pecho', 'Barra'], ['inclmanc', 'Press inclinado con mancuernas', 'Pecho', 'Mancuernas'],
+  ['aperturas', 'Aperturas en polea', 'Pecho', 'Polea'], ['apermaq', 'Aperturas en máquina', 'Pecho', 'Máquina'],
+  ['fondos', 'Fondos en paralelas', 'Pecho', 'Peso corporal'],
+  ['dominadas', 'Dominadas', 'Espalda', 'Peso corporal'], ['remo', 'Remo con barra', 'Espalda', 'Barra'],
+  ['jalon', 'Jalón al pecho', 'Espalda', 'Polea'], ['remopolea', 'Remo en polea baja', 'Espalda', 'Polea'],
+  ['militar', 'Press militar con barra', 'Hombros', 'Barra'], ['laterales', 'Elevaciones laterales', 'Hombros', 'Mancuernas'],
+  ['facepull', 'Face pull en polea', 'Hombros', 'Polea'], ['curl', 'Curl de bíceps con barra', 'Brazos', 'Barra'],
+  ['martillo', 'Curl martillo', 'Brazos', 'Mancuernas'], ['triceps', 'Extensión de tríceps en polea', 'Brazos', 'Polea'],
+  ['plancha', 'Plancha', 'Core', 'Peso corporal'], ['rueda', 'Rueda abdominal', 'Core', 'Peso corporal'],
+  ['pallof', 'Pallof press', 'Core', 'Polea'],
+].map(([id, n, g, eq, propio]) => ({ id, n, g, eq, propio: !!propio }));
+const EJ = Object.fromEntries(BIBLIOTECA.map((e) => [e.id, e]));
+const esc = (t) => String(t).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+const sinTilde = (t) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+
+// Métodos de progresión de la rutina (PRD). Descendentes y cluster son esquemas por ejercicio.
+const METODOS = [
+  { id: 'doble', n: 'Doble progresión', rec: true, d: 'Trabajas en un rango, por ejemplo 6 a 8. Cuando todas las series llegan a 8, la app sube los kilos.' },
+  { id: 'lineal', n: 'Lineal', d: 'Sube los kilos cada sesión mientras completes todas las series. Si fallas dos veces seguidas, baja un 10 % y vuelve a subir.' },
+  { id: 'porcentual', n: 'Porcentual', d: 'Los kilos son un porcentaje de tu máximo estimado, fijado por semana. Por ejemplo 70, 75, 80 y 65 %.' },
+  { id: 'rm', n: 'Por RM', d: 'Apuntas a un máximo para cierto número de repeticiones, por ejemplo 5RM: el peso que mueves 5 veces y no 6.' },
+];
+const ESQUEMAS = [
+  { id: 'normal', n: 'Normal', d: 'Todas las series con los mismos kilos.' },
+  { id: 'descendente', n: 'Descendentes', d: 'La primera serie sigue el método; cada una de las siguientes baja un 20 %.' },
+  { id: 'cluster', n: 'Cluster', d: 'Bloques de 2 a 3 repeticiones con 15 a 20 s entre bloques.' },
+];
+const SEMANA = [['L', 'lunes'], ['M', 'martes'], ['X', 'miércoles'], ['J', 'jueves'], ['V', 'viernes'], ['S', 'sábado'], ['D', 'domingo']];
+const nombreDia = (l) => { const d = SEMANA.find((x) => x[0] === l); return d ? d[1][0].toUpperCase() + d[1].slice(1) : 'Sin día fijo'; };
+
+// «Fuerza 4 días»: los mismos datos que Hoy, Registro y el detalle.
+const E = (id, s, rmin, rmax, rir, desc, inc, kg, nota = '') => ({ id, s, rmin, rmax, rir, desc, inc, kg, esquema: 'normal', nota });
+const DIAS_BASE = () => [
+  { n: 'Empuje A', dia: 'L', ej: [E('banca', 4, 6, 8, 2, 180, 2.5, 47.5), E('militar', 3, 8, 10, 2, 150, 2.5, 35), E('aperturas', 3, 12, 15, 1, 60, 2.5, 10),
+    E('laterales', 3, 12, 15, 1, 60, 1, 8), E('fondos', 3, 8, 10, 2, 90, 0, 0), E('triceps', 3, 10, 12, 1, 60, 2.5, 25)] },
+  { n: 'Pierna A', dia: 'M', ej: [E('sentadilla', 4, 6, 8, 2, 180, 2.5, 82.5, 'Baja en 3 segundos y sube rápido.'), E('pmr', 3, 8, 10, 2, 120, 2.5, 60), E('prensa', 3, 10, 12, 2, 120, 5, 140),
+    E('zancadas', 3, 8, 10, 2, 90, 2, 16), E('femoral', 3, 10, 12, 1, 90, 2.5, 35), E('gemelos', 4, 12, 15, 1, 60, 2.5, 40)] },
+  // Empuje B: el mismo de Ajustar cargas, con las cargas que tocan el jueves 19.
+  { n: 'Empuje B', dia: 'J', ej: [E('militar', 4, 6, 8, 2, 150, 2.5, 42.5), E('inclmanc', 3, 8, 10, 2, 120, 2, 22), E('apermaq', 3, 10, 12, 2, 90, 5, 45),
+    E('laterales', 3, 12, 15, 2, 60, 1, 9), E('triceps', 3, 10, 12, 1, 60, 2.5, 27.5)] },
+  { n: 'Tirón A', dia: 'V', ej: [E('jalon', 4, 8, 10, 2, 120, 2.5, 40), E('remo', 4, 6, 8, 2, 150, 2.5, 52.5), E('remopolea', 3, 10, 12, 2, 90, 2.5, 35),
+    E('facepull', 3, 12, 15, 1, 60, 2.5, 15), E('curl', 3, 8, 10, 1, 60, 2.5, 20), E('martillo', 2, 10, 12, 1, 60, 2, 8)] },
+];
+
+// ── Estado de la maqueta ─────────────────────────────────────────────────────
+let R, U; // rutina en edición e interfaz
+function reiniciar(estado) {
+  U = { hoja: null, ordenar: estado === 'ordenar' };
+  if (estado === 'vacia') { R = { nombre: '', metodo: 'doble', semanas: 8, dias: [], abierto: -1, intento: false }; return; }
+  R = { nombre: 'Fuerza 4 días', metodo: 'doble', semanas: 8, dias: DIAS_BASE(), abierto: 1, intento: false };
+  if (estado === 'error') { R.nombre = ''; R.dias[3].ej = []; R.abierto = 3; R.intento = true; }
+  if (estado === 'editando') U.hoja = { tipo: 'ejercicio', d: 1, e: 0 };
+  if (estado === 'biblioteca') U.hoja = { tipo: 'biblioteca', d: 1, sel: ['hip'], q: '', grupo: 'Piernas' };
+  if (estado === 'metodo') U.hoja = { tipo: 'metodo' };
+  if (estado === 'dia') U.hoja = { tipo: 'dia', d: 3 };
+}
+
+// ── Íconos ───────────────────────────────────────────────────────────────────
+const icoVolver = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H5M11 5l-7 7 7 7"/></svg>';
+const icoMenu = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="10.25" y="4" width="3.5" height="3.5" rx="1"/><rect x="10.25" y="10.25" width="3.5" height="3.5" rx="1"/><rect x="10.25" y="16.5" width="3.5" height="3.5" rx="1"/></svg>';
+const icoSig = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>';
+const icoAbajo = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9l7 7 7-7"/></svg>';
+const icoArriba = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 15l7-7 7 7"/></svg>';
+const icoSubir = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V5M5 11l7-7 7 7"/></svg>';
+const icoBajar = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v15M5 13l7 7 7-7"/></svg>';
+const icoBuscar = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5"/></svg>';
+const icoMas = simbolo('simbolo', '');
+
+// ── Utilidades ───────────────────────────────────────────────────────────────
+const series = (d) => d.ej.reduce((a, e) => a + e.s, 0);
+const rango = (e) => (e.rmin === e.rmax ? `${e.rmin}` : `${e.rmin}–${e.rmax}`);
+const plural = (n, uno, varios) => `${n} ${n === 1 ? uno : varios}`;
+const corporal = (e) => EJ[e.id].eq === 'Peso corporal';
+function errores() {
+  const l = [];
+  if (!R.nombre.trim()) l.push({ campo: 'nombre', txt: 'Ponle nombre a la rutina.' });
+  if (!R.dias.length) l.push({ campo: 'dias', txt: 'Agrega al menos un día.' });
+  R.dias.forEach((d, i) => { if (!d.ej.length) l.push({ campo: 'dia', i, txt: `${d.n} no tiene ejercicios.` }); });
+  return l;
+}
+const ejEnHoja = () => R.dias[U.hoja.d].ej[U.hoja.e];
+const INCS = [0, 0.5, 1, 1.25, 2, 2.5, 5, 10];
+const FORMATO = {
+  s: (v) => String(v), rmin: (v) => String(v), rmax: (v) => String(v), semanas: (v) => String(v),
+  desc: (v) => fmtReloj(v), inc: (v) => fmtKg(v), kg: (v) => fmtKg(v),
+};
+
+// ── Piezas ───────────────────────────────────────────────────────────────────
+function pasoHTML(campo, valor, unidad, etiqueta) {
+  return `<div class="paso" data-campo="${campo}">
+    <button class="btn-paso" data-paso="-1" aria-label="Bajar ${etiqueta}" data-toque><span class="barra-menos"></span></button>
+    <div class="campo"><span class="valor" data-valor="${campo}">${FORMATO[campo](valor)}</span>${unidad ? `<span class="unidad">${unidad}</span>` : ''}</div>
+    <button class="btn-paso" data-paso="1" aria-label="Subir ${etiqueta}" data-toque>${simbolo('simbolo', '')}</button>
+  </div>`;
+}
+function filaPaso(campo, valor, unidad, rot, ayuda = '') {
+  return `<div class="fila-paso"><span class="rot"><b>${rot}</b>${ayuda ? `<small>${ayuda}</small>` : ''}</span>${pasoHTML(campo, valor, unidad, rot.toLowerCase())}</div>`;
+}
+
+function filaEjercicio(e, i, d, n) {
+  const b = EJ[e.id];
+  const kg = corporal(e) ? 'peso corporal' : `${fmtKg(e.kg)} kg`;
+  const meta = `RIR ${e.rir === 4 ? '4+' : e.rir} · ${fmtReloj(e.desc)}${corporal(e) || !e.inc ? '' : ` · sube ${fmtKg(e.inc)}`}`;
+  const derecha = U.ordenar
+    ? `<div class="flechas"><button class="btn-icono" data-accion="ej-subir" data-d="${d}" data-e="${i}" aria-label="Subir ${b.n}" ${i === 0 ? 'disabled' : ''} data-toque>${icoSubir}</button>
+        <button class="btn-icono" data-accion="ej-bajar" data-d="${d}" data-e="${i}" aria-label="Bajar ${b.n}" ${i === n - 1 ? 'disabled' : ''} data-toque>${icoBajar}</button></div>` : '';
+  const dato = U.ordenar ? '' : `<span class="dato"><span class="sr cifra">${e.s}<span class="x">×</span>${rango(e)}</span><span class="kg cifra">${kg}</span></span>`;
+  return `<li class="ej-fila"><button class="ej-tocar" data-accion="editar-ej" data-d="${d}" data-e="${i}" data-toque>
+      <span class="n">${i + 1}</span><span class="cuerpo"><span class="nombre">${b.n}</span><span class="meta">${meta}</span></span>${dato}</button>${derecha}</li>`;
+}
+
+function tarjetaDia(d, i) {
+  const abierto = R.abierto === i;
+  const err = R.intento && !d.ej.length;
+  const sub = `${nombreDia(d.dia)} · ${plural(d.ej.length, 'ejercicio', 'ejercicios')}${d.ej.length ? ` · ${series(d)} series` : ''}`;
+  const derecha = U.ordenar
+    ? `<div class="flechas"><button class="btn-icono" data-accion="dia-subir" data-d="${i}" aria-label="Subir ${d.n}" ${i === 0 ? 'disabled' : ''} data-toque>${icoSubir}</button>
+        <button class="btn-icono" data-accion="dia-bajar" data-d="${i}" aria-label="Bajar ${d.n}" ${i === R.dias.length - 1 ? 'disabled' : ''} data-toque>${icoBajar}</button></div>`
+    : `<button class="btn-icono" data-accion="menu-dia" data-d="${i}" aria-label="Opciones de ${d.n}" data-toque>${icoMenu}</button>`;
+  const cuerpo = !abierto ? '' : `${d.ej.length
+    ? `<ol class="ej-lista">${d.ej.map((e, k) => filaEjercicio(e, k, i, d.ej.length)).join('')}</ol>`
+    : err ? '' : `<p class="sin-ej">Todavía no hay ejercicios en este día.</p>`}
+    ${U.ordenar ? '' : `<div class="agregar-ej"><button class="btn btn-fantasma" data-accion="biblioteca" data-d="${i}" data-toque>${icoMas}Agregar ejercicio</button></div>`}`;
+  return `<section class="dia-card${err ? ' error' : ''}" aria-label="${d.n}">
+    <div class="dia-cabeza">
+      <button class="dia-abrir" data-accion="abrir-dia" data-d="${i}" aria-expanded="${abierto}" data-toque>
+        <span class="orden">${i + 1}</span><span class="txt"><b>${d.n}</b><small>${sub}</small></span>${abierto ? icoArriba : icoAbajo}</button>
+      ${derecha}
+    </div>
+    ${err ? `<p class="msj-error dia-error">Agrega al menos un ejercicio o quita este día.</p>` : ''}
+    ${cuerpo}
+  </section>`;
+}
+
+function cuerpo(ctl) {
+  const ent = ctl.rol === 'entrenador', editar = ctl.estado === 'editar';
+  const errs = R.intento ? errores() : [];
+  const errNombre = errs.some((x) => x.campo === 'nombre');
+  const m = METODOS.find((x) => x.id === R.metodo);
+  const resumen = errs.length ? `<div class="mensaje" role="alert"><p class="h3">${errs.length === 1 ? 'Falta 1 cosa para guardar' : `Faltan ${errs.length} cosas para guardar`}</p>
+    <ul>${errs.map((x) => `<li>${x.txt}</li>`).join('')}</ul></div>` : '';
+  let banda = '';
+  if (editar) banda = ent
+    ? `<div class="banda"><span>La tienen <b class="cifra">4</b> clientes. Los cambios les llegan desde su próxima sesión; lo que ya hicieron no cambia.</span></div>`
+    : `<div class="banda"><span>Es tu rutina activa. Los cambios corren desde tu próxima sesión; lo que ya hiciste no cambia.</span></div>`;
+  else if (ent) banda = `<p class="sec para">Queda en tu biblioteca. Después la asignas a los clientes que quieras.</p>`;
+  const dias = R.dias.length ? R.dias.map(tarjetaDia).join('') : `<div class="vacio-dias${R.intento ? ' error' : ''}">
+      <p class="h3">Todavía no hay días</p>
+      <p class="sec">Agrega uno por cada día distinto que entrenas. Por ejemplo Empuje A, Pierna A y Tirón A.</p>
+      <button class="btn btn-secundario ancho" data-accion="agregar-dia" data-toque>${icoMas}Agregar el primer día</button></div>`;
+  return `${resumen}${banda}
+    <label class="rot-campo" for="nombre-${ctl._tema}">Nombre</label>
+    <input class="entrada${errNombre ? ' error' : ''}" id="nombre-${ctl._tema}" data-texto="nombre" value="${esc(R.nombre)}" placeholder="Por ejemplo: Fuerza 4 días" autocomplete="off" ${errNombre ? 'aria-invalid="true"' : ''}>
+    <p class="msj-error" data-error="nombre" ${errNombre ? '' : 'hidden'}>Ponle un nombre para encontrarla después.</p>
+    <span class="rot-campo">Cómo progresa</span>
+    <button class="selector" data-accion="metodo" data-toque><span class="txt"><b>${m.n}</b><small>${m.d}</small></span>${icoSig}</button>
+    <div class="fila-paso semanas-fila"><span class="rot"><b>Semanas</b><small>Cuánto dura antes de cambiarla</small></span>${pasoHTML('semanas', R.semanas, '', 'semanas')}</div>
+    <div class="dias-cabeza"><h2 class="h3">Días<span class="cifra">${R.dias.length || ''}</span></h2>
+      ${R.dias.length > 1 ? `<button class="btn btn-fantasma" data-accion="ordenar" aria-pressed="${U.ordenar}" data-toque>${U.ordenar ? 'Listo' : 'Ordenar'}</button>` : ''}</div>
+    ${dias}
+    ${R.dias.length && !U.ordenar ? `<button class="btn btn-secundario ancho agregar-dia" data-accion="agregar-dia" data-toque>${icoMas}Agregar día</button>` : ''}`;
+}
+
+// ── Hojas ────────────────────────────────────────────────────────────────────
+function hojaEjercicio(tema, ent) {
+  const e = ejEnHoja(), b = EJ[e.id], d = R.dias[U.hoja.d];
+  const chipsRir = [0, 1, 2, 3, 4].map((r) => `<button class="chip" data-accion="rir" data-v="${r}" aria-pressed="${e.rir === r}" data-toque><span>${r === 4 ? '4+' : r}</span></button>`).join('');
+  const chipsEsq = ESQUEMAS.map((x) => `<button class="chip texto" data-accion="esquema" data-v="${x.id}" aria-pressed="${e.esquema === x.id}" data-toque><span>${x.n}</span></button>`).join('');
+  const carga = corporal(e)
+    ? `<p class="ayuda" style="margin-top:16px">Es con tu peso: la app sugiere más repeticiones en vez de kilos.</p>`
+    : `${filaPaso('inc', e.inc, 'kg', 'Incremento', 'Lo que sube cuando toca')}${filaPaso('kg', e.kg, 'kg', 'Carga inicial', 'Para la primera sesión')}`;
+  const nota = ent ? `<label class="rot-campo" for="nota-${tema}">Nota para tus clientes</label>
+    <input class="entrada" id="nota-${tema}" data-texto="nota" value="${esc(e.nota)}" placeholder="Por ejemplo: baja en 3 segundos" style="font-size:16px;font-weight:500">` : '';
+  return `<div class="hoja-cabeza"><h2 class="h2" id="t-hoja-${tema}">${b.n}</h2><p class="sec">${b.g} · ${b.eq} · en ${d.n}</p></div>
+    <div class="hoja-cuerpo">
+      <div style="margin-top:16px">
+        ${filaPaso('s', e.s, '', 'Series')}
+        ${filaPaso('rmin', e.rmin, 'reps', 'Repeticiones mín.')}
+        ${filaPaso('rmax', e.rmax, 'reps', 'Repeticiones máx.')}
+      </div>
+      <span class="rot-campo">RIR objetivo · repeticiones que deben quedar</span>
+      <div class="chips" role="group" aria-label="RIR objetivo">${chipsRir}</div>
+      <p class="ayuda">Escala pendiente. 0 es llegar al fallo; 4+ es terminar con mucho resto.</p>
+      <div style="margin-top:16px">
+        ${filaPaso('desc', e.desc, '', 'Descanso', 'Entre series')}
+        ${carga}
+      </div>
+      <span class="rot-campo">Esquema de las series</span>
+      <div class="chips esquema" role="group" aria-label="Esquema">${chipsEsq}</div>
+      <p class="ayuda">${ESQUEMAS.find((x) => x.id === e.esquema).d}</p>
+      ${nota}
+    </div>
+    <div class="acciones"><button class="btn btn-secundario peligro" data-accion="quitar-ej" data-toque>Quitar</button>
+      <button class="btn btn-primario" data-accion="cerrar" data-toque>Listo</button></div>`;
+}
+
+function hojaBiblioteca(tema) {
+  const h = U.hoja, d = R.dias[h.d], ya = d.ej.map((e) => e.id);
+  const q = sinTilde(h.q.trim());
+  // Primero lo que se puede agregar; al final, en gris, lo que ya está en el día.
+  const visibles = BIBLIOTECA.filter((b) => h.grupo === 'Todos' || b.g === h.grupo)
+    .sort((x, y) => ya.includes(x.id) - ya.includes(y.id));
+  const filas = visibles.map((b) => {
+    const esta = ya.includes(b.id), marcado = esta || h.sel.includes(b.id);
+    const oculto = q && !sinTilde(b.n).includes(q);
+    return `<button class="ej-lib" role="checkbox" aria-checked="${marcado}" data-n="${sinTilde(b.n)}" ${esta ? 'disabled' : `data-accion="sel-ej" data-id="${b.id}"`} ${oculto ? 'hidden' : ''} data-toque>
+      <span class="check">${marcado ? visto() : ''}</span>
+      <span class="quien"><span>${b.n}${b.propio ? '<span class="etiqueta">Propio</span>' : ''}</span><small>${esta ? `Ya está en ${d.n}` : `${b.g} · ${b.eq}`}</small></span></button>`;
+  }).join('');
+  const hay = visibles.some((b) => !q || sinTilde(b.n).includes(q));
+  const enOtro = !hay && h.grupo !== 'Todos' && BIBLIOTECA.some((b) => sinTilde(b.n).includes(q));
+  const chips = GRUPOS.map((g) => `<button class="chip texto" data-accion="grupo" data-v="${g}" aria-pressed="${h.grupo === g}" data-toque><span>${g}</span></button>`).join('');
+  return `<div class="hoja-cabeza" style="border-bottom:0;padding-bottom:0"><h2 class="h2" id="t-hoja-${tema}">Agregar a ${d.n}</h2>
+      <div class="buscar">${icoBuscar}<input class="entrada" data-texto="buscar" value="${esc(h.q)}" placeholder="Buscar ejercicio" aria-label="Buscar ejercicio" autocomplete="off"></div>
+      <div class="chips-scroll" role="group" aria-label="Grupo muscular">${chips}</div></div>
+    <div class="hoja-cuerpo" style="margin-top:8px;border-top:1px solid var(--sup-alta)">
+      ${filas}
+      <div class="sin-resultados" data-sin-grupo ${enOtro ? '' : 'hidden'}>
+        <p class="h3">No está en ${h.grupo}</p>
+        <p class="sec">Hay resultados en otros grupos.</p>
+        <button class="btn btn-secundario ancho" data-accion="grupo" data-v="Todos" data-toque>Buscar en todos</button>
+      </div>
+      <div class="sin-resultados" data-sin-resultados ${hay || enOtro ? 'hidden' : ''}>
+        <p class="h3">No está en la biblioteca</p>
+        <p class="sec">Créalo como ejercicio propio, con tu foto o video de referencia.</p>
+        <button class="btn btn-secundario ancho" data-accion="crear-ej" data-toque>Crear ejercicio</button>
+      </div>
+    </div>
+    <div class="acciones"><button class="btn btn-secundario" data-accion="cerrar" data-toque>Cancelar</button>
+      <button class="btn btn-primario" data-accion="agregar-sel" ${h.sel.length ? '' : 'disabled'} data-toque><span>${h.sel.length ? `Agregar <span class="cifra">${h.sel.length}</span>` : 'Elige ejercicios'}</span></button></div>`;
+}
+
+function hojaMetodo(tema) {
+  const filas = METODOS.map((m) => `<button class="opcion" role="radio" aria-checked="${R.metodo === m.id}" data-accion="elegir-metodo" data-v="${m.id}" data-toque>
+      <span class="check">${R.metodo === m.id ? visto() : ''}</span>
+      <span class="txt"><b>${m.n}${m.rec ? '<span class="etiqueta">Recomendado</span>' : ''}</b><small>${m.d}</small></span></button>`).join('');
+  return `<div class="hoja-cabeza"><h2 class="h2" id="t-hoja-${tema}">Cómo progresa</h2>
+      <p class="sec">Con esto la app calcula cuánto subir en cada sesión. Vale para toda la rutina.</p></div>
+    <div class="hoja-cuerpo" role="radiogroup" aria-labelledby="t-hoja-${tema}">${filas}</div>
+    <div class="acciones"><button class="btn btn-primario" data-accion="cerrar" data-toque>Listo</button></div>`;
+}
+
+function hojaDia(tema) {
+  const d = R.dias[U.hoja.d];
+  const chips = SEMANA.map(([l, n]) => `<button class="chip" data-accion="dia-semana" data-v="${l}" aria-pressed="${d.dia === l}" aria-label="${n}" data-toque><span>${l}</span></button>`).join('');
+  return `<h2 class="h2" id="t-hoja-${tema}">Día ${U.hoja.d + 1}</h2>
+    <label class="rot-campo" for="dia-n-${tema}">Nombre del día</label>
+    <input class="entrada" id="dia-n-${tema}" data-texto="dia" value="${esc(d.n)}" placeholder="Por ejemplo: Pierna A" autocomplete="off">
+    <span class="rot-campo">Qué día de la semana</span>
+    <div class="chips semana" role="group" aria-label="Día de la semana">${chips}</div>
+    <p class="ayuda">${d.dia ? `Toca ${d.dia} de nuevo para dejarlo sin día fijo.` : 'Sin día fijo: la rutina sigue el orden de la lista.'}</p>
+    <ul class="menu">
+      <li><button class="menu-fila" data-accion="duplicar-dia" data-toque>Duplicar día</button></li>
+      <li><button class="menu-fila peligro" data-accion="quitar-dia" data-toque>Quitar día</button></li>
+    </ul>
+    <div class="acciones"><button class="btn btn-primario" data-accion="cerrar" data-toque>Listo</button></div>`;
+}
+
+function hojaConfirmar(tema) {
+  const h = U.hoja;
+  if (h.tipo === 'quitar-dia') {
+    const d = R.dias[h.d];
+    return `<h2 class="h2" id="t-hoja-${tema}">¿Quitar ${d.n}?</h2>
+      <p class="sec">Se quitan sus ${plural(d.ej.length, 'ejercicio', 'ejercicios')}. Lo que ya entrenaste no se borra.</p>
+      <div class="acciones"><button class="btn btn-secundario" data-accion="volver-dia" data-toque>Cancelar</button>
+        <button class="btn btn-peligro" data-accion="si-quitar-dia" data-toque>Quitar día</button></div>`;
+  }
+  return `<h2 class="h2" id="t-hoja-${tema}">¿Salir sin guardar?</h2>
+    <p class="sec">Se pierde lo que armaste en esta rutina.</p>
+    <div class="acciones"><button class="btn btn-secundario" data-accion="cerrar" data-toque>Seguir armando</button>
+      <button class="btn btn-peligro" data-accion="si-salir" data-toque>Salir</button></div>`;
+}
+
+function hoja(tema, ent) {
+  if (!U.hoja) return '';
+  const t = U.hoja.tipo;
+  let html, alta = true, fija = false;
+  if (t === 'ejercicio') html = hojaEjercicio(tema, ent);
+  else if (t === 'biblioteca') { html = hojaBiblioteca(tema); fija = true; }
+  else if (t === 'metodo') html = hojaMetodo(tema);
+  else if (t === 'dia') { html = hojaDia(tema); alta = false; }
+  else { html = hojaConfirmar(tema); alta = false; }
+  return `<div class="velo ver" data-velo><div class="hoja${alta ? ' alta' : ''}${fija ? ' fija' : ''}" role="dialog" aria-modal="true" aria-labelledby="t-hoja-${tema}">${html}</div></div>`;
+}
+
+// ── Teléfono ─────────────────────────────────────────────────────────────────
+function telefono(tema, ctl) {
+  ctl._tema = tema;
+  const ent = ctl.rol === 'entrenador', editar = ctl.estado === 'editar';
+  const titulo = editar ? 'Editar rutina' : 'Nueva rutina';
+  const html = cuerpo(ctl);
+  delete ctl._tema;
+  return `<div class="tel" data-tema="${tema}">
+    <div class="tel-estado"><span class="cifra" style="font-weight:600">9:41</span><span>5G · 82 %</span></div>
+    <div class="barra-sup">
+      <button class="btn-icono" data-accion="volver" aria-label="Volver a Rutinas" data-toque>${icoVolver}</button>
+      <h1 class="h3">${titulo}</h1>
+    </div>
+    <div class="tel-contenido">${html}</div>
+    <div class="tel-accion"><button class="btn btn-primario ancho alto" data-accion="guardar" data-toque>${editar ? 'Guardar cambios' : 'Guardar rutina'}</button></div>
+    <div class="tel-gesto"></div>
+    <div class="aviso" role="status"></div>
+    ${hoja(tema, ent)}
+  </div>`;
+}
+
+// ── Maqueta ──────────────────────────────────────────────────────────────────
+const escenario = document.getElementById('escenario');
+const todos = (sel) => escenario.querySelectorAll(sel);
+const M = iniciarMaqueta({ telefono, porDefecto: { estado: 'armando' }, alCambiarEstado: reiniciar, alPintar: () => marcarLimites() });
+const { ctl } = M;
+const avisarTodos = (t) => todos('.tel').forEach((tel) => avisar(tel, t));
+
+function repintar(arriba) {
+  const scroll = [...todos('.tel-contenido, .hoja-cuerpo')].map((c) => c.scrollTop);
+  const enHoja = U.hoja ? U.hoja.tipo : null;
+  M.pintar();
+  todos('.tel-contenido, .hoja-cuerpo').forEach((c, k) => { c.scrollTop = arriba ? 0 : scroll[k] || 0; });
+  // Una hoja recién abierta empieza arriba.
+  if (U.hoja && U.hoja.tipo !== enHoja) todos('.hoja-cuerpo').forEach((c) => { c.scrollTop = 0; });
+}
+function cerrar() { U.hoja = null; repintar(); }
+document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && U.hoja) cerrar(); });
+
+// ── Más y menos ──────────────────────────────────────────────────────────────
+function objetivo(campo) { return campo === 'semanas' ? R : ejEnHoja(); }
+function limites(campo, o) {
+  return { s: [1, 10], rmin: [1, o.rmax], rmax: [o.rmin, 50], desc: [0, 600], kg: [0, 400], semanas: [1, 24], inc: [INCS[0], INCS[INCS.length - 1]] }[campo];
+}
+function pasoDe(campo, o) {
+  if (campo === 'desc') return 15;
+  if (campo === 'kg') return EJ[o.id].eq === 'Mancuernas' ? 1 : 2.5;
+  return 1;
+}
+function pasar(campo, dir) {
+  const o = objetivo(campo);
+  if (campo === 'inc') {
+    const i = INCS.indexOf(o.inc), j = Math.max(0, Math.min(INCS.length - 1, i + dir));
+    if (j === i) return false;
+    o.inc = INCS[j];
+  } else {
+    const [min, max] = limites(campo, o);
+    const nuevo = Math.min(max, Math.max(min, +(o[campo] + dir * pasoDe(campo, o)).toFixed(2)));
+    if (nuevo === o[campo]) return false;
+    o[campo] = nuevo;
+  }
+  todos(`[data-valor="${campo}"]`).forEach((v) => {
+    v.textContent = FORMATO[campo](o[campo]);
+    v.classList.remove('sube', 'baja'); void v.offsetWidth; v.classList.add(dir > 0 ? 'sube' : 'baja');
+  });
+  marcarLimites();
+  return true;
+}
+function marcarLimites() {
+  todos('.paso[data-campo]').forEach((p) => {
+    const campo = p.dataset.campo;
+    if (campo !== 'semanas' && !(U.hoja && U.hoja.tipo === 'ejercicio')) return;
+    const o = objetivo(campo), [min, max] = limites(campo, o);
+    p.querySelector('[data-paso="-1"]').classList.toggle('limite', o[campo] <= min);
+    p.querySelector('[data-paso="1"]').classList.toggle('limite', o[campo] >= max);
+  });
+}
+let repite = null, repitio = false;
+escenario.addEventListener('pointerdown', (ev) => {
+  const b = ev.target.closest('[data-paso]'); if (!b) return;
+  const campo = b.closest('.paso').dataset.campo, dir = +b.dataset.paso;
+  repitio = false;
+  repite = setTimeout(function tic() {
+    repitio = true;
+    if (pasar(campo, dir) !== false) repite = setTimeout(tic, 100);
+  }, 400);
+});
+['pointerup', 'pointerleave', 'pointercancel'].forEach((t) => escenario.addEventListener(t, () => { clearTimeout(repite); }, true));
+
+// ── Texto: se guarda al escribir, sin repintar, para no perder el foco ───────
+escenario.addEventListener('input', (ev) => {
+  const t = ev.target.dataset.texto; if (!t) return;
+  const v = ev.target.value;
+  if (t === 'nombre') {
+    R.nombre = v;
+    if (R.intento) {
+      const ok = !!v.trim();
+      todos('[data-texto="nombre"]').forEach((i) => i.classList.toggle('error', !ok));
+      todos('[data-error="nombre"]').forEach((p) => { p.hidden = ok; });
+    }
+  }
+  if (t === 'dia') R.dias[U.hoja.d].n = v;
+  if (t === 'nota') ejEnHoja().nota = v;
+  if (t === 'buscar') {
+    U.hoja.q = v;
+    const q = sinTilde(v.trim());
+    todos('.ej-lib').forEach((f) => { f.hidden = q && !f.dataset.n.includes(q); });
+    const enOtro = U.hoja.grupo !== 'Todos' && BIBLIOTECA.some((b) => sinTilde(b.n).includes(q));
+    todos('.hoja-cuerpo').forEach((c) => {
+      const hay = [...c.querySelectorAll('.ej-lib')].some((f) => !f.hidden);
+      c.querySelector('[data-sin-grupo]').hidden = hay || !enOtro;
+      c.querySelector('[data-sin-resultados]').hidden = hay || enOtro;
+    });
+  }
+  // El otro teléfono muestra lo mismo.
+  todos(`[data-texto="${t}"]`).forEach((i) => { if (i !== ev.target) i.value = v; });
+});
+escenario.addEventListener('change', (ev) => { if (ev.target.dataset.texto === 'nombre' && R.intento) repintar(); });
+
+// ── Toques ───────────────────────────────────────────────────────────────────
+escenario.addEventListener('click', (ev) => {
+  if (ev.target.matches('[data-velo]')) { cerrar(); return; }
+  const b = ev.target.closest('[data-accion], [data-paso]'); if (!b || b.disabled) return;
+  if (b.dataset.paso) {
+    if (!repitio) pasar(b.closest('.paso').dataset.campo, +b.dataset.paso);
+    repitio = false; return;
+  }
+  const d = b.dataset.d !== undefined ? +b.dataset.d : null, e = b.dataset.e !== undefined ? +b.dataset.e : null;
+  switch (b.dataset.accion) {
+    case 'volver': {
+      const destino = ctl.rol === 'entrenador' ? 'rutinas.html#rol=entrenador' : 'rutinas.html';
+      if (!R.nombre && !R.dias.length) M.ir(destino); else { U.hoja = { tipo: 'salir' }; repintar(); }
+      break;
+    }
+    case 'si-salir': M.ir(ctl.rol === 'entrenador' ? 'rutinas.html#rol=entrenador' : 'rutinas.html'); break;
+    case 'cerrar': cerrar(); break;
+    case 'metodo': U.hoja = { tipo: 'metodo' }; repintar(); break;
+    case 'elegir-metodo': R.metodo = b.dataset.v; repintar(); break;
+    case 'abrir-dia': R.abierto = R.abierto === d ? -1 : d; repintar(); break;
+    case 'ordenar': U.ordenar = !U.ordenar; repintar(); break;
+    case 'dia-subir': case 'dia-bajar': {
+      const j = d + (b.dataset.accion === 'dia-subir' ? -1 : 1);
+      [R.dias[d], R.dias[j]] = [R.dias[j], R.dias[d]];
+      if (R.abierto === d) R.abierto = j; else if (R.abierto === j) R.abierto = d;
+      repintar(); break;
+    }
+    case 'ej-subir': case 'ej-bajar': {
+      const l = R.dias[d].ej, j = e + (b.dataset.accion === 'ej-subir' ? -1 : 1);
+      [l[e], l[j]] = [l[j], l[e]];
+      repintar(); break;
+    }
+    case 'menu-dia': U.hoja = { tipo: 'dia', d }; repintar(); break;
+    case 'dia-semana': {
+      const dia = R.dias[U.hoja.d];
+      dia.dia = dia.dia === b.dataset.v ? null : b.dataset.v;
+      repintar(); break;
+    }
+    case 'duplicar-dia': {
+      const o = R.dias[U.hoja.d];
+      R.dias.splice(U.hoja.d + 1, 0, { n: `${o.n} (copia)`, dia: null, ej: o.ej.map((x) => ({ ...x })) });
+      R.abierto = U.hoja.d + 1; U.hoja = null; repintar(); avisarTodos(`Duplicaste ${o.n}.`);
+      break;
+    }
+    case 'quitar-dia': {
+      const o = R.dias[U.hoja.d];
+      if (o.ej.length) { U.hoja = { tipo: 'quitar-dia', d: U.hoja.d }; repintar(); break; }
+      R.dias.splice(U.hoja.d, 1); R.abierto = -1; U.hoja = null; repintar(); avisarTodos(`Quitaste ${o.n}.`);
+      break;
+    }
+    case 'volver-dia': U.hoja = { tipo: 'dia', d: U.hoja.d }; repintar(); break;
+    case 'si-quitar-dia': {
+      const o = R.dias.splice(U.hoja.d, 1)[0];
+      R.abierto = -1; U.hoja = null; repintar(); avisarTodos(`Quitaste ${o.n}.`);
+      break;
+    }
+    case 'agregar-dia': {
+      R.dias.push({ n: `Día ${R.dias.length + 1}`, dia: null, ej: [] });
+      R.abierto = R.dias.length - 1; U.ordenar = false;
+      U.hoja = { tipo: 'dia', d: R.dias.length - 1 }; repintar();
+      const i = escenario.querySelector('[data-texto="dia"]'); if (i) { i.focus(); i.select(); }
+      break;
+    }
+    case 'editar-ej': U.hoja = { tipo: 'ejercicio', d, e }; repintar(); break;
+    case 'rir': ejEnHoja().rir = +b.dataset.v; repintar(); break;
+    case 'esquema': ejEnHoja().esquema = b.dataset.v; repintar(); break;
+    case 'quitar-ej': {
+      const l = R.dias[U.hoja.d].ej, x = l.splice(U.hoja.e, 1)[0];
+      U.hoja = null; repintar(); avisarTodos(`Quitaste ${EJ[x.id].n}.`);
+      break;
+    }
+    case 'biblioteca': U.hoja = { tipo: 'biblioteca', d, sel: [], q: '', grupo: 'Todos' }; repintar(); break;
+    case 'grupo': U.hoja.grupo = b.dataset.v; repintar(); break;
+    case 'sel-ej': {
+      const s = U.hoja.sel, id = b.dataset.id;
+      U.hoja.sel = s.includes(id) ? s.filter((x) => x !== id) : [...s, id];
+      repintar(); break;
+    }
+    case 'agregar-sel': {
+      const dia = R.dias[U.hoja.d], n = U.hoja.sel.length;
+      U.hoja.sel.forEach((id) => {
+        const b2 = EJ[id], corp = b2.eq === 'Peso corporal';
+        dia.ej.push(E(id, 3, 8, 12, 2, 90, corp ? 0 : b2.eq === 'Mancuernas' ? 2 : 2.5, 0));
+      });
+      R.abierto = U.hoja.d; U.hoja = null; repintar();
+      avisarTodos(`Agregaste ${plural(n, 'ejercicio', 'ejercicios')} a ${dia.n}. Toca cada uno para ajustar series y carga.`);
+      break;
+    }
+    case 'crear-ej': avisarTodos('Aquí se crea un ejercicio propio, con su grupo, equipo y foto o video.'); break;
+    case 'guardar': {
+      const errs = errores();
+      if (errs.length) {
+        R.intento = true;
+        const dia = errs.find((x) => x.campo === 'dia');
+        if (dia) R.abierto = dia.i;
+        U.ordenar = false; repintar(true);
+        break;
+      }
+      const ent = ctl.rol === 'entrenador';
+      if (ent) M.ir('rutina.html#estado=plantilla&rol=entrenador');
+      else M.ir(ctl.estado === 'editar' ? 'rutina.html#estado=activa' : 'rutina.html#estado=borrador');
+      break;
+    }
+  }
+});
+</script>
+</body>
+</html>

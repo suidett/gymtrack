@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GymTrack · Pantallas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="sistema.css">
+<style>
+  .grupo-pantallas { margin-top: 28px; }
+  .grupo-pantallas h2 { font-size: 16px; margin: 0 0 8px; }
+  .lista { list-style: none; margin: 0; padding: 0; background: var(--p-sup); border: 1px solid var(--p-borde); border-radius: 10px; }
+  .lista li { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 0 16px; border-top: 1px solid var(--p-borde); }
+  .lista li:first-child { border-top: 0; }
+  .lista .n { font: 700 13px/1 'JetBrains Mono', monospace; color: var(--p-texto-2); width: 24px; }
+  .lista a, .lista .nombre { flex: 1; color: var(--p-texto); font-weight: 600; }
+  .lista .nombre { color: var(--p-texto-2); font-weight: 500; }
+  .estado { font-size: 12px; font-weight: 600; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--p-borde); color: var(--p-texto-2); }
+  .estado.rev { background: #F5B83D; border-color: #F5B83D; color: #0F1113; }
+</style>
+</head>
+<body>
+<main class="maqueta" style="max-width:760px">
+  <header class="maqueta-cabeza">
+    <h1>GymTrack · las 20 pantallas</h1>
+    <p>Maquetas en HTML, dirección Más. Se arman una a una y se ajustan antes de pasarlas a la app.</p>
+  </header>
+
+  <section class="grupo-pantallas">
+    <h2>Alumno</h2>
+    <ol class="lista">
+      <li><span class="n">01</span><a href="ingreso.html">Ingreso</a><span class="estado rev">Lista para revisar</span></li>
+      <li><span class="n">02</span><a href="crear-cuenta.html">Crear cuenta</a><span class="estado rev">Lista para revisar</span></li>
+      <li><span class="n">03</span><a href="recuperar.html">Recuperar contraseña</a><span class="estado rev">Lista para revisar</span></li>
+      <li><span class="n">04</span><a href="encuesta.html">Encuesta inicial</a><span class="estado rev">Lista para revisar</span></li>
+      <li><span class="n">05</span><a href="hoy.html">Hoy</a><span class="estado rev">Lista para revisar</span></li>
+      <li><span class="n">06</span><a href="rutinas.html">Rutinas</a><span class="estado rev">Lista para revisar</span></li>
+      <li><span class="n">07</span><a href="nueva-rutina.html">Nueva rutina</a><span class="estado rev">Lista para revisar</span></li>
+      <li><span class="n">08</span><a href="rutina.html">Detalle de rutina</a><span class="estado rev">Lista para revisar</span></li>
+      <li><span class="n">09</span><a href="ejercicios.html">Ejercicios</a><span class="estado rev">Lista para revisar</span></li>
+      <li><span class="n">10</span><a href="ejercicio.html">Detalle de ejercicio</a><span class="estado rev">Lista para revisar</span></li>
+      <li><span class="n">11</span><a href="registro.html">Registro de sesión</a><span class="estado rev">Lista para revisar</span></li>
+      <li><span class="n">12</span><a href="registro.html#estado=descanso">Descanso (capa sobre el registro)</a><span class="estado rev">Lista para revisar</span></li>
+      <li><span class="n">13</span><a href="completada.html">Rutina completada</a><span class="estado rev">Lista para revisar</span></li>
+      <li><span class="n">14</span><a href="progreso.html">Progreso</a><span class="estado rev">Lista para revisar</span></li>
+      <li><span class="n">15</span><a href="perfil.html">Perfil y ajustes</a><span class="estado rev">Lista para revisar</span></li>
+      <li><span class="n">20</span><a href="motivos.html">Motivos de la baja</a><span class="estado rev">Lista para revisar</span></li>
+    </ol>
+  </section>
+
+  <section class="grupo-pantallas">
+    <h2>Ejercicios en 3D</h2>
+    <ol class="lista">
+      <li><span class="n">3D</span><a href="ejercicios-3d.html">Los 67 ejercicios en 3D, uno por uno</a><span class="estado rev">En curso</span></li>
+      <li><span class="n">3D</span><a href="3d/revision.html">Hoja con todos los ejercicios de un vistazo</a><span class="estado rev">En curso</span></li>
+      <li><span class="n">3D</span><a href="visor-3d.html">Primer prototipo (3 ejercicios)</a><span class="estado">Referencia</span></li>
+    </ol>
+  </section>
+
+  <section class="grupo-pantallas">
+    <h2>Entrenador</h2>
+    <ol class="lista">
+      <li><span class="n">16</span><a href="clientes.html">Clientes</a><span class="estado rev">Lista para revisar</span></li>
+      <li><span class="n">17</span><a href="ficha.html">Ficha del cliente</a><span class="estado rev">Lista para revisar</span></li>
+      <li><span class="n">18</span><a href="alertas.html">Alertas</a><span class="estado rev">Lista para revisar</span></li>
+      <li><span class="n">19</span><a href="ajustar-cargas.html">Ajustar cargas</a><span class="estado rev">Lista para revisar</span></li>
+    </ol>
+  </section>
+</main>
+</body>
+</html>

@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GymTrack · Ajustar cargas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="sistema.css">
+<style>
+  [hidden] { display: none !important; }
+  .oculto { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  /* ── Barra superior: volver y a quién se le ajusta ─────────────────────── */
+  .barra { flex: 0 0 56px; display: flex; align-items: center; gap: 4px; padding: 0 4px; }
+  .barra-titulo { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+  .barra-titulo .h3 { line-height: 1.15; }
+  .barra-titulo .sec { font-size: 13px; line-height: 1.2; }
+
+  /* ── Cabeza de la sesión ───────────────────────────────────────────────── */
+  .sesion { margin-top: 8px; }
+  .sesion .titulo { margin-top: 2px; }
+  .sesion .sec { margin-top: 4px; }
+  .info { margin: 16px 0 0; padding: 12px 14px; border-radius: var(--radio); background: var(--sup); border: 1px solid var(--sup-alta);
+    font-size: 14px; line-height: 1.45; color: var(--texto-2); }
+  .cuenta { font-size: 14px; color: var(--texto-2); }
+  .cuenta.hay { color: var(--acento-texto); font-weight: 600; }
+  .cuenta .cifra { font-size: 14px; }
+
+  .listo { margin-top: 16px; padding: 14px 16px; border-radius: var(--radio); background: var(--fila-hecha); }
+  .listo .h3 { margin-top: 4px; }
+  .listo .sec { margin-top: 4px; color: var(--texto); }
+
+  /* ── Ejercicios: fila que se abre ──────────────────────────────────────── */
+  .ejs { display: flex; flex-direction: column; gap: 8px; }
+  .ej { padding: 0; }
+  .ej.cambiado { border-color: var(--hecho-borde); }
+  .ej-cabeza { display: flex; align-items: flex-start; gap: 12px; width: 100%; min-height: 64px; padding: 14px 12px 14px 14px;
+    border: 0; border-radius: var(--radio); background: transparent; color: inherit; font: inherit; text-align: left; }
+  button.ej-cabeza { cursor: pointer; }
+  button.ej-cabeza:active { background: var(--fantasma-pres); }
+  button.ej-cabeza:focus-visible { outline: 2px solid var(--foco); outline-offset: -2px; }
+  .ej-n { flex: 0 0 16px; font-size: 14px; color: var(--texto-2); line-height: 21px; }
+  .ej-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+  .ej-nombre { font: 700 16px/1.3 var(--letra); }
+  .ej-resumen { font: 500 14px/1.3 var(--mono); color: var(--texto); }
+  .ej-resumen s { color: var(--texto-2); margin-left: 8px; text-decoration-thickness: 1.5px; }
+  .ej-resumen .nota-ind { font-family: var(--letra); color: var(--texto-2); }
+  .mas { color: var(--acento-texto); margin-right: 6px; font-weight: 700; }
+  .etiquetas { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+  .etiquetas:empty { display: none; }
+  /* Etiqueta chica común: 24 dp, radio 4, 600 12 px. «Sin avance» va neutra; «Cambiado», en la variante de acento. */
+  .etiqueta { display: inline-flex; align-items: center; height: 24px; padding: 0 8px; border-radius: 4px;
+    border: 1px solid var(--borde); color: var(--texto-2); font: 600 12px/1 var(--letra); white-space: nowrap; }
+  .etiqueta.acento { color: var(--acento-texto); border-color: var(--hecho-borde); }
+  .chev { flex: 0 0 24px; width: 24px; height: 24px; color: var(--texto-2); transition: transform var(--t-soltar) var(--curva); }
+  .chev path { stroke: currentColor; fill: none; stroke-width: 2.5; stroke-linecap: square; }
+  .ej.abierto .chev { transform: rotate(180deg); }
+
+  /* ── Editor del ejercicio abierto ──────────────────────────────────────── */
+  .editor { padding: 0 14px 14px; border-top: 1px solid var(--sup-alta); }
+  .alerta-ej { display: flex; align-items: flex-start; gap: 10px; margin-top: 14px; padding: 10px 12px; border-radius: var(--radio);
+    border: 1px solid var(--borde); font-size: 14px; line-height: 1.4; }
+  .alerta-ej p { margin: 0; }
+  .alerta-ej .ico { margin-top: 0; }
+  .ico { width: 20px; height: 20px; flex: 0 0 20px; }
+  .ico path { stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: square; }
+  .comparar { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
+  .comparar > div { padding: 10px 12px; border-radius: var(--radio); background: var(--fondo); border: 1px solid var(--sup-alta); }
+  .comparar .ceja { font-size: 12px; }
+  .comparar .grande { display: block; margin: 6px 0 0; font-size: 18px; }
+  .comparar .det { margin: 3px 0 0; font: 500 13px/1.3 var(--mono); color: var(--texto-2); }
+  .porque { margin: 10px 0 0; font-size: 14px; line-height: 1.45; color: var(--texto-2); }
+  .porque b { color: var(--texto); font-weight: 600; }
+  .rot-campo { margin: 18px 0 6px; font: 600 13px/1.3 var(--letra); color: var(--texto-2); }
+  .rot-campo .opc { font-weight: 500; }
+  .delta { margin: 6px 0 0; font-size: 13px; line-height: 1.4; color: var(--texto-2); }
+  .delta:empty { display: none; }
+  .delta b { color: var(--texto); font-weight: 700; }
+  .rangos .chip > span { font-size: 15px; }
+  .nota { min-height: 80px; }
+  .editor-pie { display: flex; margin: 8px 0 -6px -12px; }
+  /* Ya guardada, la nota se lee como la verá Martina (igual que la observación en Hoy). */
+  .nota-g { margin: -4px 14px 14px 42px; padding: 2px 0 2px 12px; border-left: 4px solid var(--hecho-fondo); font-size: 15px; line-height: 1.45; }
+
+  /* ── Pie: guardar al alcance del pulgar ────────────────────────────────── */
+  .tel-accion { position: relative; }
+  .pie-txt { margin: 0 0 10px; font-size: 13px; line-height: 1.35; color: var(--texto-2); }
+  .pie-txt .cifra { color: var(--texto); }
+  .pie-txt.error { color: var(--peligro); font-weight: 600; }
+  .btn:disabled { background: var(--desh-fondo); color: var(--desh-texto); border-color: transparent; cursor: not-allowed; }
+  .progreso { position: absolute; left: 0; right: 0; top: -1px; height: 3px; background: var(--sup-alta); overflow: hidden; }
+  .progreso i { display: block; height: 100%; width: 20%; background: var(--hecho-fondo); animation: llenar 1500ms var(--curva) forwards; }
+  @keyframes llenar { to { width: 90%; } }
+  @media (prefers-reduced-motion: reduce) { .progreso i { animation: none; width: 60%; } }
+  .hoja .acciones .btn { padding: 0 12px; }
+
+  .notas-maqueta { max-width: 860px; margin: 32px auto 0; color: var(--p-texto-2); font-size: 14px; }
+  .notas-maqueta h2 { color: var(--p-texto); font-size: 16px; margin: 0 0 8px; }
+  .notas-maqueta ul { margin: 0; padding-left: 18px; }
+  .notas-maqueta li { margin: 4px 0; }
+  .notas-maqueta a { color: inherit; }
+</style>
+</head>
+<body>
+<main class="maqueta">
+  <header class="maqueta-cabeza">
+    <h1>Pantalla 19 · Ajustar cargas</h1>
+    <p>Dirección Más · 412 × 892 dp · <a href="ficha.html">Ficha del cliente</a> · <a href="alertas.html">Alertas</a> · <a href="index.html">todas las pantallas</a></p>
+  </header>
+
+  <div class="controles" role="group" aria-label="Controles de la maqueta">
+    <label class="grupo"><span class="rot">Estado</span>
+      <select class="ctl" data-ctl="estado">
+        <option value="sin-cambios">Sin cambios</option>
+        <option value="con-cambios">Con cambios</option>
+        <option value="guardando">Guardando</option>
+        <option value="guardado">Guardado</option>
+        <option value="error">No se pudo guardar</option>
+      </select></label>
+    <label class="grupo"><span class="rot">Tema</span>
+      <select class="ctl" data-ctl="tema">
+        <option value="gimnasio">Modo gimnasio</option>
+        <option value="clara">Clara</option>
+        <option value="ambos">Las dos</option>
+      </select></label>
+    <label class="grupo"><span class="rot">Tamaño</span>
+      <select class="ctl" data-ctl="zoom">
+        <option value="ajustar">Ajustar al ancho</option>
+        <option value="100">Real (1 dp = 1 px)</option>
+        <option value="150">150 %</option>
+      </select></label>
+    <label class="grupo"><input type="checkbox" data-ctl="medidas"><span>Medidas de toque</span></label>
+  </div>
+
+  <div class="escenario" id="escenario"></div>
+
+  <section class="notas-maqueta">
+    <h2>Qué mirar</h2>
+    <ul>
+      <li>Son los 5 ejercicios de Empuje B, la próxima sesión de Martina (jueves 19). Cada fila dice lo que sugiere la app; toca una para abrirla.</li>
+      <li>Abierta, compara la última vez con la sugerencia y explica por qué la app sugiere eso. Abajo, la carga que fija Camila con más y menos de 56 dp (sube y baja de a lo que dice la rutina para ese ejercicio: 2,5 en barra, 2 en mancuernas, 1 en las laterales), el rango de repeticiones y una nota para Martina.</li>
+      <li>Lo que cambias queda marcado: borde ámbar, «Cambiado» y la sugerencia tachada al lado. «Volver a la sugerencia» deshace ese ejercicio.</li>
+      <li>El botón de abajo cuenta los cambios y el estado de la maqueta se pone solo en «Con cambios». Guardar pasa por «Guardando» y queda «Guardado»: arriba dice cuántos cambios verá Martina, cada nota se lee como ella la verá y abajo está el botón para volver a la ficha. «Editar de nuevo» vuelve a abrirlo.</li>
+      <li>Si sales con cambios sin guardar, te pregunta. «No se pudo guardar» deja todo como estaba y ofrece Reintentar.</li>
+      <li>El press inclinado viene de la alerta «Sin avance» de Martina en <a href="alertas.html">Alertas</a> y en la Ficha.</li>
+    </ul>
+  </section>
+</main>
+
+<script src="maqueta.js"></script>
+<script>
+// ── Datos de prueba: Martina, Empuje B del jueves 19, semana 3 de 8 ──────────
+// sug es lo que calculó la app con doble progresión a partir de la sesión del jueves 12.
+const EJ = [
+  { n: 'Press militar con barra', s: 4, rir: 2, inc: 2.5,
+    ult: { kg: 40, reps: [8, 8, 8, 8], rir: 2 }, sug: { kg: 42.5, r: '6–8' },
+    porque: 'Hizo 8 en las 4 series con RIR 2: sube 2,5 kg y vuelve a 6.' },
+  { n: 'Press inclinado con mancuernas', s: 3, rir: 2, inc: 2,
+    ult: { kg: 22, reps: [8, 8, 7], rir: 1 }, sug: { kg: 22, r: '8–10' },
+    porque: 'No llegó a 10 en ninguna serie: mismo peso, apunta a más repeticiones.',
+    alerta: 'Sin avance: su 1RM estimado no sube hace 3 sesiones.' },
+  { n: 'Aperturas en máquina', s: 3, rir: 2, inc: 5,
+    ult: { kg: 45, reps: [12, 12, 11], rir: 2 }, sug: { kg: 45, r: '10–12' },
+    porque: 'Le faltó una repetición en la última serie: mismo peso.' },
+  { n: 'Elevaciones laterales', s: 3, rir: 2, inc: 1,
+    ult: { kg: 8, reps: [15, 15, 15], rir: 2 }, sug: { kg: 9, r: '12–15' },
+    porque: 'Hizo 15 en las 3 series con RIR 2: sube 1 kg y vuelve a 12.' },
+  { n: 'Extensión de tríceps en polea', s: 3, rir: 1, inc: 2.5,
+    ult: { kg: 25, reps: [12, 12, 12], rir: 1 }, sug: { kg: 27.5, r: '10–12' },
+    porque: 'Hizo 12 en las 3 series con RIR 1: sube 2,5 kg y vuelve a 10.' },
+];
+const RANGOS = ['6–8', '8–10', '10–12', '12–15'];
+// Lo que fija Camila en el estado «Con cambios».
+const CAMBIOS = {
+  1: { kg: 20, r: '10–12', nota: 'Bajamos a 20 para sacar 3 series limpias de 12. En dos semanas volvemos a 22.' },
+  3: { kg: 10, r: '10–12', nota: 'Tu gimnasio no tiene mancuernas de 9. Usa las de 10 y apunta a 10–12.' },
+};
+
+let A;
+function cargar(estado) {
+  A = { ej: EJ.map((e) => ({ kg: e.sug.kg, r: e.sug.r, nota: '' })), abierto: estado === 'guardado' ? -1 : 1 };
+  if (estado !== 'sin-cambios') for (const [i, c] of Object.entries(CAMBIOS)) Object.assign(A.ej[i], c);
+}
+const cambioCarga = (i) => A.ej[i].kg !== EJ[i].sug.kg || A.ej[i].r !== EJ[i].sug.r;
+const cambiado = (i) => cambioCarga(i) || A.ej[i].nota.trim() !== '';
+const nCambios = () => EJ.filter((_, i) => cambiado(i)).length;
+const plural = (n, uno, varios) => `${n} ${n === 1 ? uno : varios}`;
+
+// ── Íconos ───────────────────────────────────────────────────────────────────
+const icoVolver = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H5"/><path d="M11 5l-7 7 7 7"/></svg>';
+const icoChev = '<svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+const icoEst = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 19l6-8h12"/></svg>';
+
+// ── Piezas ───────────────────────────────────────────────────────────────────
+function resumen(i) {
+  const e = EJ[i], v = A.ej[i];
+  if (cambioCarga(i)) {
+    return `${fmtKg(v.kg)} kg × ${v.r}<s><span class="oculto">la app sugería </span>${fmtKg(e.sug.kg)} × ${e.sug.r}</s>`;
+  }
+  const mas = e.sug.kg > e.ult.kg ? `<span class="mas">+${fmtKg(e.sug.kg - e.ult.kg)}</span>` : '';
+  return `${mas}${fmtKg(v.kg)} kg × ${v.r}${v.nota.trim() ? '<span class="nota-ind"> · con nota</span>' : ''}`;
+}
+
+function etiquetas(i, guardado) {
+  return [
+    EJ[i].alerta ? '<span class="etiqueta">Sin avance</span>' : '',
+    cambiado(i) ? `<span class="etiqueta acento">${guardado ? 'Fijado por ti' : 'Cambiado'}</span>` : '',
+  ].join('');
+}
+
+function delta(i) {
+  const d = +(A.ej[i].kg - EJ[i].sug.kg).toFixed(2);
+  if (!d) return 'Igual que la sugerencia.';
+  return d > 0 ? `<b>${fmtKg(d)} kg más</b> que la sugerencia.` : `<b>${fmtKg(-d)} kg menos</b> que la sugerencia.`;
+}
+const deltaR = (i) => (A.ej[i].r !== EJ[i].sug.r ? `La app sugiere ${EJ[i].sug.r}.` : '');
+
+function editor(i, tema) {
+  const e = EJ[i], v = A.ej[i];
+  const mas = e.sug.kg > e.ult.kg ? `<span class="mas">+${fmtKg(e.sug.kg - e.ult.kg)}</span>` : '';
+  const chips = RANGOS.map((r) => `<button class="chip" data-accion="rango" data-i="${i}" data-v="${r}" aria-pressed="${v.r === r}" data-toque><span>${r}</span></button>`).join('');
+  return `<div class="editor">
+    ${e.alerta ? `<div class="alerta-ej">${icoEst}<p>${e.alerta}</p></div>` : ''}
+    <div class="comparar">
+      <div><p class="ceja">Última vez · 12 nov</p><p class="cifra grande">${fmtKg(e.ult.kg)} kg</p><p class="det">${e.ult.reps.join('·')} · RIR&nbsp;${e.ult.rir}</p></div>
+      <div><p class="ceja">La app sugiere</p><p class="cifra grande">${mas}${fmtKg(e.sug.kg)} kg</p><p class="det">${e.sug.r} reps</p></div>
+    </div>
+    <p class="porque"><b>Por qué:</b> ${e.porque}</p>
+    <p class="rot-campo" id="rk-${i}-${tema}">Carga para el jueves</p>
+    <div class="paso" data-i="${i}" role="group" aria-labelledby="rk-${i}-${tema}">
+      <button class="btn-paso${v.kg - e.inc < e.inc ? ' limite' : ''}" data-paso="-1" aria-label="Menos ${fmtKg(e.inc)} kilos" data-toque><span class="barra-menos"></span></button>
+      <div class="campo"><span class="valor" data-valor="${i}">${fmtKg(v.kg)}</span><span class="unidad">kg</span></div>
+      <button class="btn-paso" data-paso="1" aria-label="Más ${fmtKg(e.inc)} kilos" data-toque>${simbolo('simbolo', '')}</button>
+    </div>
+    <p class="delta" data-delta="${i}">${delta(i)}</p>
+    <p class="rot-campo">Repeticiones objetivo · ${e.s} series, RIR ${e.rir}</p>
+    <div class="chips rangos" role="group" aria-label="Repeticiones objetivo">${chips}</div>
+    <p class="delta" data-delta-r="${i}">${deltaR(i)}</p>
+    <label class="rot-campo" for="nota-${i}-${tema}" style="display:block">Nota para Martina <span class="opc">· opcional</span></label>
+    <textarea class="area nota" id="nota-${i}-${tema}" data-nota="${i}" placeholder="Por ejemplo: baja lento, 3 segundos">${v.nota}</textarea>
+    <div class="editor-pie"><button class="btn btn-fantasma" data-accion="volver" data-i="${i}" data-volver="${i}"${cambiado(i) ? '' : ' hidden'} data-toque>Volver a la sugerencia</button></div>
+  </div>`;
+}
+
+function tarjeta(i, tema, guardado) {
+  const e = EJ[i], abierto = !guardado && A.abierto === i;
+  const dentro = `<span class="ej-n cifra">${i + 1}</span>
+    <span class="ej-txt"><span class="ej-nombre">${e.n}</span>
+      <span class="ej-resumen" data-resumen="${i}">${resumen(i)}</span>
+      <span class="etiquetas" data-tags="${i}">${etiquetas(i, guardado)}</span></span>`;
+  const cabeza = guardado
+    ? `<div class="ej-cabeza">${dentro}</div>`
+    : `<button class="ej-cabeza" data-accion="abrir" data-i="${i}" aria-expanded="${abierto}" data-toque>${dentro}${icoChev}</button>`;
+  return `<section class="tarjeta ej${abierto ? ' abierto' : ''}${cambiado(i) ? ' cambiado' : ''}" data-ej="${i}" aria-label="${e.n}">
+    ${cabeza}${abierto ? editor(i, tema) : ''}
+    ${guardado && A.ej[i].nota.trim() ? `<p class="nota-g">${A.ej[i].nota}</p>` : ''}</section>`;
+}
+
+function cuenta() {
+  const n = nCambios();
+  return n ? `<span class="cuenta hay"><span class="cifra">${n}</span> ${n === 1 ? 'cambiado' : 'cambiados'}</span>` : '<span class="cuenta">Todo como sugiere la app</span>';
+}
+
+function pie(estado) {
+  const n = nCambios();
+  if (estado === 'guardando') {
+    return `<div class="progreso" aria-hidden="true"><i></i></div>
+      <p class="pie-txt">Guardando ${plural(n, 'cambio', 'cambios')}…</p>
+      <button class="btn btn-primario ancho alto" disabled aria-busy="true" data-toque>Guardando…</button>`;
+  }
+  if (estado === 'guardado') {
+    return `<p class="pie-txt">Guardado hoy a las <span class="cifra">9:41</span></p>
+      <button class="btn btn-primario ancho alto" data-ir="ficha.html" data-toque>Volver a la ficha</button>`;
+  }
+  if (estado === 'error') {
+    return `<p class="pie-txt error" role="alert">No se guardó. Revisa tu conexión: tus cambios siguen aquí.</p>
+      <button class="btn btn-primario ancho alto" data-accion="guardar" data-toque>Reintentar</button>`;
+  }
+  if (!n) {
+    return `<p class="pie-txt">Sin cambios. Martina hará lo que sugiere la app.</p>
+      <button class="btn btn-primario ancho alto" disabled data-toque>Guardar cambios</button>`;
+  }
+  return `<p class="pie-txt"><span class="cifra">${n}</span> ${n === 1 ? 'cambio' : 'cambios'} sin guardar. Martina los verá al empezar.</p>
+    <button class="btn btn-primario ancho alto" data-accion="guardar" data-toque>Guardar ${plural(n, 'cambio', 'cambios')}</button>`;
+}
+
+function telefono(tema, ctl) {
+  const estado = ctl.estado, guardado = estado === 'guardado', n = nCambios();
+  const listo = guardado
+    ? `<div class="listo" role="status"><p class="ceja acento">Guardado</p>
+        <p class="h3">${n ? `Martina verá ${plural(n, 'cambio', 'cambios')} el jueves` : 'Martina hará lo que sugiere la app'}</p>
+        <p class="sec">${n === EJ.length ? 'Fijaste todas las cargas.' : 'Los demás ejercicios siguen la sugerencia de la app.'}</p></div>`
+    : `<p class="info">La app calcula cada carga con lo que Martina hizo el jueves 12. Lo que cambies reemplaza la sugerencia y ella lo ve al empezar la sesión.</p>`;
+  return `<div class="tel" data-tema="${tema}">
+    <div class="tel-estado"><span class="cifra" style="font-weight:600">9:41</span><span>5G · 82 %</span></div>
+    <div class="barra">
+      <button class="btn-icono" data-accion="atras" aria-label="Volver a la ficha" ${estado === 'guardando' ? 'disabled' : ''} data-toque>${icoVolver}</button>
+      <div class="barra-titulo"><span class="h3">Ajustar cargas</span><span class="sec">Martina Fuentes</span></div>
+    </div>
+    <div class="tel-contenido"${estado === 'guardando' ? ' inert aria-busy="true"' : ''}>
+      <div class="sesion">
+        <p class="ceja">Próxima sesión</p>
+        <h1 class="titulo">Empuje B</h1>
+        <p class="sec">Jueves 19 de noviembre · semana <span class="cifra">3</span> de <span class="cifra">8</span></p>
+        <p class="sec" style="margin-top:0">Fuerza 4 días · doble progresión</p>
+      </div>
+      ${listo}
+      <div class="seccion-cabeza"><h2 class="h3">${EJ.length} ejercicios</h2><span data-cuenta>${cuenta()}</span></div>
+      <div class="ejs">${EJ.map((_, i) => tarjeta(i, tema, guardado)).join('')}</div>
+      ${guardado ? '<div class="editor-pie" style="margin-top:12px"><button class="btn btn-fantasma" data-accion="editar" data-toque>Editar de nuevo</button></div>' : ''}
+    </div>
+    <div class="tel-accion">${pie(estado)}</div>
+    <div class="tel-gesto"></div>
+    <div class="aviso" role="status"></div>
+    <div class="velo" data-hoja="salir"><div class="hoja" role="dialog" aria-modal="true" aria-labelledby="t-salir-${tema}">
+      <h2 class="h2" id="t-salir-${tema}">¿Salir sin guardar?</h2>
+      <p class="sec" style="margin-top:8px" data-perder></p>
+      <div class="acciones"><button class="btn btn-secundario" data-accion="cerrar-hoja" data-toque>Seguir editando</button>
+        <button class="btn btn-peligro" data-accion="salir" data-toque>Salir sin guardar</button></div>
+    </div></div>
+  </div>`;
+}
+
+// ── Maqueta ──────────────────────────────────────────────────────────────────
+// #bajar=si (o un número de px) baja el contenido, para revisar la parte de abajo.
+const BAJAR = new URLSearchParams(location.hash.slice(1)).get('bajar');
+const m = iniciarMaqueta({
+  telefono, porDefecto: { estado: 'sin-cambios' }, alCambiarEstado: cargar,
+  alPintar: () => {
+    if (!BAJAR) return;
+    document.querySelectorAll('#escenario .tel-contenido').forEach((c) => { c.scrollTop = BAJAR === 'si' ? c.scrollHeight : +BAJAR; });
+  },
+});
+const { ctl, escenario } = m;
+const todos = (sel) => escenario.querySelectorAll(sel);
+const avisarTodos = (t) => todos('.tel').forEach((tel) => avisar(tel, t));
+
+function repintar() {
+  const sc = [...todos('.tel-contenido')].map((c) => c.scrollTop);
+  m.pintar();
+  todos('.tel-contenido').forEach((c, k) => { c.scrollTop = sc[k] || 0; });
+}
+
+// Lo que cambia con cada toque se actualiza en su lugar, sin repintar: así el más y menos
+// se puede mantener presionado y la nota no pierde el foco.
+function sincronizar(i) {
+  todos(`[data-resumen="${i}"]`).forEach((el) => { el.innerHTML = resumen(i); });
+  todos(`[data-tags="${i}"]`).forEach((el) => { el.innerHTML = etiquetas(i, false); });
+  todos(`[data-delta="${i}"]`).forEach((el) => { el.innerHTML = delta(i); });
+  todos(`[data-delta-r="${i}"]`).forEach((el) => { el.innerHTML = deltaR(i); });
+  todos(`[data-volver="${i}"]`).forEach((el) => { el.hidden = !cambiado(i); });
+  todos(`.ej[data-ej="${i}"]`).forEach((el) => el.classList.toggle('cambiado', cambiado(i)));
+  todos('[data-cuenta]').forEach((el) => { el.innerHTML = cuenta(); });
+  // Mientras se edita, el estado de la maqueta sigue a la cuenta de cambios.
+  if (ctl.estado === 'sin-cambios' || ctl.estado === 'con-cambios') {
+    const nuevo = nCambios() ? 'con-cambios' : 'sin-cambios';
+    if (nuevo !== ctl.estado) {
+      ctl.estado = nuevo;
+      document.querySelector('[data-ctl="estado"]').value = nuevo;
+      history.replaceState(null, '', '#' + new URLSearchParams(ctl).toString());
+    }
+  }
+  todos('.tel-accion').forEach((el) => { el.innerHTML = pie(ctl.estado); });
+  m.medir();
+}
+
+// ── Más y menos: un toque suma el incremento del ejercicio; mantener repite ──
+function pasar(i, dir) {
+  const e = EJ[i], v = A.ej[i];
+  const nuevo = +(v.kg + dir * e.inc).toFixed(2);
+  if (nuevo < e.inc || nuevo > 300) { avisarTodos(dir > 0 ? 'Llegaste al máximo.' : `No baja de ${fmtKg(e.inc)} kg.`); return false; }
+  v.kg = nuevo;
+  todos(`[data-valor="${i}"]`).forEach((el) => {
+    el.textContent = fmtKg(nuevo);
+    el.classList.remove('sube', 'baja'); void el.offsetWidth; el.classList.add(dir > 0 ? 'sube' : 'baja');
+  });
+  todos(`.paso[data-i="${i}"] [data-paso="-1"]`).forEach((b) => b.classList.toggle('limite', nuevo - e.inc < e.inc));
+  sincronizar(i);
+  return true;
+}
+let repite = null, repitio = false;
+escenario.addEventListener('pointerdown', (ev) => {
+  const b = ev.target.closest('[data-paso]'); if (!b) return;
+  const i = +b.closest('.paso').dataset.i, dir = +b.dataset.paso;
+  repitio = false;
+  repite = setTimeout(function tic() {
+    repitio = true;
+    if (pasar(i, dir) !== false) repite = setTimeout(tic, 120);
+  }, 400);
+});
+['pointerup', 'pointerleave', 'pointercancel'].forEach((t) => escenario.addEventListener(t, () => { clearTimeout(repite); }, true));
+
+// ── Nota: se copia al otro teléfono si se ven los dos ────────────────────────
+escenario.addEventListener('input', (ev) => {
+  const t = ev.target.closest('[data-nota]'); if (!t) return;
+  const i = +t.dataset.nota;
+  A.ej[i].nota = t.value;
+  todos(`[data-nota="${i}"]`).forEach((o) => { if (o !== t) o.value = t.value; });
+  sincronizar(i);
+});
+
+// ── Toques ───────────────────────────────────────────────────────────────────
+let espera = null;
+function guardar() {
+  ctl.estado = 'guardando'; repintar();
+  clearTimeout(espera);
+  espera = setTimeout(() => {
+    if (ctl.estado !== 'guardando') return;
+    ctl.estado = 'guardado'; A.abierto = -1; m.pintar();
+    todos('.tel-contenido').forEach((c) => { c.scrollTop = 0; });
+  }, 1500);
+}
+
+escenario.addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-accion], [data-paso]'); if (!b || b.disabled) return;
+  const tel = b.closest('.tel');
+  if (b.dataset.paso) {
+    // El clic que sigue a una repetición ya se contó.
+    if (!repitio) pasar(+b.closest('.paso').dataset.i, +b.dataset.paso);
+    repitio = false; return;
+  }
+  const i = +b.dataset.i;
+  switch (b.dataset.accion) {
+    case 'abrir': {
+      A.abierto = A.abierto === i ? -1 : i;
+      repintar();
+      // Si la tarjeta abierta quedó arriba del borde, se baja hasta ella.
+      todos('.tel-contenido').forEach((c) => {
+        const t = c.querySelector(`[data-ej="${i}"]`);
+        const arriba = t.offsetTop - c.offsetTop - 8;
+        if (arriba < c.scrollTop) c.scrollTop = arriba;
+      });
+      break;
+    }
+    case 'rango':
+      A.ej[i].r = b.dataset.v;
+      todos(`[data-accion="rango"][data-i="${i}"]`).forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.v === b.dataset.v)));
+      sincronizar(i);
+      break;
+    case 'volver':
+      A.ej[i] = { kg: EJ[i].sug.kg, r: EJ[i].sug.r, nota: '' };
+      repintar(); sincronizar(i);
+      avisarTodos(`${EJ[i].n} vuelve a lo que sugiere la app.`);
+      break;
+    case 'guardar': guardar(); break;
+    case 'editar': ctl.estado = nCambios() ? 'con-cambios' : 'sin-cambios'; A.abierto = 1; m.pintar(); break;
+    case 'atras': {
+      const n = nCambios();
+      if (n && ctl.estado !== 'guardado') {
+        const v = tel.querySelector('[data-hoja="salir"]');
+        v.querySelector('[data-perder]').textContent = `Se pierde${n === 1 ? '' : 'n'} ${plural(n, 'cambio', 'cambios')} y Martina hará lo que sugiere la app.`;
+        v.classList.add('ver'); v.querySelector('.btn').focus();
+      } else m.ir('ficha.html');
+      break;
+    }
+    case 'cerrar-hoja': b.closest('.velo').classList.remove('ver'); break;
+    case 'salir': m.ir('ficha.html'); break;
+  }
+});
+</script>
+</body>
+</html>

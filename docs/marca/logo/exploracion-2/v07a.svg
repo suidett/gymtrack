@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none" style="color:#131A17">
+  <!-- 07A Interlínea fina -->
+  <path fill="currentColor" d="M14 11.25H46A2 2 0 0 1 48 13.25V17.75A2 2 0 0 1 46 19.75H14A2 2 0 0 1 12 17.75V13.25A2 2 0 0 1 14 11.25Z"/>
+  <path fill="currentColor" d="M14 22.25H22A2 2 0 0 1 24 24.25V28.75A2 2 0 0 1 22 30.75H14A2 2 0 0 1 12 28.75V24.25A2 2 0 0 1 14 22.25Z"/>
+  <path fill="currentColor" d="M14 33.25H22A2 2 0 0 1 24 35.25V39.75A2 2 0 0 1 22 41.75H14A2 2 0 0 1 12 39.75V35.25A2 2 0 0 1 14 33.25Z"/>
+  <path class="acento" fill="#45B392" d="M34 33.25H50A2 2 0 0 1 52 35.25V39.75A2 2 0 0 1 50 41.75H34A2 2 0 0 1 32 39.75V35.25A2 2 0 0 1 34 33.25Z"/>
+  <path fill="currentColor" d="M14 44.25H50A2 2 0 0 1 52 46.25V50.75A2 2 0 0 1 50 52.75H14A2 2 0 0 1 12 50.75V46.25A2 2 0 0 1 14 44.25Z"/>
+</svg>

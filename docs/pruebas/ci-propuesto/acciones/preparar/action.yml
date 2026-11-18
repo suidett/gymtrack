@@ -1,0 +1,25 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Acción compuesta «preparar» · borrador, no se ejecuta desde docs/
+#
+# Deja el runner listo para el monorepo con lo mismo que usa el ci.yml actual:
+# pnpm 12, Node 22 y la caché de pnpm. La llaman todos los workflows propuestos.
+# Al activar: copiar a .github/actions/preparar/action.yml.
+# ─────────────────────────────────────────────────────────────────────────────
+name: Preparar el monorepo
+description: Instala pnpm 12 y Node 22 con caché y corre pnpm install --frozen-lockfile.
+
+runs:
+  using: composite
+  steps:
+    - uses: pnpm/action-setup@v4
+      with:
+        version: 12
+
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+        cache: pnpm
+
+    - name: Instalar dependencias
+      shell: bash
+      run: pnpm install --frozen-lockfile

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none" style="color:#131A17">
+  <!-- 08 La nota del entrenador: el circulo abierto que el profe traza alrededor de la cifra del alumno -->
+  <path class="acento-trazo" d="M47.6 18.4A21 21 0 1 0 53 32" stroke="#45B392" stroke-width="7" stroke-linecap="round"/>
+  <rect x="20" y="28.5" width="24" height="7" rx="2" fill="currentColor"/>
+</svg>

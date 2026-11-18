@@ -1,0 +1,173 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Nocturno · borrador
+#
+# Cada noche a las 06:00 UTC (03:00 de Chile en verano, 02:00 en invierno):
+#   e2e-completo        suite completa de Maestro (E2E-001 a E2E-022), con un reintento por flujo
+#   e2e-compatibilidad  humo en Android 10, 360 dp y fuente al 130 % (ACC-005, ACC-008)
+#   sin-senal           sincronización con Toxiproxy (SYNC-006, SYNC-008, SYNC-009, E2E-013)
+#   worker-volumen      el worker con 500 alumnos y reloj controlado (WRK, REN-009)
+#   carga-liviana       k6 contra staging (REN-003, REN-004, REN-005, REN-007)
+#   seguridad-staging   fotos privadas, https, rutas de prueba ausentes, secretos en toda la historia
+# Si algo falla, abre o actualiza el issue «nocturno-rojo».
+# version.yml lo llama como workflow reutilizable antes de publicar.
+# ─────────────────────────────────────────────────────────────────────────────
+name: Nocturno
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  e2e-completo:
+    uses: ./.github/workflows/e2e-android.yml
+    with:
+      suite: completo
+      reintentos: 1
+
+  e2e-compatibilidad:
+    uses: ./.github/workflows/e2e-android.yml
+    with:
+      suite: compatibilidad
+      nivel_api: 29
+      perfil: Nexus 5          # 1080 × 1920 a 480 dpi: 360 dp de ancho
+      escala_fuente: "1.3"
+
+  sin-senal:
+    uses: ./.github/workflows/e2e-android.yml
+    with:
+      suite: sin-senal
+      reintentos: 1
+
+  worker-volumen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NODE_ENV: test
+      TZ: UTC
+      DATABASE_URL: postgresql://gymtrack:gymtrack@localhost:5432/gymtrack_plantilla
+      CORREO_DRIVER: memoria
+      PUSH_DRIVER: buzon
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: gymtrack
+          POSTGRES_PASSWORD: gymtrack
+          POSTGRES_DB: gymtrack_plantilla
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U gymtrack"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/preparar
+
+      - name: Secretos de esta corrida
+        run: echo "SEMILLA_CLAVE=$(openssl rand -base64 18)" >> "$GITHUB_ENV"
+
+      - name: Migraciones y semilla de carga
+        run: |
+          pnpm --filter api exec prisma migrate deploy
+          pnpm --filter api run semilla carga -- --alumnos 500
+
+      # Detección, recordatorios, tope de push y purga con reloj controlado;
+      # REN-009 exige que termine en menos de 5 minutos. PENDIENTE: proyecto «worker-volumen».
+      - name: Worker con volumen
+        run: |
+          pnpm --filter api exec vitest run --project worker-volumen \
+            --reporter=default --reporter=junit --outputFile=reportes/junit-worker.xml
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: worker-volumen
+          path: apps/api/reportes/
+          retention-days: 14
+
+  carga-liviana:
+    runs-on: ubuntu-latest
+    environment: staging
+    timeout-minutes: 20
+    env:
+      STAGING_API_URL: ${{ vars.STAGING_API_URL }}
+      HUMO_CLAVE: ${{ secrets.HUMO_CLAVE }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: grafana/setup-k6-action@v1
+
+      # PENDIENTE: apps/api/carga/lecturas.js (20 usuarios virtuales, 5 minutos, p95 < 300 ms),
+      # cierres.js (200 cierres, p95 < 800 ms) y sync.js (10 sesiones, < 5 s). Los umbrales
+      # van como «thresholds» de k6: si no se cumplen, el job falla.
+      - name: Lecturas, cierres y sincronización
+        run: |
+          mkdir -p reportes
+          for guion in lecturas cierres sync; do
+            k6 run --summary-export "reportes/k6-${guion}.json" "apps/api/carga/${guion}.js"
+          done
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: carga-liviana
+          path: reportes/
+          retention-days: 30
+
+  seguridad-staging:
+    runs-on: ubuntu-latest
+    environment: staging
+    timeout-minutes: 15
+    env:
+      STAGING_API_URL: ${{ vars.STAGING_API_URL }}
+      HUMO_CLAVE: ${{ secrets.HUMO_CLAVE }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Toda la historia, no solo el diff del PR.
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: ./.github/actions/preparar
+
+      # SEG-016 (fotos sin firma, firma vencida, listado del bucket), SEG-022 (http)
+      # y SEG-025 (/test/* responde 404). Desde la noche también los de afuera de
+      # escenarios-infra.md: INF-08 (https), INF-10 (puertos, una vez por semana),
+      # INF-12 (Postgres desde afuera), INF-23 a INF-25 (bucket real de staging).
+      # PENDIENTE: script «seguridad:staging».
+      - name: Seguridad contra staging
+        run: pnpm --filter api run seguridad:staging
+
+  # La recarga semanal de staging con la semilla «staging» corre en el servidor, con el
+  # timer gymtrack-semilla-staging.timer (domingo 07:30 UTC), no aquí: así la URL de la
+  # base nunca sale del VPS (docs/pruebas/infraestructura-vps-firebase.md).
+
+  reporte:
+    needs: [e2e-completo, e2e-compatibilidad, sin-senal, worker-volumen, carga-liviana, seguridad-staging]
+    if: failure() && github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Abrir o actualizar el issue «nocturno-rojo»
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          ABIERTO=$(gh issue list --label nocturno-rojo --state open --json number --jq '.[0].number')
+          if [ -n "$ABIERTO" ]; then
+            gh issue comment "$ABIERTO" --body "Otra noche roja: $URL"
+          else
+            gh issue create --label nocturno-rojo --title "Nocturno rojo" \
+              --body "Falló la corrida nocturna: $URL. Los artefactos traen capturas, grabaciones y logs."
+          fi

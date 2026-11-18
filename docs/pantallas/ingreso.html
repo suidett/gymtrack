@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GymTrack · Ingreso</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="sistema.css">
+<style>
+  /* ── Piezas de acceso (las mismas en ingreso, crear cuenta, recuperar y encuesta) ── */
+  .oculto { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .btn:disabled { background: var(--desh-fondo); border-color: transparent; color: var(--desh-texto); cursor: not-allowed; }
+  .btn-fantasma:disabled { background: transparent; }
+  .btn[aria-busy="true"] { pointer-events: none; }
+  .apila { display: flex; flex-direction: column; gap: 4px; }
+
+  /* Campo de texto: rótulo arriba, caja de 56 dp, mensaje de error abajo. */
+  .fld { margin-top: 16px; }
+  .fld-rot { display: block; margin: 0 0 6px; font: 600 14px/1.3 var(--letra); }
+  .fld-caja { display: flex; align-items: center; height: 56px; border: 2px solid var(--campo-borde);
+    border-radius: var(--radio); background: var(--campo-fondo); }
+  .fld-caja:focus-within { border-color: var(--accion); }
+  .fld-caja input { flex: 1; min-width: 0; height: 100%; padding: 0 14px; border: 0; border-radius: var(--radio);
+    background: transparent; color: var(--texto); font: 500 17px/1.2 var(--letra); outline: none; }
+  .fld-caja input::placeholder { color: var(--texto-2); opacity: 1; }
+  .fld-caja .btn { min-height: 48px; margin-right: 2px; padding: 0 14px; font-size: 15px; }
+  .fld.error .fld-caja { border-color: var(--peligro); }
+  .fld-msj { display: flex; align-items: flex-start; gap: 6px; margin: 6px 0 0; font: 600 14px/1.35 var(--letra); color: var(--peligro); }
+  .fld-msj svg { flex: 0 0 16px; height: 16px; margin-top: 1px; fill: currentColor; }
+  .fld-caja.desh { background: var(--desh-fondo); border-color: transparent; }
+  .fld-caja.desh input { color: var(--desh-texto); }
+
+  /* Mensaje dentro de la pantalla: barra a la izquierda, título corto y una línea de qué hacer. */
+  .mensaje { position: relative; overflow: hidden; margin-top: 16px; padding: 12px 14px 12px 18px;
+    border-radius: var(--radio); background: var(--sup); border: 1px solid var(--sup-alta); }
+  .mensaje::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--peligro); }
+  .mensaje.neutro::before { background: var(--texto-2); }
+  .mensaje .h3 { font-size: 16px; }
+  .mensaje .sec { margin-top: 2px; }
+
+  /* Cargando: una barra fina bajo la barra de estado, sin rebotes. */
+  .cargando { position: absolute; left: 0; right: 0; top: 28px; z-index: 2; height: 3px; overflow: hidden; background: var(--sup-alta); }
+  .cargando::before { content: ""; position: absolute; top: 0; bottom: 0; left: -40%; width: 40%; background: var(--accion);
+    animation: carga 1.1s linear infinite; }
+  @keyframes carga { to { left: 100%; } }
+  @media (prefers-reduced-motion: reduce) { .cargando::before { animation: none; left: 0; width: 100%; } }
+
+  /* ── Piezas propias del ingreso ────────────────────────────────────────── */
+  .logo { display: flex; justify-content: center; padding: 64px 0 40px; }
+  .logo img { display: block; width: 150px; height: auto; }
+
+  /* Selector de rol: dos segmentos, el elegido invertido como un chip. */
+  .segmento { display: flex; padding: 2px; margin-top: 8px; border: 2px solid var(--borde); border-radius: var(--radio); }
+  .segmento button { flex: 1; height: 48px; border: 0; border-radius: var(--radio); background: transparent; color: var(--texto);
+    font: 600 16px/1 var(--letra); cursor: pointer; }
+  .segmento button:active { background: var(--fantasma-pres); }
+  .segmento button[aria-checked="true"] { background: var(--texto); color: var(--fondo); }
+  .segmento button:focus-visible { outline: 2px solid var(--foco); outline-offset: 2px; }
+  .segmento button:disabled { cursor: not-allowed; }
+
+  .olvide { display: flex; justify-content: flex-end; margin: 4px -12px 0 0; }
+
+  .notas-maqueta { max-width: 860px; margin: 32px auto 0; color: var(--p-texto-2); font-size: 14px; }
+  .notas-maqueta h2 { color: var(--p-texto); font-size: 16px; margin: 0 0 8px; }
+  .notas-maqueta ul { margin: 0; padding-left: 18px; }
+  .notas-maqueta li { margin: 4px 0; }
+</style>
+</head>
+<body>
+<main class="maqueta">
+  <header class="maqueta-cabeza">
+    <h1>Pantalla 1 · Ingreso</h1>
+    <p>Dirección Más · 412 × 892 dp · <a href="crear-cuenta.html">Crear cuenta</a> · <a href="recuperar.html">Recuperar</a> · <a href="index.html">todas las pantallas</a></p>
+  </header>
+
+  <div class="controles" role="group" aria-label="Controles de la maqueta">
+    <label class="grupo"><span class="rot">Estado</span>
+      <select class="ctl" data-ctl="estado">
+        <option value="normal">Normal</option>
+        <option value="error">Error de credenciales</option>
+        <option value="cargando">Cargando</option>
+        <option value="sin-red">Sin conexión</option>
+        <option value="bloqueo">Demasiados intentos</option>
+      </select></label>
+    <label class="grupo"><span class="rot">Tema</span>
+      <select class="ctl" data-ctl="tema">
+        <option value="gimnasio">Modo gimnasio</option>
+        <option value="clara">Clara</option>
+        <option value="ambos">Las dos</option>
+      </select></label>
+    <label class="grupo"><span class="rot">Tamaño</span>
+      <select class="ctl" data-ctl="zoom">
+        <option value="ajustar">Ajustar al ancho</option>
+        <option value="100">Real (1 dp = 1 px)</option>
+        <option value="150">150 %</option>
+      </select></label>
+    <label class="grupo"><input type="checkbox" data-ctl="medidas"><span>Medidas de toque</span></label>
+  </div>
+
+  <div class="escenario" id="escenario"></div>
+
+  <section class="notas-maqueta">
+    <h2>Qué mirar</h2>
+    <ul>
+      <li>Elige Cliente o Entrenador arriba: «Ingresar» lleva a Hoy o a Clientes, y «Regístrate» abre Crear cuenta con ese rol ya marcado.</li>
+      <li>Cualquier correo y contraseña entran. Si dejas un campo vacío o el correo sin @, el error sale bajo el campo; al escribir, se va.</li>
+      <li>El error de credenciales no dice cuál de los dos está mal, a propósito. Toca «Mostrar»: la contraseña tiene un error de tipeo.</li>
+      <li>«Demasiados intentos» sale del límite del PRD (5 intentos por minuto): el botón cuenta hacia atrás y se vuelve a activar solo.</li>
+      <li>«Ingresar» queda abajo, al alcance del pulgar. En Android sube con el teclado (ajuste de tamaño de la ventana).</li>
+    </ul>
+  </section>
+</main>
+
+<script src="maqueta.js"></script>
+<script>
+// ── Datos de prueba ──────────────────────────────────────────────────────────
+const CUENTAS = {
+  cliente: { correo: 'martina@ejemplo.cl', clave: 'sentadila25' },
+  entrenador: { correo: 'camila@ejemplo.cl', clave: 'rutinas2026' },
+};
+const ESPERA_BLOQUEO = 48; // segundos que faltan para volver a intentar
+
+// ── Estado de la pantalla ────────────────────────────────────────────────────
+let S;
+const rolDelHash = () => (new URLSearchParams(location.hash.slice(1)).get('rol') === 'entrenador' ? 'entrenador' : 'cliente');
+function nuevoEstado(estado) {
+  clearTimeout(nuevoEstado.t);
+  const rol = rolDelHash();
+  const lleno = estado !== 'normal';
+  S = {
+    rol,
+    v: lleno ? { ...CUENTAS[rol] } : { correo: '', clave: '' },
+    err: {},
+    ver: false,
+    cargando: estado === 'cargando',
+    msg: { error: 'credenciales', 'sin-red': 'red', bloqueo: 'bloqueo' }[estado] || null,
+    bloqueoFin: estado === 'bloqueo' ? Date.now() + ESPERA_BLOQUEO * 1000 : 0,
+  };
+}
+const restaBloqueo = () => Math.max(0, Math.ceil((S.bloqueoFin - Date.now()) / 1000));
+
+// ── Íconos ───────────────────────────────────────────────────────────────────
+const icoAlerta = '<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="6.75" y="1.5" width="2.5" height="8.5" rx=".5"/><rect x="6.75" y="11.5" width="2.5" height="2.5" rx=".5"/></svg>';
+
+// ── Piezas ───────────────────────────────────────────────────────────────────
+function campo(tema, { id, rot, tipo = 'text', modo, auto, extra = '' }) {
+  const err = S.err[id];
+  const desh = S.cargando;
+  return `<div class="fld${err ? ' error' : ''}">
+    <label class="fld-rot" for="${tema}-${id}">${rot}</label>
+    <div class="fld-caja${desh ? ' desh' : ''}" data-toque>
+      <input id="${tema}-${id}" data-campo="${id}" type="${tipo}" ${modo ? `inputmode="${modo}"` : ''} autocomplete="${auto}"
+        autocapitalize="off" spellcheck="false" value="${S.v[id]}" ${desh ? 'disabled' : ''}
+        ${err ? `aria-invalid="true" aria-describedby="${tema}-${id}-msj"` : ''}>${extra}
+    </div>
+    ${err ? `<p class="fld-msj" id="${tema}-${id}-msj">${icoAlerta}<span>${err}</span></p>` : ''}
+  </div>`;
+}
+
+function mensaje() {
+  if (S.msg === 'credenciales') {
+    return `<div class="mensaje" role="alert"><p class="h3">No pudimos ingresar</p>
+      <p class="sec">El correo o la contraseña no coinciden. Revisa que estén bien escritos; con «Mostrar» ves la contraseña.</p></div>`;
+  }
+  if (S.msg === 'red') {
+    return `<div class="mensaje neutro" role="alert"><p class="h3">Sin conexión</p>
+      <p class="sec">Para ingresar necesitas internet. Revisa la señal o el wifi e intenta de nuevo.</p></div>`;
+  }
+  if (S.msg === 'bloqueo') {
+    return `<div class="mensaje" role="alert"><p class="h3">Demasiados intentos</p>
+      <p class="sec">Por seguridad, espera un minuto antes de volver a intentar. Si no recuerdas tu contraseña, recupérala.</p></div>`;
+  }
+  return '';
+}
+
+function botonIngresar() {
+  if (S.cargando) {
+    return `<button class="btn btn-primario ancho alto" aria-busy="true" data-toque>Ingresando…</button>`;
+  }
+  const resta = S.msg === 'bloqueo' ? restaBloqueo() : 0;
+  if (resta) {
+    return `<button class="btn btn-primario ancho alto" disabled data-toque>Espera <span class="cifra" data-cuenta>${fmtReloj(resta)}</span></button>`;
+  }
+  return `<button class="btn btn-primario ancho alto" data-accion="ingresar" data-toque>Ingresar</button>`;
+}
+
+function telefono(tema) {
+  const logo = `marca/logotipo-apilado-sobre-${tema === 'clara' ? 'claro' : 'oscuro'}.svg`;
+  const rolBtn = (r, t) => `<button role="radio" aria-checked="${S.rol === r}" data-accion="rol" data-v="${r}" ${S.cargando ? 'disabled' : ''} data-toque>${t}</button>`;
+  const verClave = `<button class="btn btn-fantasma" data-accion="ver-clave" aria-pressed="${S.ver}" ${S.cargando ? 'disabled' : ''} data-toque>${S.ver ? 'Ocultar' : 'Mostrar'}</button>`;
+  const registro = S.rol === 'entrenador' ? 'crear-cuenta.html#rol=entrenador' : 'crear-cuenta.html';
+  return `<div class="tel" data-tema="${tema}">
+    <div class="tel-estado"><span class="cifra" style="font-weight:600">9:41</span><span>5G · 82 %</span></div>
+    ${S.cargando ? '<div class="cargando" role="progressbar" aria-label="Ingresando"></div>' : ''}
+    <div class="tel-contenido">
+      <h1 class="oculto">Ingresar a GymTrack</h1>
+      <div class="logo"><img src="${logo}" alt="GymTrack" width="150" height="97"></div>
+      <p class="ceja" id="${tema}-rol">Ingresas como</p>
+      <div class="segmento" role="radiogroup" aria-labelledby="${tema}-rol">${rolBtn('cliente', 'Cliente')}${rolBtn('entrenador', 'Entrenador')}</div>
+      ${mensaje()}
+      ${campo(tema, { id: 'correo', rot: 'Correo', modo: 'email', auto: 'email' })}
+      ${campo(tema, { id: 'clave', rot: 'Contraseña', tipo: S.ver ? 'text' : 'password', auto: 'current-password', extra: verClave })}
+      <div class="olvide"><button class="btn btn-fantasma" data-ir="recuperar.html" ${S.cargando ? 'disabled' : ''} data-toque>Olvidé mi contraseña</button></div>
+    </div>
+    <div class="tel-accion"><div class="apila">
+      ${botonIngresar()}
+      <button class="btn btn-fantasma ancho" data-ir="${registro}" ${S.cargando ? 'disabled' : ''} data-toque>¿No tienes cuenta? Regístrate</button>
+    </div></div>
+    <div class="tel-gesto"></div>
+    <div class="aviso" role="status"></div>
+  </div>`;
+}
+
+// ── Maqueta ──────────────────────────────────────────────────────────────────
+const m = iniciarMaqueta({ telefono, porDefecto: { estado: 'normal' }, alCambiarEstado: nuevoEstado });
+const { ctl, escenario } = m;
+
+// Repinta los dos teléfonos sin perder el campo en edición ni el desplazamiento.
+function repintar() {
+  const a = document.activeElement;
+  const foco = a && a.dataset && a.dataset.campo && a.closest('.tel')
+    ? { tema: a.closest('.tel').dataset.tema, campo: a.dataset.campo, ini: a.selectionStart, fin: a.selectionEnd } : null;
+  const scroll = [...escenario.querySelectorAll('.tel-contenido')].map((c) => c.scrollTop);
+  m.pintar();
+  escenario.querySelectorAll('.tel-contenido').forEach((c, k) => { c.scrollTop = scroll[k] || 0; });
+  if (foco) {
+    const el = escenario.querySelector(`.tel[data-tema="${foco.tema}"] [data-campo="${foco.campo}"]`);
+    if (el && !el.disabled) { el.focus({ preventScroll: true }); try { el.setSelectionRange(foco.ini, foco.fin); } catch (e) { /* sin selección */ } }
+  }
+}
+
+function validar() {
+  const err = {};
+  const c = S.v.correo.trim();
+  if (!c) err.correo = 'Escribe tu correo.';
+  else if (!c.includes('@')) err.correo = 'Revisa el correo: le falta la @.';
+  else if (!/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(c)) err.correo = 'Revisa el correo: le falta el final, como .cl o .com.';
+  if (!S.v.clave) err.clave = 'Escribe tu contraseña.';
+  return err;
+}
+
+function ingresar() {
+  S.err = validar();
+  if (Object.keys(S.err).length) {
+    repintar();
+    const primero = escenario.querySelector(`[aria-invalid="true"]`);
+    if (primero) primero.focus();
+    return;
+  }
+  S.msg = null; S.cargando = true; ctl.estado = 'cargando'; repintar();
+  nuevoEstado.t = setTimeout(() => m.ir(S.rol === 'entrenador' ? 'clientes.html' : 'hoy.html'), 1200);
+}
+
+escenario.addEventListener('input', (ev) => {
+  const c = ev.target.closest('[data-campo]'); if (!c) return;
+  S.v[c.dataset.campo] = c.value;
+  delete S.err[c.dataset.campo];
+  if (S.msg === 'credenciales') { S.msg = null; ctl.estado = 'normal'; }
+  repintar();
+});
+
+escenario.addEventListener('keydown', (ev) => {
+  if (ev.key === 'Enter' && ev.target.matches('input[data-campo]') && !S.cargando && !restaBloqueo()) { ev.preventDefault(); ingresar(); }
+});
+
+escenario.addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-accion]'); if (!b || b.disabled) return;
+  switch (b.dataset.accion) {
+    case 'rol': S.rol = b.dataset.v; ctl.rol = S.rol; repintar(); break;
+    case 'ver-clave': S.ver = !S.ver; repintar(); break;
+    case 'ingresar': ingresar(); break;
+  }
+});
+
+// Cuenta regresiva del bloqueo.
+setInterval(() => {
+  if (S.msg !== 'bloqueo' || !S.bloqueoFin) return;
+  const resta = restaBloqueo();
+  escenario.querySelectorAll('[data-cuenta]').forEach((c) => { c.textContent = fmtReloj(resta); });
+  if (resta === 0) { S.bloqueoFin = 0; repintar(); }
+}, 1000);
+</script>
+</body>
+</html>

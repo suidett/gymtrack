@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none" style="color:#131A17">
+  <!-- 05 La coma decimal: la coma de 2,5 sentada en el renglon -->
+  <g transform="translate(1.5 -2)">
+  <rect class="acento" x="9" y="29" width="20" height="7" rx="2" fill="#45B392"/>
+  <path fill="currentColor" d="M51 27C51 38 44 46 33 51L31 47C37.5 43.5 41.5 39.5 42 36A9 9 0 1 1 51 27Z"/>
+  </g>
+</svg>

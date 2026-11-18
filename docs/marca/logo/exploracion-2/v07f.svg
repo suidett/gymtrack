@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none" style="color:#131A17">
+  <!-- 07F Canto recto -->
+  <path fill="currentColor" d="M12 12H48V19H12Z"/>
+  <path fill="currentColor" d="M12 23H24V30H12Z"/>
+  <path fill="currentColor" d="M12 34H24V41H12Z"/>
+  <path class="acento" fill="#45B392" d="M32 34H52V41H32Z"/>
+  <path fill="currentColor" d="M12 45H52V52H12Z"/>
+</svg>

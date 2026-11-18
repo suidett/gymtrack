@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GymTrack · Hoy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="sistema.css">
+<style>
+  /* ── Piezas propias de Hoy ─────────────────────────────────────────────── */
+  .cabeza { display: flex; align-items: center; justify-content: space-between; height: 56px; }
+  .simbolo { display: block; width: 24px; height: 24px; }
+  .simbolo .h { fill: var(--simb-h); }
+  .simbolo .v { fill: var(--simb-v); }
+  .racha { display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 12px 0 10px;
+    border-radius: var(--radio); background: var(--sup); border: 1px solid var(--sup-alta); font-size: 13px; color: var(--texto-2); }
+  .racha::before { content: ""; width: 4px; height: 14px; border-radius: 1px; background: var(--hecho-fondo); }
+  .racha .cifra { font-size: 14px; color: var(--texto); }
+  .saludo { margin: 4px 0 20px; }
+  .saludo .titulo { margin-top: 2px; }
+
+  .fila-ceja { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .hoy-card .h2 { margin-top: 4px; }
+  .hoy-card .sec { margin-top: 4px; }
+  .hoy-card .acciones { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
+
+  .ejercicios { margin-top: 12px; border-top: 1px solid var(--sup-alta); }
+  .ejercicios > li:first-child { border-top: 0; }
+  .ej-nombre { font-size: 16px; line-height: 1.3; }
+  .ej-dato { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; white-space: nowrap; }
+  .ej-dato .sr { font-size: 15px; }
+  .ej-dato .sr .x { color: var(--texto-2); font-weight: 500; margin: 0 2px; }
+  .ej-dato .kg { font-size: 13px; color: var(--texto-2); }
+  .mas { color: var(--acento-texto); margin-right: 6px; }
+  .leyenda { margin: 4px 0 0; font-size: 13px; color: var(--texto-2); }
+  .ver-todos { margin-top: 4px; width: 100%; justify-content: center; }
+
+  .mes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .dato { background: var(--sup); border: 1px solid var(--sup-alta); border-radius: var(--radio); padding: 12px; }
+  .dato .cifra { display: block; font-size: 24px; line-height: 1.1; }
+  .dato .cifra small { font-size: 14px; margin-left: 2px; color: var(--texto-2); }
+  .dato .sec { font-size: 13px; margin-top: 4px; }
+
+  .semana { display: flex; justify-content: space-between; }
+  .dia { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .marca { width: 40px; height: 40px; border-radius: var(--radio); display: flex; align-items: center; justify-content: center; }
+  .marca.hecho { background: var(--hecho-fondo); border: 2px solid var(--hecho-borde); }
+  .marca.hecho svg { width: 22px; height: 22px; }
+  .marca.hecho path { stroke: var(--visto); }
+  .marca.toca { border: 2px solid var(--accion); }
+  .marca.plan { border: 2px solid var(--marcar-borde); }
+  .marca.descanso::before { content: ""; width: 14px; height: 4px; border-radius: 1px; background: var(--borde); }
+  .dia .letra { font: 500 12px/1 var(--mono); color: var(--texto-2); }
+  .dia.hoy .letra { color: var(--texto); font-weight: 700; }
+  .dia.hoy .letra::after { content: ""; display: block; width: 12px; height: 2px; margin: 4px auto 0; background: var(--texto); }
+
+  .ent-cabeza { display: flex; align-items: center; gap: 12px; }
+  .avatar { flex: 0 0 40px; height: 40px; border-radius: var(--radio); background: var(--sup-alta);
+    display: flex; align-items: center; justify-content: center; font-size: 14px; }
+  .nota { margin: 14px 0 0; padding: 2px 0 2px 12px; border-left: 4px solid var(--hecho-fondo); font-size: 15px; line-height: 1.45; }
+  .ent-pie { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; margin-right: -12px; }
+  .ent-pie .sec { font-size: 13px; }
+
+  .en-curso { border-color: var(--hecho-borde); }
+  .avance { display: flex; gap: 3px; margin-top: 16px; }
+  .avance i { flex: 1; height: 8px; border-radius: 1px; background: var(--sup-alta); }
+  .avance i.si { background: var(--hecho-fondo); }
+  .avance-txt { margin: 8px 0 0; font-size: 13px; color: var(--texto-2); }
+  .avance-txt .cifra { color: var(--texto); }
+
+  .notas-maqueta { max-width: 860px; margin: 32px auto 0; color: var(--p-texto-2); font-size: 14px; }
+  .notas-maqueta h2 { color: var(--p-texto); font-size: 16px; margin: 0 0 8px; }
+  .notas-maqueta ul { margin: 0; padding-left: 18px; }
+  .notas-maqueta li { margin: 4px 0; }
+</style>
+</head>
+<body>
+<main class="maqueta">
+  <header class="maqueta-cabeza">
+    <h1>Pantalla 5 · Hoy</h1>
+    <p>Dirección Más · marco de 412 × 892 dp · <a href="index.html">todas las pantallas</a></p>
+  </header>
+
+  <div class="controles" role="group" aria-label="Controles de la maqueta">
+    <label class="grupo"><span class="rot">Estado</span>
+      <select class="ctl" data-ctl="estado">
+        <option value="normal">Normal</option>
+        <option value="curso">Sesión en curso</option>
+        <option value="descanso">Día de descanso</option>
+        <option value="espera">Sin rutina, con entrenador</option>
+        <option value="solo">Sin rutina, solo</option>
+      </select></label>
+    <label class="grupo"><span class="rot">Tema</span>
+      <select class="ctl" data-ctl="tema">
+        <option value="gimnasio">Modo gimnasio</option>
+        <option value="clara">Clara</option>
+        <option value="ambos">Las dos</option>
+      </select></label>
+    <label class="grupo"><span class="rot">Tamaño</span>
+      <select class="ctl" data-ctl="zoom">
+        <option value="ajustar">Ajustar al ancho</option>
+        <option value="100">Real (1 dp = 1 px)</option>
+        <option value="150">150 %</option>
+      </select></label>
+    <label class="grupo"><input type="checkbox" data-ctl="medidas"><span>Medidas de toque</span></label>
+  </div>
+
+  <div class="escenario" id="escenario"></div>
+
+  <section class="notas-maqueta">
+    <h2>Qué mirar</h2>
+    <ul>
+      <li>El botón de acción vive abajo, al alcance del pulgar, y cambia según el estado: «Empezar rutina» o «Retomar sesión». Los dos llevan al registro de la sesión.</li>
+      <li>El <b>+2,5</b> junto a los kilos es lo que la app sugiere subir hoy. Es la idea de la marca: un poco más cada vez.</li>
+      <li>En la semana, el cuadrado lleno es un día entrenado, el de borde es un día por entrenar y el guion es descanso.</li>
+      <li>Toca «Ver los 6 ejercicios», «Descartar sesión» y las pestañas: llevan a sus pantallas.</li>
+    </ul>
+  </section>
+</main>
+
+<script src="maqueta.js"></script>
+<script>
+// ── Datos de prueba ──────────────────────────────────────────────────────────
+const EJERCICIOS = [
+  { n: 'Sentadilla', s: 4, r: 8, kg: 82.5, mas: 2.5 },
+  { n: 'Peso muerto rumano', s: 3, r: 10, kg: 60 },
+  { n: 'Prensa', s: 3, r: 12, kg: 140, mas: 5 },
+  { n: 'Zancadas con mancuernas', s: 3, r: 10, kg: 16 },
+  { n: 'Curl femoral', s: 3, r: 12, kg: 35 },
+  { n: 'Gemelos de pie', s: 4, r: 15, kg: 40, mas: 2.5 },
+];
+const ENTRENADORA = { nombre: 'Camila Rojas', iniciales: 'CR' };
+
+const ESTADOS = {
+  normal: {
+    fecha: 'Martes 17 de noviembre', racha: 12,
+    semana: ['hecho', 'toca', 'descanso', 'plan', 'plan', 'descanso', 'descanso'], hoy: 1, cuenta: '1 de 4',
+    mes: { sesiones: '9', volumen: '41,3', records: '3' },
+    accion: { texto: 'Empezar rutina', ir: 'registro.html#estado=empezando' },
+    entrenador: { nota: 'Hoy sube a 82,5 en la sentadilla. Si la última serie se pone fea, vuelve a 80.', hace: 'hace 2 días', total: 2 },
+  },
+  curso: {
+    fecha: 'Martes 17 de noviembre', racha: 12,
+    semana: ['hecho', 'toca', 'descanso', 'plan', 'plan', 'descanso', 'descanso'], hoy: 1, cuenta: '1 de 4',
+    mes: { sesiones: '9', volumen: '41,3', records: '3' },
+    accion: { texto: 'Retomar sesión', ir: 'registro.html#estado=mitad' },
+    entrenador: { nota: 'Hoy sube a 82,5 en la sentadilla. Si la última serie se pone fea, vuelve a 80.', hace: 'hace 2 días', total: 2 },
+  },
+  descanso: {
+    fecha: 'Miércoles 18 de noviembre', racha: 13,
+    semana: ['hecho', 'hecho', 'descanso', 'plan', 'plan', 'descanso', 'descanso'], hoy: 2, cuenta: '2 de 4',
+    mes: { sesiones: '10', volumen: '46,1', records: '4' },
+    accion: null,
+    entrenador: { nota: 'Buena sesión de pierna. Descansa bien hoy, mañana toca empuje.', hace: 'hace 3 h', total: 3 },
+  },
+  espera: {
+    fecha: 'Martes 17 de noviembre', racha: 0, sinHistoria: true,
+    semana: ['descanso', 'descanso', 'descanso', 'descanso', 'descanso', 'descanso', 'descanso'], hoy: 1, cuenta: null,
+    mes: { sesiones: '0', volumen: '0', records: '0' },
+    accion: null,
+    entrenador: { nota: 'Ya tengo tu encuesta. Te armo la rutina esta semana y te aviso.', hace: 'hace 1 día', total: 1 },
+  },
+  solo: {
+    fecha: 'Martes 17 de noviembre', racha: 0, sinHistoria: true,
+    semana: ['descanso', 'descanso', 'descanso', 'descanso', 'descanso', 'descanso', 'descanso'], hoy: 1, cuenta: null,
+    mes: { sesiones: '0', volumen: '0', records: '0' },
+    accion: null, entrenador: null,
+  },
+};
+const LETRAS = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+
+function filaEjercicio(e) {
+  const mas = e.mas ? `<span class="mas">+${fmtKg(e.mas)}</span>` : '';
+  return `<li><span class="ej-nombre">${e.n}</span>
+    <span class="ej-dato"><span class="sr cifra">${e.s}<span class="x">×</span>${e.r}</span>
+    <span class="kg cifra">${mas}${fmtKg(e.kg)} kg</span></span></li>`;
+}
+
+function tarjetaPrincipal(estado, abierta) {
+  if (estado === 'normal') {
+    const lista = (abierta ? EJERCICIOS : EJERCICIOS.slice(0, 3)).map(filaEjercicio).join('');
+    const series = EJERCICIOS.reduce((a, e) => a + e.s, 0);
+    return `<section class="tarjeta hoy-card" aria-label="Rutina de hoy">
+      <div class="fila-ceja"><p class="ceja">Rutina de hoy</p><p class="ceja">Semana <span class="cifra">3</span> de <span class="cifra">8</span></p></div>
+      <h2 class="h2">Pierna A</h2>
+      <p class="sec">${EJERCICIOS.length} ejercicios · ${series} series · ~55 min</p>
+      <ul class="lista-filas ejercicios">${lista}</ul>
+      <p class="leyenda"><span class="mas cifra">+2,5</span>kilos más que la última vez</p>
+      <button class="btn btn-fantasma ver-todos" data-accion="ver-todos" data-toque>${abierta ? 'Ver menos' : `Ver los ${EJERCICIOS.length} ejercicios`}</button>
+    </section>`;
+  }
+  if (estado === 'curso') {
+    const total = EJERCICIOS.reduce((a, e) => a + e.s, 0), hechas = 9;
+    const barras = Array.from({ length: total }, (_, i) => `<i class="${i < hechas ? 'si' : ''}"></i>`).join('');
+    return `<section class="tarjeta hoy-card en-curso" aria-label="Sesión en curso">
+      <p class="ceja acento">Sesión en curso</p>
+      <h2 class="h2">Pierna A</h2>
+      <p class="sec">Empezaste hace 25 min. Ibas en la Prensa.</p>
+      <div class="avance" aria-hidden="true">${barras}</div>
+      <p class="avance-txt"><span class="cifra">${hechas}</span> de <span class="cifra">${total}</span> series</p>
+      <div class="acciones"><button class="btn btn-fantasma peligro" data-accion="descartar" data-toque>Descartar sesión</button></div>
+    </section>`;
+  }
+  if (estado === 'descanso') {
+    return `<section class="tarjeta hoy-card" aria-label="Hoy">
+      <p class="ceja">Rutina de hoy</p>
+      <h2 class="h2">Día de descanso</h2>
+      <p class="sec">Mañana toca Empuje B: 5 ejercicios, ~50 min.</p>
+      <div class="acciones"><button class="btn btn-secundario ancho" data-accion="aviso" data-aviso="Se adelanta Empuje B a hoy y la semana se corre un día." data-toque>Adelantar Empuje B a hoy</button></div>
+    </section>`;
+  }
+  if (estado === 'espera') {
+    return `<section class="tarjeta hoy-card" aria-label="Rutina de hoy">
+      <p class="ceja">Rutina de hoy</p>
+      <h2 class="h2">Tu entrenadora está armando tu rutina</h2>
+      <p class="sec">Te avisamos apenas Camila la active. Mientras, puedes registrar tu peso y tus medidas.</p>
+      <div class="acciones"><button class="btn btn-secundario ancho" data-ir="progreso.html#estado=peso" data-toque>Registrar peso</button></div>
+    </section>`;
+  }
+  return `<section class="tarjeta hoy-card" aria-label="Rutina de hoy">
+    <p class="ceja">Rutina de hoy</p>
+    <h2 class="h2">Todavía no tienes rutina</h2>
+    <p class="sec">Ármala tú: los días, los ejercicios y cuánto subir cada semana. Toma unos 5 minutos.</p>
+    <div class="acciones"><button class="btn btn-primario ancho alto" data-ir="nueva-rutina.html" data-toque>Crear rutina</button></div>
+  </section>`;
+}
+
+function bloqueMes(m) {
+  return `<div class="seccion-cabeza"><h3 class="h3">Noviembre</h3></div>
+    <div class="mes">
+      <div class="dato"><span class="cifra">${m.sesiones}</span><p class="sec">sesiones</p></div>
+      <div class="dato"><span class="cifra">${m.volumen}<small>t</small></span><p class="sec">levantadas</p></div>
+      <div class="dato"><span class="cifra">${m.records}</span><p class="sec">récords</p></div>
+    </div>`;
+}
+
+function bloqueSemana(d) {
+  const dias = d.semana.map((tipo, i) => {
+    const hoy = i === d.hoy;
+    const nombre = { hecho: 'entrenado', toca: 'toca entrenar', plan: 'por entrenar', descanso: 'descanso' }[tipo];
+    return `<div class="dia${hoy ? ' hoy' : ''}" aria-label="${LETRAS[i]}${hoy ? ', hoy' : ''}: ${nombre}">
+      <span class="marca ${tipo}">${tipo === 'hecho' ? visto() : ''}</span><span class="letra">${LETRAS[i]}</span></div>`;
+  }).join('');
+  const cuenta = d.cuenta ? `<span class="sec"><span class="cifra">${d.cuenta.split(' de ')[0]}</span> de <span class="cifra">${d.cuenta.split(' de ')[1]}</span></span>` : '';
+  return `<div class="seccion-cabeza"><h3 class="h3">Esta semana</h3>${cuenta}</div>
+    <div class="tarjeta"><div class="semana">${dias}</div></div>`;
+}
+
+function bloqueEntrenador(e) {
+  if (!e) {
+    return `<div class="seccion-cabeza"><h3 class="h3">¿Entrenas con alguien?</h3></div>
+      <div class="tarjeta">
+        <p class="sec">Si tu entrenador te dio un código de 6 letras, ingrésalo y verá tus rutinas y tu avance.</p>
+        <div class="acciones" style="margin-top:12px"><button class="btn btn-secundario ancho" data-ir="perfil.html#estado=vincular" data-toque>Ingresar código</button></div>
+      </div>`;
+  }
+  return `<div class="seccion-cabeza"><h3 class="h3">Tu entrenadora</h3></div>
+    <div class="tarjeta">
+      <div class="ent-cabeza"><span class="avatar cifra">${ENTRENADORA.iniciales}</span>
+        <div><p class="h3" style="font-size:16px">${ENTRENADORA.nombre}</p><p class="sec">Te dejó una observación</p></div></div>
+      <p class="nota">${e.nota}</p>
+      <div class="ent-pie"><span class="sec">${e.hace}</span>
+        <button class="btn btn-fantasma" data-accion="aviso" data-aviso="Aquí se abren las observaciones de Camila." data-toque>Ver observaciones (${e.total})</button></div>
+    </div>`;
+}
+
+function telefono(tema, ctl) {
+  const estado = ctl.estado;
+  const d = ESTADOS[estado];
+  const racha = d.racha ? `<span class="racha"><span class="cifra">${d.racha}</span> días de racha</span>` : '';
+  const accion = d.accion
+    ? `<div class="tel-accion"><button class="btn btn-primario ancho alto" data-ir="${d.accion.ir}" data-toque>${d.accion.texto}</button></div>` : '';
+  return `<div class="tel" data-tema="${tema}">
+    <div class="tel-estado"><span class="cifra" style="font-weight:600">9:41</span><span>5G · 82 %</span></div>
+    <div class="tel-contenido">
+      <div class="cabeza">${simbolo()}${racha}</div>
+      <div class="saludo"><p class="ceja">${d.fecha}</p><h1 class="titulo">Hola, Martina</h1></div>
+      ${tarjetaPrincipal(estado, abierta)}
+      ${d.sinHistoria ? '' : bloqueSemana(d) + bloqueMes(d.mes)}
+      ${bloqueEntrenador(d.entrenador)}
+    </div>
+    ${accion}
+    ${pestanas(PESTANAS_ALUMNO, 'Hoy')}
+    <div class="tel-gesto"></div>
+    <div class="aviso" role="status"></div>
+    <div class="velo"><div class="hoja" role="dialog" aria-modal="true" aria-labelledby="t-descartar-${tema}">
+      <h2 class="h2" id="t-descartar-${tema}">¿Descartar la sesión?</h2>
+      <p class="sec" style="margin-top:8px">Se borran las 9 series que marcaste hoy. No se puede deshacer.</p>
+      <div class="acciones"><button class="btn btn-secundario" data-accion="cancelar" data-toque>Cancelar</button>
+        <button class="btn btn-peligro" data-accion="si-descartar" data-toque>Sí, descartar</button></div>
+    </div></div>
+  </div>`;
+}
+
+// ── Maqueta ──────────────────────────────────────────────────────────────────
+let abierta = false;
+const m = iniciarMaqueta({ telefono, porDefecto: { estado: 'normal' }, alCambiarEstado: () => { abierta = false; } });
+const { ctl, pintar, escenario } = m;
+
+escenario.addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-accion]'); if (!b) return;
+  const tel = b.closest('.tel');
+  switch (b.dataset.accion) {
+    case 'ver-todos': abierta = !abierta; pintar(); break;
+    case 'aviso': avisar(tel, b.dataset.aviso); break;
+    case 'descartar': tel.querySelector('.velo').classList.add('ver'); tel.querySelector('[data-accion="cancelar"]').focus(); break;
+    case 'cancelar': tel.querySelector('.velo').classList.remove('ver'); break;
+    case 'si-descartar':
+      ctl.estado = 'normal'; pintar();
+      escenario.querySelectorAll('.tel').forEach((t) => avisar(t, 'Descartaste la sesión. Pierna A vuelve a quedar para hoy.'));
+      break;
+  }
+});
+</script>
+</body>
+</html>

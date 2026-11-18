@@ -1,0 +1,83 @@
+{
+  "page": {
+    "id": "marca",
+    "name": "2 · Marca"
+  },
+  "boards": {
+    "MTipoResumen.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1680,
+      "h": 980,
+      "title": "Tipografía: las 6 opciones",
+      "page": "marca"
+    },
+    "MTipo1.dc.html": {
+      "x": 0,
+      "y": 1340,
+      "w": 1200,
+      "h": 980,
+      "title": "Tipografía 1 · Manrope + IBM Plex Mono",
+      "page": "marca"
+    },
+    "MTipo2.dc.html": {
+      "x": 1280,
+      "y": 1340,
+      "w": 1200,
+      "h": 980,
+      "title": "Tipografía 2 · Source Sans 3 + IBM Plex Mono",
+      "page": "marca"
+    },
+    "MTipo3.dc.html": {
+      "x": 2560,
+      "y": 1340,
+      "w": 1200,
+      "h": 980,
+      "title": "Tipografía 3 · Atkinson Hyperlegible Next + Atkinson Hyperlegible Mono",
+      "page": "marca"
+    },
+    "MTipo4.dc.html": {
+      "x": 0,
+      "y": 2680,
+      "w": 1200,
+      "h": 980,
+      "title": "Tipografía 4 · Barlow + Chivo Mono",
+      "page": "marca"
+    },
+    "MTipo5.dc.html": {
+      "x": 1280,
+      "y": 2680,
+      "w": 1200,
+      "h": 980,
+      "title": "Tipografía 5 · Chivo + Chivo Mono",
+      "page": "marca"
+    },
+    "MTipo6.dc.html": {
+      "x": 2560,
+      "y": 2680,
+      "w": 1200,
+      "h": 980,
+      "title": "Tipografía 6 · Rubik + IBM Plex Mono",
+      "page": "marca"
+    }
+  },
+  "order": [
+    "MTipoResumen.dc.html",
+    "MTipo1.dc.html",
+    "MTipo2.dc.html",
+    "MTipo3.dc.html",
+    "MTipo4.dc.html",
+    "MTipo5.dc.html",
+    "MTipo6.dc.html"
+  ],
+  "notes": {
+    "mt0": {
+      "x": 0,
+      "y": -300,
+      "text": "Tipografía: elige una voz",
+      "kind": "title1",
+      "maxW": 3840,
+      "page": "marca"
+    }
+  }
+}

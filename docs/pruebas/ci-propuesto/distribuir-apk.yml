@@ -1,0 +1,106 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Distribuir el APK de prueba · borrador
+#
+# Reemplaza el job «apk-staging» de staging.yml. En cada push a main que toque la
+# app o lo compartido: EAS compila el APK del perfil «preview» (apunta a
+# api-staging.<dominio> y al proyecto de Firebase de staging) y lo sube a Firebase
+# App Distribution para el grupo «equipo». A mano se puede mandar también a los
+# grupos de la prueba piloto. Es el paso de antes de Google Play: la prueba cerrada
+# de Play sigue saliendo de version.yml.
+#
+# «paths» en el disparador está bien aquí: este workflow no es un check obligatorio
+# (ci.md explica por qué los obligatorios no lo usan).
+#
+# Entra a Google Cloud con Workload Identity Federation: GitHub no guarda ninguna
+# llave. La cuenta de servicio «gh-distribucion» del proyecto de staging solo
+# tiene el rol «Firebase App Distribution Admin».
+# ─────────────────────────────────────────────────────────────────────────────
+name: Distribuir APK
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/mobile/**"
+      - "packages/**"
+      - "pnpm-lock.yaml"
+  workflow_dispatch:
+    inputs:
+      grupos:
+        description: "Alias de grupos de App Distribution, separados por coma"
+        type: string
+        default: equipo
+      notas:
+        type: string
+        required: false
+
+permissions:
+  contents: read
+  id-token: write   # para Workload Identity Federation
+
+# Un APK nuevo deja obsoleto al anterior. Cancelar aquí no cancela la compilación en EAS.
+concurrency:
+  group: distribuir-apk
+  cancel-in-progress: true
+
+env:
+  EAS_CLI_VERSION: "PENDIENTE"        # la misma que staging.yml y version.yml (eas.json pide 16 o más)
+  FIREBASE_TOOLS_VERSION: "PENDIENTE" # fijar una versión exacta de firebase-tools
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    environment: staging
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/preparar
+
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: ${{ env.EAS_CLI_VERSION }}
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      # PENDIENTE en apps/mobile/eas.json, perfil «preview»: env EXPO_PUBLIC_API_URL de
+      # staging y el google-services.json de staging como variable de archivo de EAS
+      # (GOOGLE_SERVICES_JSON). Conviene un paquete propio (com.gymtrack.app.staging)
+      # para instalarlo junto al de Play; eso pide pasar app.json a app.config.ts.
+      # Cada compilación gasta del plan de EAS: si no alcanza, «eas build --local».
+      - name: Compilar el APK de vista previa
+        working-directory: apps/mobile
+        run: |
+          eas build --platform android --profile preview --non-interactive --wait --json > build.json
+          curl -fsSL -o gymtrack-preview.apk "$(jq -r '.[0].artifacts.buildUrl' build.json)"
+
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVEEDOR_STAGING }}
+          service_account: ${{ vars.GCP_SA_DISTRIBUCION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Subir a Firebase App Distribution
+        working-directory: apps/mobile
+        env:
+          FIREBASE_APP_ID: ${{ vars.FIREBASE_APP_ID_ANDROID_STAGING }}
+          GRUPOS: ${{ inputs.grupos || 'equipo' }}
+          NOTAS_MANUALES: ${{ inputs.notas }}
+        run: |
+          NOTAS="${NOTAS_MANUALES:-$(git log -1 --pretty='%h %s')} · apunta a staging"
+          npx --yes "firebase-tools@${FIREBASE_TOOLS_VERSION}" appdistribution:distribute gymtrack-preview.apk \
+            --app "$FIREBASE_APP_ID" --groups "$GRUPOS" --release-notes "$NOTAS"
+          {
+            echo "### APK de vista previa"
+            echo "- Grupos: $GRUPOS"
+            echo "- Notas: $NOTAS"
+            echo "- App Distribution guarda cada versión 150 días."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apk-preview-${{ github.sha }}
+          path: apps/mobile/gymtrack-preview.apk
+          retention-days: 7

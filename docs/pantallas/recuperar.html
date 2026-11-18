@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GymTrack · Recuperar contraseña</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="sistema.css">
+<style>
+  /* ── Piezas de acceso (las mismas en ingreso, crear cuenta, recuperar y encuesta) ── */
+  .barra { flex: 0 0 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 4px; }
+  .btn:disabled { background: var(--desh-fondo); border-color: transparent; color: var(--desh-texto); cursor: not-allowed; }
+  .btn-fantasma:disabled { background: transparent; }
+  .btn[aria-busy="true"] { pointer-events: none; }
+  .apila { display: flex; flex-direction: column; gap: 8px; }
+
+  .fld { margin-top: 20px; }
+  .fld-rot { display: block; margin: 0 0 6px; font: 600 14px/1.3 var(--letra); }
+  .fld-caja { display: flex; align-items: center; height: 56px; border: 2px solid var(--campo-borde);
+    border-radius: var(--radio); background: var(--campo-fondo); }
+  .fld-caja:focus-within { border-color: var(--accion); }
+  .fld-caja input { flex: 1; min-width: 0; height: 100%; padding: 0 14px; border: 0; border-radius: var(--radio);
+    background: transparent; color: var(--texto); font: 500 17px/1.2 var(--letra); outline: none; }
+  .fld-caja .btn { min-height: 48px; margin-right: 2px; padding: 0 14px; font-size: 15px; }
+  .fld.error .fld-caja { border-color: var(--peligro); }
+  .fld-msj { display: flex; align-items: flex-start; gap: 6px; margin: 6px 0 0; font: 600 14px/1.35 var(--letra); color: var(--peligro); }
+  .fld-msj svg { flex: 0 0 16px; height: 16px; margin-top: 1px; fill: currentColor; }
+  .fld-caja.desh { background: var(--desh-fondo); border-color: transparent; }
+  .fld-caja.desh input { color: var(--desh-texto); }
+
+  .cargando { position: absolute; left: 0; right: 0; top: 28px; z-index: 2; height: 3px; overflow: hidden; background: var(--sup-alta); }
+  .cargando::before { content: ""; position: absolute; top: 0; bottom: 0; left: -40%; width: 40%; background: var(--accion);
+    animation: carga 1.1s linear infinite; }
+  @keyframes carga { to { left: 100%; } }
+  @media (prefers-reduced-motion: reduce) { .cargando::before { animation: none; left: 0; width: 100%; } }
+
+  .regla { display: flex; align-items: center; gap: 8px; margin-top: 8px; font: 500 14px/1.3 var(--letra); color: var(--texto-2); }
+  .regla .caja { flex: 0 0 24px; height: 24px; border: 2px solid var(--marcar-borde); border-radius: 4px;
+    display: flex; align-items: center; justify-content: center; }
+  .regla .caja svg { width: 20px; height: 20px; }
+  .regla .caja path { stroke: var(--visto); }
+  .regla .cuenta { margin-left: auto; font: 500 13px/1 var(--mono); }
+  .regla.si { color: var(--texto); }
+  .regla.si .caja { background: var(--hecho-fondo); border-color: var(--hecho-borde); }
+  .regla.error { color: var(--peligro); font-weight: 600; }
+  .regla.error .caja { border-color: var(--peligro); }
+
+  /* ── Piezas propias de recuperar ───────────────────────────────────────── */
+  .cuerpo > .ceja { margin-top: 8px; }
+  .cuerpo .titulo { margin-top: 4px; }
+  .cuerpo > .sec { margin-top: 8px; font-size: 15px; }
+  .cuerpo > .sec b { color: var(--texto); font-weight: 600; word-break: break-all; }
+  .ceja.alerta { color: var(--peligro); }
+
+  .vence { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-top: 24px; }
+  .vence > div > .cifra { display: block; margin-top: 4px; font-size: 32px; line-height: 1; }
+  .vence .sec .cifra { color: var(--texto); }
+  .vence .sec { text-align: right; font-size: 13px; }
+
+  .pistas { list-style: none; margin: 0; padding: 0; }
+  .pistas li { position: relative; padding: 6px 0 6px 18px; font-size: 15px; line-height: 1.4; }
+  .pistas li::before { content: ""; position: absolute; left: 0; top: 16px; width: 8px; height: 3px; border-radius: 1px; background: var(--texto-2); }
+  .otro { margin: 12px 0 0 -12px; }
+
+  .hecho-grande { width: 56px; height: 56px; margin: 16px 0 8px; border-radius: var(--radio); display: flex; align-items: center; justify-content: center;
+    background: var(--hecho-fondo); border: 2px solid var(--hecho-borde); }
+  .hecho-grande svg { width: 32px; height: 32px; }
+  .hecho-grande path { stroke: var(--visto); }
+
+  .nota-sesion { margin-top: 20px; font-size: 13px; }
+
+  .notas-maqueta { max-width: 860px; margin: 32px auto 0; color: var(--p-texto-2); font-size: 14px; }
+  .notas-maqueta h2 { color: var(--p-texto); font-size: 16px; margin: 0 0 8px; }
+  .notas-maqueta ul { margin: 0; padding-left: 18px; }
+  .notas-maqueta li { margin: 4px 0; }
+</style>
+</head>
+<body>
+<main class="maqueta">
+  <header class="maqueta-cabeza">
+    <h1>Pantalla 3 · Recuperar contraseña</h1>
+    <p>Dirección Más · 412 × 892 dp · <a href="ingreso.html">Ingreso</a> · <a href="index.html">todas las pantallas</a></p>
+  </header>
+
+  <div class="controles" role="group" aria-label="Controles de la maqueta">
+    <label class="grupo"><span class="rot">Estado</span>
+      <select class="ctl" data-ctl="estado">
+        <option value="pedir">Pedir el enlace</option>
+        <option value="pedir-error">Correo mal escrito</option>
+        <option value="enviando">Enviando</option>
+        <option value="enviado">Enlace enviado</option>
+        <option value="limite">Límite de envíos</option>
+        <option value="nueva">Nueva contraseña (desde el enlace)</option>
+        <option value="guardando">Guardando</option>
+        <option value="lista">Contraseña guardada</option>
+        <option value="vencido">Enlace vencido</option>
+      </select></label>
+    <label class="grupo"><span class="rot">Tema</span>
+      <select class="ctl" data-ctl="tema">
+        <option value="gimnasio">Modo gimnasio</option>
+        <option value="clara">Clara</option>
+        <option value="ambos">Las dos</option>
+      </select></label>
+    <label class="grupo"><span class="rot">Tamaño</span>
+      <select class="ctl" data-ctl="zoom">
+        <option value="ajustar">Ajustar al ancho</option>
+        <option value="100">Real (1 dp = 1 px)</option>
+        <option value="150">150 %</option>
+      </select></label>
+    <label class="grupo"><input type="checkbox" data-ctl="medidas"><span>Medidas de toque</span></label>
+  </div>
+
+  <div class="escenario" id="escenario"></div>
+
+  <section class="notas-maqueta">
+    <h2>Qué mirar</h2>
+    <ul>
+      <li>El mensaje de «enlace enviado» no confirma que el correo tenga cuenta («si … tiene una cuenta»): la API responde lo mismo siempre, para no revelar quién está registrado.</li>
+      <li>La hora exacta en que vence el enlace (10:41, una hora después de pedirlo) dice más que «una hora».</li>
+      <li>«Reenviar enlace» espera un minuto entre envíos. Al tercer envío de la hora aparece el límite del PRD (3 por hora por correo).</li>
+      <li>«Abrir correo» abriría la app de correo; el enlace trae de vuelta a «Nueva contraseña». Para ver ese paso y el de enlace vencido, usa el selector de estado.</li>
+      <li>La contraseña nueva usa la misma regla visible que Crear cuenta. No pide repetirla: con «Mostrar» se revisa.</li>
+    </ul>
+  </section>
+</main>
+
+<script src="maqueta.js"></script>
+<script>
+// ── Datos de prueba ──────────────────────────────────────────────────────────
+const CORREO = 'martina@ejemplo.cl';
+const VENCE = '10:41';          // el enlace se pidió a las 9:41 y dura una hora
+const PROXIMO_PERMITIDO = '10:12'; // el primero de los 3 envíos fue a las 9:12
+const ESPERA_REENVIO = 60;      // segundos entre envíos
+const VENCIDO = { pedido: '8:20', vence: '9:20' }; // un enlace de esta mañana, abierto tarde
+const MINIMO = 8;
+
+// ── Estado de la pantalla ────────────────────────────────────────────────────
+let S;
+function nuevoEstado(estado) {
+  clearTimeout(nuevoEstado.t);
+  const paso = { 'pedir-error': 'pedir', enviando: 'pedir', guardando: 'nueva' }[estado] || estado;
+  S = { paso, correo: '', clave: '', err: {}, ver: false, cargando: false, envios: 0, reenvioFin: 0 };
+  if (estado === 'pedir-error') { S.correo = 'martina.ejemplo.cl'; S.err.correo = 'Revisa el correo: le falta la @.'; }
+  if (estado === 'enviando') { S.correo = CORREO; S.cargando = true; }
+  if (estado === 'enviado') { S.correo = CORREO; S.envios = 1; S.reenvioFin = Date.now() + 52000; }
+  if (estado === 'limite') { S.correo = CORREO; S.envios = 3; }
+  if (estado === 'guardando') { S.clave = 'sentadilla25'; S.cargando = true; }
+  if (['vencido', 'lista', 'nueva', 'guardando'].includes(estado)) S.correo = CORREO;
+}
+const restaReenvio = () => Math.max(0, Math.ceil((S.reenvioFin - Date.now()) / 1000));
+
+// ── Íconos ───────────────────────────────────────────────────────────────────
+const icoVolver = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H5M11 5l-7 7 7 7"/></svg>';
+const icoAlerta = '<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="6.75" y="1.5" width="2.5" height="8.5" rx=".5"/><rect x="6.75" y="11.5" width="2.5" height="2.5" rx=".5"/></svg>';
+
+// ── Piezas ───────────────────────────────────────────────────────────────────
+function campo(tema, { id, rot, tipo = 'text', modo, auto, extra = '', pie = '' }) {
+  const err = S.err[id];
+  const msj = err && id !== 'clave' ? `<p class="fld-msj" id="${tema}-${id}-msj">${icoAlerta}<span>${err}</span></p>` : '';
+  return `<div class="fld${err ? ' error' : ''}">
+    <label class="fld-rot" for="${tema}-${id}">${rot}</label>
+    <div class="fld-caja${S.cargando ? ' desh' : ''}" data-toque>
+      <input id="${tema}-${id}" data-campo="${id}" type="${tipo}" ${modo ? `inputmode="${modo}"` : ''} autocomplete="${auto}"
+        autocapitalize="off" spellcheck="false" value="${S[id]}" ${S.cargando ? 'disabled' : ''}
+        ${err ? `aria-invalid="true" aria-describedby="${tema}-${id}-msj"` : ''}>${extra}
+    </div>${msj}${pie}
+  </div>`;
+}
+
+function regla(tema) {
+  const n = S.clave.length, ok = n >= MINIMO, error = !ok && S.err.clave, falta = MINIMO - n;
+  const texto = error ? `Al menos ${MINIMO} caracteres · te ${falta === 1 ? 'falta 1' : `faltan ${falta}`}` : `Al menos ${MINIMO} caracteres`;
+  return `<p class="regla${ok ? ' si' : ''}${error ? ' error' : ''}" id="${tema}-clave-msj">
+    <span class="caja" aria-hidden="true">${ok ? visto() : ''}</span><span>${texto}</span>
+    ${ok ? '' : `<span class="cuenta" aria-label="${n} de ${MINIMO}">${n}/${MINIMO}</span>`}</p>`;
+}
+
+const primario = (texto, accion, ocupado) => (ocupado
+  ? `<button class="btn btn-primario ancho alto" aria-busy="true" data-toque>${ocupado}</button>`
+  : `<button class="btn btn-primario ancho alto" data-accion="${accion}" data-toque>${texto}</button>`);
+const volverIngreso = '<button class="btn btn-fantasma ancho" data-ir="ingreso.html" data-toque>Volver a ingresar</button>';
+
+// Cada paso devuelve [contenido, acción de abajo].
+const PASOS = {
+  pedir: (tema) => [`
+      <h1 class="titulo">Recupera tu contraseña</h1>
+      <p class="sec">Escribe el correo de tu cuenta. Te mandamos un enlace para crear una contraseña nueva.</p>
+      ${campo(tema, { id: 'correo', rot: 'Correo', modo: 'email', auto: 'email' })}`,
+    primario('Enviar enlace', 'enviar', S.cargando && 'Enviando…')],
+
+  enviado: () => {
+    const resta = restaReenvio();
+    const reenviar = resta
+      ? `<button class="btn btn-secundario ancho" disabled data-toque>Reenviar en <span class="cifra" data-cuenta>${fmtReloj(resta)}</span></button>`
+      : `<button class="btn btn-secundario ancho" data-accion="reenviar" data-toque>Reenviar enlace</button>`;
+    return [`
+      <p class="ceja acento">Enlace enviado</p>
+      <h1 class="titulo">Revisa tu correo</h1>
+      <p class="sec">Si <b>${S.correo}</b> tiene una cuenta en GymTrack, le llegó un enlace para crear una contraseña nueva.</p>
+      <div class="tarjeta vence">
+        <div><p class="ceja">El enlace vence a las</p><span class="cifra">${VENCE}</span></div>
+        <p class="sec">Dura una hora<br>y sirve una sola vez.</p>
+      </div>
+      <div class="seccion-cabeza"><h2 class="h3">¿No te llega?</h2></div>
+      <ul class="pistas">
+        <li>Espera un par de minutos.</li>
+        <li>Revisa las carpetas de spam y promociones.</li>
+        <li>Revisa que el correo esté bien escrito.</li>
+      </ul>
+      <div class="otro"><button class="btn btn-fantasma" data-accion="otro-correo" data-toque>Usar otro correo</button></div>`,
+    `<div class="apila">${primario('Abrir correo', 'abrir-correo')}${reenviar}</div>`];
+  },
+
+  limite: () => [`
+      <p class="ceja alerta">Límite de envíos</p>
+      <h1 class="titulo">Ya pediste 3 enlaces</h1>
+      <p class="sec">Por seguridad, puedes pedir 3 por hora. Podrás pedir otro a las <span class="cifra">${PROXIMO_PERMITIDO}</span>.</p>
+      <div class="tarjeta" style="margin-top:24px"><p class="h3" style="font-size:16px">Mientras, revisa tu correo</p>
+        <p class="sec" style="margin-top:4px">Puede que alguno ya te haya llegado a spam o promociones. Abre el más reciente.</p></div>`,
+    `<div class="apila">${primario('Abrir correo', 'abrir-correo')}${volverIngreso}</div>`],
+
+  nueva: (tema) => {
+    const ver = `<button class="btn btn-fantasma" data-accion="ver-clave" aria-pressed="${S.ver}" ${S.cargando ? 'disabled' : ''} data-toque>${S.ver ? 'Ocultar' : 'Mostrar'}</button>`;
+    return [`
+      <h1 class="titulo">Crea tu contraseña nueva</h1>
+      <p class="sec">Para <b>${S.correo}</b>.</p>
+      ${campo(tema, { id: 'clave', rot: 'Contraseña nueva', tipo: S.ver ? 'text' : 'password', auto: 'new-password', extra: ver, pie: regla(tema) })}
+      <p class="sec nota-sesion">Al guardarla, se cierra tu sesión en los demás teléfonos.</p>`,
+    primario('Guardar contraseña', 'guardar', S.cargando && 'Guardando…')];
+  },
+
+  lista: () => [`
+      <div class="hecho-grande" aria-hidden="true">${visto()}</div>
+      <p class="ceja acento">Listo</p>
+      <h1 class="titulo">Guardaste tu contraseña nueva</h1>
+      <p class="sec">Ya puedes ingresar con ella. Cerramos tu sesión en los demás teléfonos.</p>`,
+    `<button class="btn btn-primario ancho alto" data-ir="ingreso.html" data-toque>Ingresar</button>`],
+
+  vencido: () => [`
+      <p class="ceja alerta">Enlace vencido</p>
+      <h1 class="titulo">Este enlace ya no sirve</h1>
+      <p class="sec">Los enlaces duran una hora y se usan una sola vez. Pide otro y ábrelo apenas te llegue.</p>
+      <div class="tarjeta vence">
+        <div><p class="ceja">Este venció a las</p><span class="cifra">${VENCIDO.vence}</span></div>
+        <p class="sec">Lo pediste hoy<br>a las <span class="cifra">${VENCIDO.pedido}</span>.</p>
+      </div>`,
+    `<div class="apila">${primario('Pedir otro enlace', 'pedir-otro')}${volverIngreso}</div>`],
+};
+
+function telefono(tema) {
+  const [contenido, accion] = PASOS[S.paso](tema);
+  return `<div class="tel" data-tema="${tema}">
+    <div class="tel-estado"><span class="cifra" style="font-weight:600">9:41</span><span>5G · 82 %</span></div>
+    ${S.cargando ? '<div class="cargando" role="progressbar" aria-label="Cargando"></div>' : ''}
+    <div class="barra"><button class="btn-icono" data-ir="ingreso.html" aria-label="Volver al ingreso" ${S.cargando ? 'disabled' : ''} data-toque>${icoVolver}</button></div>
+    <div class="tel-contenido"><div class="cuerpo">${contenido}</div></div>
+    <div class="tel-accion">${accion}</div>
+    <div class="tel-gesto"></div>
+    <div class="aviso" role="status"></div>
+  </div>`;
+}
+
+// ── Maqueta ──────────────────────────────────────────────────────────────────
+const m = iniciarMaqueta({ telefono, porDefecto: { estado: 'pedir' }, alCambiarEstado: nuevoEstado });
+const { ctl, escenario } = m;
+
+function repintar() {
+  const a = document.activeElement;
+  const foco = a && a.dataset && a.dataset.campo && a.closest('.tel')
+    ? { tema: a.closest('.tel').dataset.tema, campo: a.dataset.campo, ini: a.selectionStart, fin: a.selectionEnd } : null;
+  const scroll = [...escenario.querySelectorAll('.tel-contenido')].map((c) => c.scrollTop);
+  m.pintar();
+  escenario.querySelectorAll('.tel-contenido').forEach((c, k) => { c.scrollTop = scroll[k] || 0; });
+  if (foco) {
+    const el = escenario.querySelector(`.tel[data-tema="${foco.tema}"] [data-campo="${foco.campo}"]`);
+    if (el && !el.disabled) { el.focus({ preventScroll: true }); try { el.setSelectionRange(foco.ini, foco.fin); } catch (e) { /* sin selección */ } }
+  }
+}
+const ir = (estado, cambios) => { Object.assign(S, cambios); ctl.estado = estado; repintar(); };
+const avisarTodos = (t) => escenario.querySelectorAll('.tel').forEach((tel) => avisar(tel, t));
+
+function enviar(tel) {
+  const c = S.correo.trim();
+  const err = !c ? 'Escribe tu correo.' : !c.includes('@') ? 'Revisa el correo: le falta la @.'
+    : !/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(c) ? 'Revisa el correo: le falta el final, como .cl o .com.' : null;
+  if (err) { S.err.correo = err; ctl.estado = 'pedir-error'; repintar(); tel.querySelector('[data-campo="correo"]').focus(); return; }
+  ir('enviando', { cargando: true });
+  nuevoEstado.t = setTimeout(() => ir('enviado', { paso: 'enviado', cargando: false, envios: 1, reenvioFin: Date.now() + ESPERA_REENVIO * 1000 }), 1200);
+}
+
+function guardar(tel) {
+  if (S.clave.length < MINIMO) { S.err.clave = 'corta'; repintar(); tel.querySelector('[data-campo="clave"]').focus(); return; }
+  ir('guardando', { cargando: true });
+  nuevoEstado.t = setTimeout(() => ir('lista', { paso: 'lista', cargando: false }), 1200);
+}
+
+escenario.addEventListener('input', (ev) => {
+  const c = ev.target.closest('[data-campo]'); if (!c) return;
+  S[c.dataset.campo] = c.value;
+  if (c.dataset.campo === 'correo') delete S.err.correo;
+  else if (S.clave.length >= MINIMO) delete S.err.clave;
+  repintar();
+});
+
+escenario.addEventListener('keydown', (ev) => {
+  if (ev.key !== 'Enter' || !ev.target.matches('input[data-campo]') || S.cargando) return;
+  ev.preventDefault();
+  if (S.paso === 'pedir') enviar(ev.target.closest('.tel')); else guardar(ev.target.closest('.tel'));
+});
+
+escenario.addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-accion]'); if (!b || b.disabled) return;
+  const tel = b.closest('.tel');
+  switch (b.dataset.accion) {
+    case 'enviar': enviar(tel); break;
+    case 'guardar': guardar(tel); break;
+    case 'ver-clave': S.ver = !S.ver; repintar(); break;
+    case 'abrir-correo': avisar(tel, 'Se abre tu app de correo. El enlace te trae de vuelta para crear la contraseña nueva.'); break;
+    case 'otro-correo': ir('pedir', { paso: 'pedir', err: {} }); break;
+    case 'pedir-otro': ir('pedir', { paso: 'pedir', err: {}, envios: 0 }); break;
+    case 'reenviar':
+      if (S.envios >= 3) { ir('limite', { paso: 'limite' }); break; }
+      S.envios += 1; S.reenvioFin = Date.now() + ESPERA_REENVIO * 1000; repintar();
+      avisarTodos(`Te mandamos otro enlace (${S.envios} de 3 en esta hora). Usa el más reciente.`);
+      break;
+  }
+});
+
+// Cuenta regresiva para reenviar.
+setInterval(() => {
+  if (S.paso !== 'enviado' || !S.reenvioFin) return;
+  const resta = restaReenvio();
+  escenario.querySelectorAll('[data-cuenta]').forEach((c) => { c.textContent = fmtReloj(resta); });
+  if (resta === 0) { S.reenvioFin = 0; repintar(); }
+}, 1000);
+</script>
+</body>
+</html>

@@ -1,0 +1,72 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Mensual · borrador
+#
+# El primer lunes de cada mes:
+#   restauracion  abre el issue de la revisión mensual de respaldos (§Disponibilidad;
+#                 MAN-024). La restauración ya no es a mano: respaldo-vps.yml la hace
+#                 cada lunes en el VPS de Vultr y aquí una persona revisa y anota las
+#                 del mes. El respaldo nunca baja al CI: trae datos de salud reales.
+#   dependencias  lista lo desactualizado (§Seguridad: actualización mensual).
+# ─────────────────────────────────────────────────────────────────────────────
+name: Mensual
+
+on:
+  # En cron, el día del mes y el día de la semana se combinan con «o», no con «y»;
+  # por eso corre todos los lunes y el primer paso sale si no es la primera semana.
+  schedule:
+    - cron: "0 12 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  restauracion:
+    runs-on: ubuntu-latest
+    steps:
+      - name: ¿Es el primer lunes del mes?
+        id: hoy
+        run: echo "toca=$([ "$(date -u +%d)" -le 7 ] && echo si || echo no)" >> "$GITHUB_OUTPUT"
+
+      - name: Issue con los pasos de la restauración de prueba
+        if: steps.hoy.outputs.toca == 'si' || github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          MES=$(date -u +%Y-%m)
+          gh issue create --label respaldo --title "Revisión de respaldos ${MES}" --body "$(cat <<'TXT'
+          Pasos (§Disponibilidad: respaldo diario, 14 días de retención, una restauración de prueba al mes):
+
+          - [ ] Abre las restauraciones de prueba del mes en respaldo-vps.yml (resumen y artefacto «restauracion-*») y copia aquí, de cada una, la fecha del respaldo, cuánto tardó y los conteos (INF-19).
+          - [ ] Confirma que ninguna falló y que no hay issues «respaldo» abiertos.
+          - [ ] En Google Cloud, revisa que el bucket de respaldos no tenga objetos de más de 14 días y que la cuenta vps-respaldos siga sin permiso para borrar (INF-17).
+          - [ ] Revisa que el bucket de medios de producción siga con el versionado activado y la regla de 7 días para versiones no actuales (INF-26).
+          - [ ] En Vultr, revisa que los respaldos automáticos de la instancia sigan activos y anota la fecha del último.
+          - [ ] Revisa en el servidor que unattended-upgrades corrió en la última semana (INF-34).
+          TXT
+          )"
+
+  dependencias:
+    runs-on: ubuntu-latest
+    steps:
+      - name: ¿Es el primer lunes del mes?
+        id: hoy
+        run: echo "toca=$([ "$(date -u +%d)" -le 7 ] && echo si || echo no)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v4
+        if: steps.hoy.outputs.toca == 'si' || github.event_name == 'workflow_dispatch'
+
+      - uses: ./.github/actions/preparar
+        if: steps.hoy.outputs.toca == 'si' || github.event_name == 'workflow_dispatch'
+
+      - name: Issue con las dependencias desactualizadas
+        if: steps.hoy.outputs.toca == 'si' || github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          pnpm outdated -r > desactualizadas.txt || true
+          gh issue create --label dependencias --title "Dependencias desactualizadas $(date -u +%Y-%m)" \
+            --body "$(printf 'Revisa y actualiza en un PR propio. Primero lo que tenga avisos de seguridad.\n\n```\n%s\n```' "$(cat desactualizadas.txt)")"

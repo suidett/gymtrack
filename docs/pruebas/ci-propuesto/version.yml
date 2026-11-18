@@ -1,0 +1,187 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Versión · borrador
+#
+# Al empujar una etiqueta v1.2.3:
+#   0. comprobar       la etiqueta está en main y staging corre ese mismo commit
+#   1. suite-completa  corre nocturno.yml sobre ese commit; si no está verde, no sigue
+#   2. fotos-staging   SEG-017: URL vencida y purga de fotos en staging (§Riesgos)
+#   3. produccion      llama a desplegar-vps.yml: espera la aprobación del entorno «produccion»
+#                      y despliega en el VPS de Vultr la misma imagen que corrió en staging
+#   4. play-interna    AAB con EAS, a la pista de prueba interna de Google Play, y tamaño (REN-006)
+#   5. release         release de GitHub con el changelog
+# Pasar de prueba interna a prueba cerrada o a producción en Play se hace a mano.
+# ─────────────────────────────────────────────────────────────────────────────
+name: Versión
+
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: write   # para crear el release
+  issues: write
+
+concurrency:
+  group: version
+  cancel-in-progress: false
+
+env:
+  EAS_CLI_VERSION: "PENDIENTE"
+  BUNDLETOOL_VERSION: "PENDIENTE"
+
+jobs:
+  # La carga y la seguridad de la suite nocturna se miden contra staging. Si staging
+  # corre otro commit, la versión se aprobaría con pruebas de otro código.
+  comprobar:
+    runs-on: ubuntu-latest
+    environment: staging
+    timeout-minutes: 5
+    env:
+      STAGING_API_URL: ${{ vars.STAGING_API_URL }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: La etiqueta está en main
+        run: git merge-base --is-ancestor "$GITHUB_SHA" origin/main
+
+      # PENDIENTE: que /health devuelva la versión y el commit desplegados
+      # ({ "estado": "ok", "version": "sha-<sha>", "commit": "<sha>" }). El commit lo
+      # trae la imagen desde su construcción (build-arg COMMIT en desplegar-vps.yml).
+      - name: Staging corre este commit
+        run: |
+          DESPLEGADO=$(curl -fsS "$STAGING_API_URL/health" | jq -r '.commit')
+          if [ "$DESPLEGADO" != "$GITHUB_SHA" ]; then
+            echo "::error::Staging corre $DESPLEGADO y la etiqueta apunta a $GITHUB_SHA. Espera a staging.yml o etiqueta el commit desplegado."
+            exit 1
+          fi
+
+  suite-completa:
+    needs: comprobar
+    uses: ./.github/workflows/nocturno.yml
+    secrets: inherit
+
+  fotos-staging:
+    needs: suite-completa
+    runs-on: ubuntu-latest
+    environment: staging
+    timeout-minutes: 30
+    env:
+      STAGING_API_URL: ${{ vars.STAGING_API_URL }}
+      HUMO_CLAVE: ${{ secrets.HUMO_CLAVE }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/preparar
+
+      # Sube una foto con la cuenta humo.purga al bucket de staging, prueba la URL firmada
+      # a los 16 minutos (debe dar 403, INF-23) y borra la cuenta.
+      # PENDIENTE: script «seguridad:fotos-staging» con las fases «antes» y «despues».
+      - name: Fotos privadas en staging
+        run: pnpm --filter api run seguridad:fotos-staging -- --fase antes
+
+      # La purga adelantada 31 días corre en el servidor, dentro del worker de staging, por
+      # SSH con la llave de staging (puerta-ssh.sh solo acepta «purgar staging <fecha>»).
+      # Staging usa el reloj real y no tiene rutas /test/*; el worker acepta --ahora solo
+      # fuera de producción (P-52, SEG-032).
+      - name: Purga adelantada en staging
+        env:
+          VULTR_SSH_KEY: ${{ secrets.VULTR_SSH_KEY }}
+          VULTR_HOST: ${{ vars.VULTR_HOST }}
+          VULTR_SSH_HOST_KEY: ${{ vars.VULTR_SSH_HOST_KEY }}
+          VULTR_SSH_USER: ${{ vars.VULTR_SSH_USER }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$VULTR_SSH_KEY" > ~/.ssh/despliegue && chmod 600 ~/.ssh/despliegue
+          printf '%s %s\n' "$VULTR_HOST" "$VULTR_SSH_HOST_KEY" > ~/.ssh/known_hosts
+          ssh -i ~/.ssh/despliegue -o BatchMode=yes "$VULTR_SSH_USER@$VULTR_HOST" \
+            "purgar staging $(date -u -d '+31 days' +%Y-%m-%dT%H:%M:%SZ)" </dev/null
+
+      # La clave ya no existe como versión actual y como versión no actual dura 7 días
+      # como máximo (INF-26, P-58).
+      - name: La foto ya no está
+        run: pnpm --filter api run seguridad:fotos-staging -- --fase despues
+
+  # desplegar-vps.yml pone la etiqueta v1.2.3 a la imagen sha-<commit> que corrió en
+  # staging (sin recompilar), espera la aprobación del entorno «produccion», entra por
+  # SSH a Vultr, toma un respaldo predespliegue, migra, levanta, revisa /health con la
+  # versión, corre el humo de solo lectura (humo:produccion con HUMO_CLAVE_PRODUCCION)
+  # y vuelve atrás si algo falla. En GitHub basta UNA aprobación de la lista de
+  # revisores: el entorno lleva una persona de cada frente y «Prevent self-review»,
+  # para que quien empujó la etiqueta no se apruebe solo.
+  # Si la migración borra o renombra algo, el PR trajo su plan de vuelta atrás.
+  produccion:
+    needs: [suite-completa, fotos-staging]
+    permissions:
+      contents: read
+      packages: write   # para etiquetar la imagen en GHCR
+      issues: write
+    uses: ./.github/workflows/desplegar-vps.yml
+    with:
+      entorno: produccion
+      version: ${{ github.ref_name }}
+    secrets: inherit
+
+  # Este job vuelve a pedir la aprobación del entorno «produccion»: es a propósito,
+  # para que subir a Play sea una decisión aparte de desplegar la API.
+  play-interna:
+    needs: produccion
+    runs-on: ubuntu-latest
+    environment: produccion
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/preparar
+
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: ${{ env.EAS_CLI_VERSION }}
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Compilar el AAB de producción
+        working-directory: apps/mobile
+        run: |
+          eas build --platform android --profile production --non-interactive --wait --json > build.json
+          curl -fsSL -o gymtrack.aab "$(jq -r '.[0].artifacts.buildUrl' build.json)"
+
+      # La cuenta de servicio de Google Play vive en EAS, no en GitHub.
+      # PENDIENTE: en eas.json, submit.production.android.track = "internal".
+      - name: Subir a la pista de prueba interna
+        working-directory: apps/mobile
+        run: eas submit --platform android --profile production --latest --non-interactive
+
+      # REN-006: la app instalada pesa menos de 60 MB (§Rendimiento).
+      - name: Tamaño de la app
+        working-directory: apps/mobile
+        run: |
+          curl -fsSL -o bundletool.jar \
+            "https://github.com/google/bundletool/releases/download/${BUNDLETOOL_VERSION}/bundletool-all-${BUNDLETOOL_VERSION}.jar"
+          java -jar bundletool.jar build-apks --bundle=gymtrack.aab --output=gymtrack.apks --mode=universal
+          java -jar bundletool.jar get-size total --apks=gymtrack.apks | tee tamano.csv
+          {
+            echo "### Tamaño de la app"
+            echo '```'
+            cat tamano.csv
+            echo '```'
+            echo "Objetivo: menos de 60 MB instalada (§Rendimiento)."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aab-${{ github.ref_name }}
+          path: |
+            apps/mobile/gymtrack.aab
+            apps/mobile/tamano.csv
+          retention-days: 90
+
+  release:
+    needs: play-interna
+    runs-on: ubuntu-latest
+    steps:
+      - name: Crear el release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh release create "$GITHUB_REF_NAME" --generate-notes --title "GymTrack $GITHUB_REF_NAME"

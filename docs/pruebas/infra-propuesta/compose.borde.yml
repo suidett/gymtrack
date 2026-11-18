@@ -1,0 +1,54 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Borde: Caddy con HTTPS automático · BORRADOR
+#
+# Un solo Caddy para los dos entornos. Es el único contenedor que publica puertos
+# (80, 443 y 443/udp para HTTP/3). Pide y renueva solo los certificados de
+# Let's Encrypt para api.<dominio> y api-staging.<dominio>.
+#
+# El volumen caddy_data guarda los certificados: si se pierde, Caddy los vuelve a
+# pedir y con varios intentos seguidos se puede topar con los límites de Let's Encrypt.
+#
+# En el servidor va en /opt/gymtrack/borde/, junto al Caddyfile y a un .env con
+# DOMINIO y CORREO_ACME. Se levanta una vez:
+#   docker network create borde
+#   docker compose -f /opt/gymtrack/borde/compose.borde.yml up -d
+# ─────────────────────────────────────────────────────────────────────────────
+name: gymtrack-borde
+
+services:
+  caddy:
+    image: caddy:2-alpine        # PENDIENTE: fijar 2.x exacta y su digest
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMINIO: ${DOMINIO:?falta DOMINIO}
+      CORREO_ACME: ${CORREO_ACME:?falta CORREO_ACME}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 64m
+    memswap_limit: 64m
+    cpus: 0.5
+    logging:
+      driver: local
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      borde: {}
+
+networks:
+  borde:
+    external: true
+
+volumes:
+  caddy_data: {}
+  caddy_config: {}

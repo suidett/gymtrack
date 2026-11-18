@@ -1,0 +1,38 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Staging · borrador
+#
+# En cada push a main despliega a staging en el VPS de Vultr. Ya no habla con
+# Railway: llama a desplegar-vps.yml, que construye la imagen sha-<commit>, la
+# publica en GHCR, entra por SSH con la llave de staging, migra con Prisma, levanta,
+# revisa /health con la versión, corre el humo contra staging (humo:staging, con las
+# cuentas humo.*) y vuelve atrás si algo falla. Si falla, abre un issue «staging-roto».
+#
+# El APK de staging para teléfonos reales ya no sale de aquí: lo compila y lo reparte
+# distribuir-apk.yml por Firebase App Distribution, solo cuando cambia la app.
+#
+# version.yml («comprobar») exige que staging corra el commit de la etiqueta: este
+# workflow es el que lo deja así.
+# ─────────────────────────────────────────────────────────────────────────────
+name: Staging
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Nunca dos despliegues a staging a la vez, y nunca se cancela uno a medias.
+concurrency:
+  group: staging
+  cancel-in-progress: false
+
+jobs:
+  desplegar:
+    permissions:
+      contents: read
+      packages: write   # publicar la imagen en GHCR
+      issues: write
+    uses: ./.github/workflows/desplegar-vps.yml
+    with:
+      entorno: staging
+      version: sha-${{ github.sha }}
+    secrets: inherit

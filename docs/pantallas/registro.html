@@ -1,0 +1,475 @@
+<!doctype html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GymTrack · Registro de sesión</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="sistema.css">
+<style>
+  /* ── Barra superior: salir, reloj, terminar ────────────────────────────── */
+  .reg-barra { flex: 0 0 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 4px 0 4px; }
+  .reg-reloj { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .reg-reloj .ceja { font-size: 12px; }
+  .reg-reloj .reloj { font-size: 17px; }
+  .terminar { color: var(--acento-texto); }
+
+  /* ── Cabeza del ejercicio ──────────────────────────────────────────────── */
+  .ej-nav { display: flex; align-items: center; justify-content: space-between; margin: 4px 0 8px; }
+  .ej-nav .flechas { display: flex; margin-right: -12px; }
+  .ej-avance { margin-bottom: 16px; }
+  .ej-grupo { margin-top: 4px; }
+  .ultima { display: flex; justify-content: space-between; gap: 12px; margin-top: 16px; padding: 12px 14px;
+    border-radius: var(--radio); background: var(--sup); border: 1px solid var(--sup-alta); }
+  .ultima .ceja { font-size: 12px; }
+  .ultima .cifra { font-size: 15px; margin-top: 4px; }
+  .ultima .hoy-sug { text-align: right; }
+  .mas { color: var(--acento-texto); margin-right: 6px; }
+
+  /* ── Series ────────────────────────────────────────────────────────────── */
+  .series { list-style: none; margin: 16px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  .serie { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 0 8px 0 14px;
+    border-radius: var(--radio); background: var(--sup); border: 1px solid var(--sup-alta); }
+  .serie .n { flex: 0 0 18px; font-size: 14px; color: var(--texto-2); }
+  .serie .v { flex: 1; display: flex; align-items: baseline; white-space: nowrap; }
+  .serie .v b { font: 700 18px/1 var(--mono); }
+  .serie .v .u { font-size: 13px; color: var(--texto-2); margin: 0 8px 0 4px; }
+  .serie .v .x { color: var(--texto-2); margin-right: 8px; }
+  .serie .rir { font: 500 13px/1 var(--mono); color: var(--texto-2); white-space: nowrap; }
+  .serie .rir b { color: var(--texto); font-weight: 700; }
+  .serie.pendiente .v { color: var(--texto-2); font: 500 15px/1 var(--mono); }
+  .serie.hecha { background: var(--fila-hecha); border-color: transparent; }
+  .serie.fallada .falla { font: 600 12px/1 var(--letra); color: var(--peligro); margin-left: 8px; }
+  .estado-s { flex: 0 0 40px; height: 40px; border-radius: var(--radio); display: flex; align-items: center; justify-content: center;
+    border: 2px solid var(--marcar-borde); }
+  .estado-s.hecho { background: var(--hecho-fondo); border-color: var(--hecho-borde); }
+  .estado-s.hecho svg { width: 22px; height: 22px; }
+  .estado-s.hecho path { stroke: var(--visto); }
+  .estado-s.fallo { border-color: var(--peligro); }
+  .estado-s.fallo::before { content: ""; width: 14px; height: 4px; border-radius: 1px; background: var(--peligro); }
+  .serie.recien { animation: fila-recien 120ms var(--curva); }
+  .serie.recien .estado-s svg { animation: visto-entra 100ms var(--curva); }
+  @keyframes fila-recien { from { background-color: var(--sup); } }
+  @keyframes visto-entra { from { opacity: 0; transform: scale(.85); } }
+  @media (prefers-reduced-motion: reduce) { .serie.recien, .serie.recien .estado-s svg { animation: none; } }
+
+  /* La serie que se está registrando: cifras grandes, más y menos de 56 dp. */
+  .serie.activa { display: block; padding: 14px; border: 2px solid var(--accion); background: var(--sup); }
+  .activa-cabeza { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
+  .activa-cabeza .sec { font-size: 13px; }
+  .activa .rot-campo { margin: 12px 0 6px; font-size: 13px; color: var(--texto-2); }
+  .activa .rot-campo:first-of-type { margin-top: 0; }
+
+  .extras { display: flex; justify-content: space-between; margin: 8px -12px 0; }
+
+  .terminado { margin-top: 16px; padding: 16px; border-radius: var(--radio); background: var(--fila-hecha); }
+  .terminado .h3 { margin-top: 4px; }
+
+  /* ── Pie: acción principal al alcance del pulgar ───────────────────────── */
+  .reg-pie { display: flex; gap: 8px; }
+  .reg-pie .falle { flex: 0 0 112px; }
+  .reg-pie .principal { flex: 1; }
+  .btn-secundario.peligro { color: var(--peligro); border-color: var(--peligro); }
+
+  /* ── Capa de descanso (pantalla 12): sube sobre el pie ─────────────────── */
+  .descanso { position: absolute; left: 0; right: 0; bottom: 20px; z-index: 3; padding: 16px 16px 20px;
+    background: var(--sup); border-top: 1px solid var(--sup-alta); border-radius: 12px 12px 0 0;
+    animation: descanso-sube 120ms var(--curva); }
+  .descanso.quieto { animation: none; }
+  @keyframes descanso-sube { from { transform: translateY(100%); } }
+  @media (prefers-reduced-motion: reduce) { .descanso { animation: none; } }
+  .desc-fila { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-top: 4px; }
+  .desc-cifra { font-size: 56px; line-height: 1; }
+  .desc-sig { text-align: right; padding-bottom: 6px; }
+  .desc-sig .h3 { font-size: 16px; }
+  .desc-barra { height: 6px; margin-top: 16px; border-radius: 1px; background: var(--sup-alta); overflow: hidden; }
+  .desc-barra i { display: block; height: 100%; background: var(--hecho-fondo); transition: width 1s linear; }
+  .desc-acciones { display: flex; gap: 8px; margin-top: 16px; }
+  .desc-acciones .btn { min-height: 56px; }
+  .desc-acciones .mas30 { flex: 0 0 112px; }
+  .desc-acciones .saltar { flex: 1; }
+  .deshacer { margin: 8px -12px 0; }
+  .con-descanso .tel-contenido { padding-bottom: 300px; }
+
+  .notas-maqueta { max-width: 860px; margin: 32px auto 0; color: var(--p-texto-2); font-size: 14px; }
+  .notas-maqueta h2 { color: var(--p-texto); font-size: 16px; margin: 0 0 8px; }
+  .notas-maqueta ul { margin: 0; padding-left: 18px; }
+  .notas-maqueta li { margin: 4px 0; }
+</style>
+</head>
+<body>
+<main class="maqueta">
+  <header class="maqueta-cabeza">
+    <h1>Pantallas 11 y 12 · Registro de sesión y descanso</h1>
+    <p>Dirección Más · 412 × 892 dp · <a href="hoy.html">Hoy</a> · <a href="index.html">todas las pantallas</a></p>
+  </header>
+
+  <div class="controles" role="group" aria-label="Controles de la maqueta">
+    <label class="grupo"><span class="rot">Estado</span>
+      <select class="ctl" data-ctl="estado">
+        <option value="empezando">Recién empieza</option>
+        <option value="mitad">A mitad de la sesión</option>
+        <option value="descanso">Descansando</option>
+        <option value="terminado">Ejercicio terminado</option>
+        <option value="final">Todo marcado</option>
+      </select></label>
+    <label class="grupo"><span class="rot">Tema</span>
+      <select class="ctl" data-ctl="tema">
+        <option value="gimnasio">Modo gimnasio</option>
+        <option value="clara">Clara</option>
+        <option value="ambos">Las dos</option>
+      </select></label>
+    <label class="grupo"><span class="rot">Tamaño</span>
+      <select class="ctl" data-ctl="zoom">
+        <option value="ajustar">Ajustar al ancho</option>
+        <option value="100">Real (1 dp = 1 px)</option>
+        <option value="150">150 %</option>
+      </select></label>
+    <label class="grupo"><input type="checkbox" data-ctl="medidas"><span>Medidas de toque</span></label>
+  </div>
+
+  <div class="escenario" id="escenario"></div>
+
+  <section class="notas-maqueta">
+    <h2>Qué mirar</h2>
+    <ul>
+      <li>Funciona de verdad: sube y baja kilos (de 2,5 en 2,5) y repeticiones; mantén presionado para que avance solo.</li>
+      <li>«Serie hecha» marca la fila en ámbar y abre el descanso desde abajo, con la cuenta regresiva, +30 s, saltar y deshacer. Al terminar, el teléfono vibraría.</li>
+      <li>«Fallé» guarda la serie con las repeticiones que alcanzaste y la marca con un menos rojo.</li>
+      <li>Los kilos de hoy ya vienen con la sugerencia (<b>+5</b> en la Prensa) y arriba ves lo que hiciste la última vez.</li>
+      <li>La escala de RIR quedó pendiente: puse de 0 a 4+ solo para ver cómo se acomoda.</li>
+      <li>La X de arriba vuelve a Hoy y deja la sesión en curso. «Terminar» pide confirmación y lleva a Rutina completada.</li>
+    </ul>
+  </section>
+</main>
+
+<script src="maqueta.js"></script>
+<script>
+// ── Datos de prueba: Pierna A, semana 3 ──────────────────────────────────────
+const PLAN = [
+  { n: 'Sentadilla', g: 'Cuádriceps y glúteos', s: 4, rmin: 6, rmax: 8, rir: 2, desc: 180, kg: 82.5, mas: 2.5, ult: { f: '10 nov', kg: 80, reps: [8, 8, 8, 7] } },
+  { n: 'Peso muerto rumano', g: 'Isquiotibiales y glúteos', s: 3, rmin: 8, rmax: 10, rir: 2, desc: 120, kg: 60, ult: { f: '10 nov', kg: 60, reps: [10, 10, 9] } },
+  { n: 'Prensa', g: 'Cuádriceps', s: 3, rmin: 10, rmax: 12, rir: 2, desc: 120, kg: 140, mas: 5, ult: { f: '10 nov', kg: 135, reps: [12, 12, 12] } },
+  { n: 'Zancadas con mancuernas', g: 'Cuádriceps y glúteos', s: 3, rmin: 8, rmax: 10, rir: 2, desc: 90, kg: 16, ult: { f: '10 nov', kg: 16, reps: [10, 10, 10] } },
+  { n: 'Curl femoral', g: 'Isquiotibiales', s: 3, rmin: 10, rmax: 12, rir: 1, desc: 90, kg: 35, ult: { f: '10 nov', kg: 35, reps: [12, 11, 10] } },
+  { n: 'Gemelos de pie', g: 'Pantorrillas', s: 4, rmin: 12, rmax: 15, rir: 1, desc: 60, kg: 40, mas: 2.5, ult: { f: '10 nov', kg: 37.5, reps: [15, 15, 15, 15] } },
+];
+const RIRS = [0, 1, 2, 3, 4];
+
+// ── Sesión en memoria ────────────────────────────────────────────────────────
+let S;
+function nuevaSesion(estado) {
+  const ejercicios = PLAN.map((p) => ({ ...p, series: Array.from({ length: p.s }, () => ({ kg: p.kg, reps: p.rmax, rir: p.rir, estado: 'pendiente' })) }));
+  const hechas = { empezando: 0, mitad: 9, descanso: 9, terminado: 10, final: 20 }[estado];
+  let k = 0;
+  for (const e of ejercicios) for (const s of e.series) if (k++ < hechas) s.estado = 'hecha';
+  if (estado !== 'empezando') {
+    // Algo de variación real: una serie con una repetición menos y una fallada.
+    ejercicios[0].series[3].reps = 7;
+    ejercicios[1].series[2].reps = 9; ejercicios[1].series[2].rir = 1;
+  }
+  const ej = { empezando: 0, mitad: 2, descanso: 2, terminado: 2, final: 5 }[estado];
+  const minutos = { empezando: 0, mitad: 25, descanso: 24, terminado: 28, final: 54 }[estado];
+  S = { ejercicios, ej, inicio: Date.now() - minutos * 60000 - 14000, descanso: null, ultima: null, recien: null };
+  if (estado === 'descanso') {
+    S.descanso = { total: 120, fin: Date.now() + 108000 };
+    S.ultima = { ej: 2, i: 1 };
+    ejercicios[2].series[1].estado = 'hecha';
+  }
+}
+const ejActual = () => S.ejercicios[S.ej];
+const activaIdx = (e = ejActual()) => e.series.findIndex((s) => s.estado === 'pendiente');
+const totalSeries = () => S.ejercicios.reduce((a, e) => a + e.series.length, 0);
+const seriesMarcadas = () => S.ejercicios.reduce((a, e) => a + e.series.filter((s) => s.estado !== 'pendiente').length, 0);
+const ejercicioListo = (e) => e.series.every((s) => s.estado !== 'pendiente');
+const siguientePendiente = () => {
+  for (let k = 1; k <= S.ejercicios.length; k++) {
+    const j = (S.ej + k) % S.ejercicios.length;
+    if (!ejercicioListo(S.ejercicios[j])) return j;
+  }
+  return -1;
+};
+
+// ── Íconos ───────────────────────────────────────────────────────────────────
+const icoX = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+const icoAnt = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>';
+const icoSig = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>';
+
+// ── Piezas ───────────────────────────────────────────────────────────────────
+function fila(s, i, esRecien) {
+  if (s.estado === 'pendiente') {
+    const e = ejActual();
+    return `<li class="serie pendiente"><span class="n cifra">${i + 1}</span>
+      <span class="v">${fmtKg(s.kg)} kg × ${e.rmin}–${e.rmax}</span><span class="estado-s" aria-label="pendiente"></span></li>`;
+  }
+  const fallo = s.estado === 'fallada';
+  return `<li class="serie ${fallo ? 'fallada' : 'hecha'}${esRecien ? ' recien' : ''}"><span class="n cifra">${i + 1}</span>
+    <span class="v"><b>${fmtKg(s.kg)}</b><span class="u">kg</span><span class="x">×</span><b>${s.reps}</b>${fallo ? '<span class="falla">fallida</span>' : ''}</span>
+    <span class="rir">RIR <b>${s.rir === 4 ? '4+' : s.rir}</b></span>
+    <span class="estado-s ${fallo ? 'fallo' : 'hecho'}" aria-label="${fallo ? 'fallida' : 'hecha'}">${fallo ? '' : visto()}</span></li>`;
+}
+
+function activa(s, i, e) {
+  const chips = RIRS.map((r) => `<button class="chip" data-accion="rir" data-v="${r}" aria-pressed="${s.rir === r}" data-toque><span>${r === 4 ? '4+' : r}</span></button>`).join('');
+  return `<li class="serie activa" aria-label="Serie ${i + 1}, registrando">
+    <div class="activa-cabeza"><span class="h3">Serie ${i + 1}</span><span class="sec">objetivo ${e.rmin}–${e.rmax} · RIR ${e.rir}</span></div>
+    <p class="rot-campo">Kilos</p>
+    <div class="paso" data-campo="kg">
+      <button class="btn-paso" data-paso="-1" aria-label="Menos 2,5 kilos" data-toque><span class="barra-menos"></span></button>
+      <div class="campo"><span class="valor" data-valor="kg">${fmtKg(s.kg)}</span><span class="unidad">kg</span></div>
+      <button class="btn-paso" data-paso="1" aria-label="Más 2,5 kilos" data-toque>${simbolo('simbolo', '')}</button>
+    </div>
+    <p class="rot-campo">Repeticiones</p>
+    <div class="paso" data-campo="reps">
+      <button class="btn-paso" data-paso="-1" aria-label="Una repetición menos" data-toque><span class="barra-menos"></span></button>
+      <div class="campo"><span class="valor" data-valor="reps">${s.reps}</span><span class="unidad">reps</span></div>
+      <button class="btn-paso" data-paso="1" aria-label="Una repetición más" data-toque>${simbolo('simbolo', '')}</button>
+    </div>
+    <p class="rot-campo">RIR · repeticiones que te quedaban</p>
+    <div class="chips" role="group" aria-label="RIR">${chips}</div>
+  </li>`;
+}
+
+function cuerpo() {
+  const e = ejActual(), ai = activaIdx(e);
+  const seg = S.ejercicios.map((x, j) => `<i class="${j === S.ej ? 'ahora' : ejercicioListo(x) ? 'si' : ''}"></i>`).join('');
+  const ult = `${fmtKg(e.ult.kg)} × ${e.ult.reps.join(' · ')}`;
+  const sug = e.mas ? `<span class="mas">+${fmtKg(e.mas)}</span>${fmtKg(e.kg)} kg` : `${fmtKg(e.kg)} kg`;
+  const filas = e.series.map((s, i) => (i === ai ? activa(s, i, e) : fila(s, i, S.recien && S.recien.ej === S.ej && S.recien.i === i))).join('');
+  const sig = siguientePendiente();
+  const terminado = ai === -1
+    ? `<div class="terminado"><p class="ceja">Ejercicio terminado</p><p class="h3">${sig === -1 ? 'Marcaste todas las series de hoy' : `Sigue ${S.ejercicios[sig].n}`}</p></div>` : '';
+  return `
+    <div class="ej-nav">
+      <p class="ceja">Ejercicio <span class="cifra">${S.ej + 1}</span> de <span class="cifra">${S.ejercicios.length}</span></p>
+      <div class="flechas">
+        <button class="btn-icono" data-accion="anterior" aria-label="Ejercicio anterior" ${S.ej === 0 ? 'disabled' : ''} data-toque>${icoAnt}</button>
+        <button class="btn-icono" data-accion="siguiente" aria-label="Ejercicio siguiente" ${S.ej === S.ejercicios.length - 1 ? 'disabled' : ''} data-toque>${icoSig}</button>
+      </div>
+    </div>
+    <div class="avance ej-avance" aria-hidden="true">${seg}</div>
+    <h2 class="titulo">${e.n}</h2>
+    <p class="sec ej-grupo">${e.g} · ${e.s} × ${e.rmin}–${e.rmax} · RIR ${e.rir} · descanso ${fmtReloj(e.desc)}</p>
+    <div class="ultima">
+      <div><p class="ceja">Última vez · ${e.ult.f}</p><p class="cifra">${ult}</p></div>
+      <div class="hoy-sug"><p class="ceja">Hoy</p><p class="cifra">${sug}</p></div>
+    </div>
+    <ol class="series">${filas}</ol>
+    ${terminado}
+    <div class="extras">
+      <button class="btn btn-fantasma" data-accion="anadir" data-toque>Añadir serie</button>
+      <button class="btn btn-fantasma" data-accion="observacion" data-toque>Dolor u observación</button>
+    </div>`;
+}
+
+function pie() {
+  const ai = activaIdx(), sig = siguientePendiente();
+  if (ai !== -1) {
+    return `<div class="reg-pie">
+      <button class="btn btn-secundario peligro alto falle" data-accion="falle" aria-label="Fallé la serie" data-toque>Fallé</button>
+      <button class="btn btn-primario alto principal" data-accion="hecha" data-toque>Serie hecha</button></div>`;
+  }
+  if (sig !== -1) return `<button class="btn btn-primario ancho alto" data-accion="ir-ej" data-j="${sig}" data-toque>Siguiente ejercicio</button>`;
+  return `<button class="btn btn-primario ancho alto" data-accion="terminar" data-toque>Terminar sesión</button>`;
+}
+
+function capaDescanso() {
+  if (!S.descanso) return '';
+  const resta = Math.max(0, Math.ceil((S.descanso.fin - Date.now()) / 1000));
+  const e = ejActual(), ai = activaIdx(e);
+  let sigue;
+  if (ai !== -1) sigue = `Serie ${ai + 1} · ${fmtKg(e.series[ai].kg)} kg × ${e.series[ai].reps}`;
+  else { const j = siguientePendiente(); sigue = j === -1 ? 'Terminar la sesión' : S.ejercicios[j].n; }
+  const u = S.ultima;
+  // Sube desde abajo solo cuando recién empieza; al repintar por +30 s se queda quieta.
+  const quieto = S.descanso.visto ? ' quieto' : '';
+  return `<div class="descanso${quieto}" role="region" aria-label="Descanso">
+    <p class="ceja acento">Descanso</p>
+    <div class="desc-fila"><span class="cifra desc-cifra" aria-live="off">${fmtReloj(resta)}</span>
+      <div class="desc-sig"><p class="sec">Sigue</p><p class="h3">${sigue}</p></div></div>
+    <div class="desc-barra"><i style="width:${(resta / S.descanso.total) * 100}%"></i></div>
+    <div class="desc-acciones">
+      <button class="btn btn-secundario mas30" data-accion="mas30" data-toque>+30 s</button>
+      <button class="btn btn-primario saltar" data-accion="saltar" data-toque>Saltar descanso</button>
+    </div>
+    ${u ? `<button class="btn btn-fantasma deshacer" data-accion="deshacer" data-toque>Deshacer serie ${u.i + 1}</button>` : ''}
+  </div>`;
+}
+
+function hojas(tema) {
+  return `<div class="velo" data-hoja="terminar"><div class="hoja" role="dialog" aria-modal="true" aria-labelledby="t-term-${tema}">
+      <h2 class="h2" id="t-term-${tema}">¿Terminar la sesión?</h2>
+      <p class="sec" style="margin-top:8px" data-quedan></p>
+      <div class="acciones"><button class="btn btn-secundario" data-accion="cerrar-hoja" data-toque>Seguir entrenando</button>
+        <button class="btn btn-primario" data-accion="si-terminar" data-toque>Terminar</button></div></div></div>
+    <div class="velo" data-hoja="observacion"><div class="hoja" role="dialog" aria-modal="true" aria-labelledby="t-obs-${tema}">
+      <h2 class="h2" id="t-obs-${tema}">Anotar en ${ejActual().n}</h2>
+      <div class="chips" role="group" aria-label="Tipo" style="margin-top:12px;justify-content:flex-start">
+        <button class="chip texto" data-accion="tipo" data-v="obs" aria-pressed="true" style="flex:0 0 auto" data-toque><span>Observación</span></button>
+        <button class="chip texto" data-accion="tipo" data-v="dolor" aria-pressed="false" style="flex:0 0 auto" data-toque><span>Dolor</span></button>
+      </div>
+      <textarea class="area" style="margin-top:8px" aria-label="Qué quieres anotar" placeholder="Por ejemplo: sentí la rodilla derecha en la bajada"></textarea>
+      <p class="sec" style="margin-top:8px;font-size:13px">Tu entrenadora la ve en tu ficha y te puede responder.</p>
+      <div class="acciones"><button class="btn btn-secundario" data-accion="cerrar-hoja" data-toque>Cancelar</button>
+        <button class="btn btn-primario" data-accion="guardar-obs" data-toque>Guardar</button></div></div></div>`;
+}
+
+function telefono(tema) {
+  const reloj = fmtReloj(Math.floor((Date.now() - S.inicio) / 1000));
+  return `<div class="tel${S.descanso ? ' con-descanso' : ''}" data-tema="${tema}">
+    <div class="tel-estado"><span class="cifra" style="font-weight:600">9:41</span><span>5G · 78 %</span></div>
+    <div class="reg-barra">
+      <button class="btn-icono" data-accion="salir" aria-label="Salir; la sesión queda en curso" data-toque>${icoX}</button>
+      <div class="reg-reloj"><span class="ceja">Pierna A</span><span class="cifra reloj">${reloj}</span></div>
+      <button class="btn btn-fantasma terminar" data-accion="terminar" data-toque>Terminar</button>
+    </div>
+    <div class="tel-contenido">${cuerpo()}</div>
+    <div class="tel-accion">${pie()}</div>
+    ${capaDescanso()}
+    <div class="tel-gesto"></div>
+    <div class="aviso" role="status"></div>
+    ${hojas(tema)}
+  </div>`;
+}
+
+// ── Maqueta ──────────────────────────────────────────────────────────────────
+const m = iniciarMaqueta({
+  telefono, porDefecto: { estado: 'mitad' }, alCambiarEstado: nuevaSesion,
+  alPintar: () => { if (S.descanso) S.descanso.visto = true; },
+});
+const { escenario } = m;
+
+function repintar() {
+  // Conserva el desplazamiento del contenido de cada teléfono entre repintados.
+  const scroll = [...escenario.querySelectorAll('.tel-contenido')].map((c) => c.scrollTop);
+  m.pintar();
+  escenario.querySelectorAll('.tel-contenido').forEach((c, k) => { c.scrollTop = scroll[k] || 0; });
+  S.recien = null;
+}
+const todos = (sel) => escenario.querySelectorAll(sel);
+const avisarTodos = (t) => todos('.tel').forEach((tel) => avisar(tel, t));
+
+// ── Más y menos: un toque suma un paso; mantener presionado repite ───────────
+const PASOS = { kg: 2.5, reps: 1 };
+const LIMITES = { kg: [0, 500], reps: [1, 60] };
+function pasar(campo, dir) {
+  const s = ejActual().series[activaIdx()]; if (!s) return;
+  const [min, max] = LIMITES[campo];
+  const nuevo = Math.min(max, Math.max(min, +(s[campo] + dir * PASOS[campo]).toFixed(1)));
+  if (nuevo === s[campo]) { avisarTodos(dir > 0 ? 'Llegaste al máximo.' : 'Llegaste al mínimo.'); return false; }
+  s[campo] = nuevo;
+  todos(`[data-valor="${campo}"]`).forEach((v) => {
+    v.textContent = campo === 'kg' ? fmtKg(nuevo) : String(nuevo);
+    v.classList.remove('sube', 'baja'); void v.offsetWidth; v.classList.add(dir > 0 ? 'sube' : 'baja');
+  });
+  return true;
+}
+let repite = null, repitio = false;
+escenario.addEventListener('pointerdown', (ev) => {
+  const b = ev.target.closest('[data-paso]'); if (!b) return;
+  const campo = b.closest('.paso').dataset.campo, dir = +b.dataset.paso;
+  repitio = false;
+  repite = setTimeout(function tic() {
+    repitio = true;
+    if (pasar(campo, dir) !== false) repite = setTimeout(tic, 100);
+  }, 400);
+});
+['pointerup', 'pointerleave', 'pointercancel'].forEach((t) => escenario.addEventListener(t, () => { clearTimeout(repite); }, true));
+
+// ── Descanso ─────────────────────────────────────────────────────────────────
+function empezarDescanso(seg) { S.descanso = { total: seg, fin: Date.now() + seg * 1000 }; }
+function terminarDescanso(porTiempo) {
+  S.descanso = null; repintar();
+  if (porTiempo) {
+    const ai = activaIdx();
+    avisarTodos(ai !== -1 ? `Vibra y suena: toca la serie ${ai + 1}.` : 'Vibra y suena: terminó el descanso.');
+  }
+}
+setInterval(() => {
+  todos('.reloj').forEach((r) => { r.textContent = fmtReloj(Math.floor((Date.now() - S.inicio) / 1000)); });
+  if (!S.descanso) return;
+  const resta = Math.max(0, Math.ceil((S.descanso.fin - Date.now()) / 1000));
+  todos('.desc-cifra').forEach((c) => { c.textContent = fmtReloj(resta); });
+  todos('.desc-barra i').forEach((i) => { i.style.width = `${(resta / S.descanso.total) * 100}%`; });
+  if (resta === 0) terminarDescanso(true);
+}, 1000);
+
+// ── Toques ───────────────────────────────────────────────────────────────────
+function abrirHoja(tel, nombre) {
+  const v = tel.querySelector(`[data-hoja="${nombre}"]`);
+  if (nombre === 'terminar') {
+    const quedan = totalSeries() - seriesMarcadas();
+    v.querySelector('[data-quedan]').textContent = quedan
+      ? `Te ${quedan === 1 ? 'queda 1 serie' : `quedan ${quedan} series`} sin marcar. Se guardan como no hechas.`
+      : 'Marcaste todas las series.';
+  }
+  v.classList.add('ver');
+  v.querySelector('[data-accion="cerrar-hoja"]').focus();
+}
+
+escenario.addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-accion], [data-paso]'); if (!b || b.disabled) return;
+  const tel = b.closest('.tel');
+  if (b.dataset.paso) {
+    // El clic que sigue a una repetición ya se contó.
+    if (!repitio) pasar(b.closest('.paso').dataset.campo, +b.dataset.paso);
+    repitio = false; return;
+  }
+  const e = ejActual(), ai = activaIdx(e);
+  switch (b.dataset.accion) {
+    case 'rir':
+      e.series[ai].rir = +b.dataset.v;
+      todos('[data-accion="rir"]').forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.v === b.dataset.v)));
+      break;
+    case 'hecha':
+    case 'falle': {
+      const s = e.series[ai];
+      s.estado = b.dataset.accion === 'hecha' ? 'hecha' : 'fallada';
+      // La serie que sigue hereda lo que se hizo: si subiste kilos, la próxima parte desde ahí.
+      const prox = e.series[ai + 1];
+      if (prox && prox.estado === 'pendiente') { prox.kg = s.kg; prox.rir = s.rir; }
+      S.ultima = { ej: S.ej, i: ai }; S.recien = { ej: S.ej, i: ai };
+      if (seriesMarcadas() < totalSeries()) empezarDescanso(e.desc); else S.descanso = null;
+      repintar();
+      if (b.dataset.accion === 'falle') avisarTodos(`Serie ${ai + 1} guardada como fallida, con ${s.reps} repeticiones.`);
+      break;
+    }
+    case 'mas30': S.descanso.fin += 30000; S.descanso.total += 30; repintar(); break;
+    case 'saltar': terminarDescanso(false); break;
+    case 'deshacer': {
+      const u = S.ultima; S.ej = u.ej;
+      S.ejercicios[u.ej].series[u.i].estado = 'pendiente';
+      S.ultima = null; S.descanso = null; repintar();
+      avisarTodos(`Serie ${u.i + 1} desmarcada.`);
+      break;
+    }
+    case 'anterior': if (S.ej > 0) { S.ej--; S.descanso = null; repintar(); } break;
+    case 'siguiente': if (S.ej < S.ejercicios.length - 1) { S.ej++; S.descanso = null; repintar(); } break;
+    case 'ir-ej': S.ej = +b.dataset.j; S.descanso = null; repintar(); break;
+    case 'anadir': {
+      const base = e.series[e.series.length - 1];
+      e.series.push({ kg: base.kg, reps: e.rmax, rir: e.rir, estado: 'pendiente' });
+      repintar(); avisarTodos(`Agregaste la serie ${e.series.length}.`);
+      break;
+    }
+    case 'observacion': abrirHoja(tel, 'observacion'); break;
+    case 'tipo':
+      b.parentElement.querySelectorAll('.chip').forEach((c) => c.setAttribute('aria-pressed', String(c === b)));
+      break;
+    case 'guardar-obs':
+      tel.querySelector('[data-hoja="observacion"]').classList.remove('ver');
+      avisar(tel, `Guardado en ${e.n}. Camila lo verá en tu ficha.`);
+      break;
+    case 'terminar': abrirHoja(tel, 'terminar'); break;
+    case 'cerrar-hoja': b.closest('.velo').classList.remove('ver'); break;
+    case 'si-terminar':
+      m.ir('completada.html');
+      break;
+    case 'salir': m.ir('hoy.html#estado=curso'); break;
+  }
+});
+</script>
+</body>
+</html>

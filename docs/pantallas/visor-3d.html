@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GymTrack · Ejercicios en 3D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="sistema.css">
+<style>
+  .barra { flex: 0 0 56px; display: flex; align-items: center; padding: 0 4px; }
+  .barra .ceja { margin-left: 4px; }
+  .cabeza-ej { margin: 4px 0 12px; }
+  .cabeza-ej .titulo { margin-top: 2px; }
+
+  /* El visor: la figura gira con el dedo. */
+  .visor { position: relative; height: 300px; border-radius: var(--radio); overflow: hidden;
+    background: var(--sup); border: 1px solid var(--sup-alta); touch-action: none; }
+  .visor canvas { display: block; width: 100%; height: 100%; cursor: grab; }
+  .visor canvas:active { cursor: grabbing; }
+  .visor .pista { position: absolute; left: 12px; bottom: 10px; margin: 0; font-size: 12px; color: var(--texto-2); pointer-events: none; }
+  .visor .fase { position: absolute; left: 12px; top: 10px; margin: 0; font: 700 12px/1 var(--mono); color: var(--texto-2); pointer-events: none; }
+
+  .mandos { display: flex; align-items: center; gap: 4px; margin-top: 8px; }
+  .mandos .vistas { display: flex; gap: 6px; flex: 1; }
+  .mandos .chip { flex: 1; }
+  .btn-icono.reproducir { background: var(--sec-fondo); border: 2px solid var(--sec-borde); }
+  .btn-icono.reproducir path { fill: currentColor; stroke: none; }
+  .vel { flex: 0 0 64px; }
+
+  .musculos { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 4px; }
+  .musculo { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; }
+  .musculo::before { content: ""; width: 12px; height: 12px; border-radius: 2px; background: var(--hecho-fondo); }
+  .musculo.ayuda { color: var(--texto-2); }
+  .musculo.ayuda::before { background: transparent; border: 2px solid var(--borde); }
+
+  .pasos { list-style: none; margin: 0; padding: 0; }
+  .pasos li { display: flex; gap: 12px; padding: 10px 0 10px 12px; border-left: 4px solid var(--sup-alta); color: var(--texto-2); font-size: 15px; line-height: 1.4; }
+  .pasos li b { font: 700 13px/1.6 var(--mono); }
+  .pasos li.ahora { border-left-color: var(--hecho-fondo); color: var(--texto); }
+
+  .notas-maqueta { max-width: 860px; margin: 32px auto 0; color: var(--p-texto-2); font-size: 14px; }
+  .notas-maqueta h2 { color: var(--p-texto); font-size: 16px; margin: 0 0 8px; }
+  .notas-maqueta ul { margin: 0 0 16px; padding-left: 18px; }
+  .notas-maqueta li { margin: 4px 0; }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<main class="maqueta">
+  <header class="maqueta-cabeza">
+    <h1>Prototipo · Ejercicios en 3D</h1>
+    <p>Dirección Más · cómo se vería en el detalle del ejercicio · <a href="index.html">todas las pantallas</a></p>
+  </header>
+
+  <div class="controles" role="group" aria-label="Controles de la maqueta">
+    <label class="grupo"><span class="rot">Ejercicio</span>
+      <select class="ctl" data-ctl="estado">
+        <option value="sentadilla">Sentadilla</option>
+        <option value="rumano">Peso muerto rumano</option>
+        <option value="zancada">Zancadas con mancuernas</option>
+      </select></label>
+    <label class="grupo"><span class="rot">Tema</span>
+      <select class="ctl" data-ctl="tema">
+        <option value="gimnasio">Modo gimnasio</option>
+        <option value="clara">Clara</option>
+        <option value="ambos">Las dos</option>
+      </select></label>
+    <label class="grupo"><span class="rot">Tamaño</span>
+      <select class="ctl" data-ctl="zoom">
+        <option value="ajustar">Ajustar al ancho</option>
+        <option value="100">Real (1 dp = 1 px)</option>
+        <option value="150">150 %</option>
+      </select></label>
+    <label class="grupo"><input type="checkbox" data-ctl="medidas"><span>Medidas de toque</span></label>
+  </div>
+
+  <div class="escenario" id="escenario"></div>
+
+  <section class="notas-maqueta">
+    <h2>Qué es esto</h2>
+    <ul>
+      <li>Un prototipo para decidir si vale la pena: la figura se mueve en 3D de verdad y se puede girar con el dedo (o el mouse) o cambiar a frente, lado y tres cuartos.</li>
+      <li>Los músculos que trabajan se pintan en ámbar sobre la figura, y el paso de la técnica que corresponde se marca mientras se mueve.</li>
+      <li>La figura es un maniquí simple hecho con piezas, a propósito: calza con la marca y no distrae. El movimiento está programado a mano para tres ejercicios; en la app vendría de animaciones grabadas.</li>
+      <li>Parte en pausa si el teléfono tiene «reducir movimiento» activado.</li>
+    </ul>
+
+    <h2>Cómo se haría de verdad (investigación del 17-11-2026)</h2>
+    <ul>
+      <li><b>Primera versión, videos cortos en bucle.</b> Con expo-video, sin girar. Es lo más barato y seguro. Se pueden licenciar (WorkoutLabs vende 679 ejercicios desde US$1.200 al año; Hyperhuman tiene más de 2.000 filmados, con precio por contrato) o grabar a la entrenadora con el celular. Evitar ExerciseDB: sus términos prohíben guardar el contenido dentro de la app.</li>
+      <li><b>Segunda versión, figura 3D que gira, como este prototipo.</b> Un solo personaje con la marca, movimientos capturados con IA desde un video (Rokoko Vision desde US$20 al mes; DeepMotion exporta GLB con personaje propio), limpiados en Blender y exportados como .glb.</li>
+      <li><b>En la app:</b> react-native-filament (de Margelo) carga .glb con animaciones y funciona con la arquitectura nueva; suma unos 4 MB. Falta confirmar cómo se integra con Expo SDK 57 y con Reanimated 4.</li>
+      <li><b>Antes de decidir:</b> probar con 3 ejercicios (sentadilla, press banca, dominadas) en un Android de gama media. La captura desde una sola cámara se complica con barra, porque tapa el cuerpo.</li>
+      <li>No se pudo confirmar en sus sitios oficiales: la licencia y el precio de Gymvisual, el FAQ de Mixamo y los precios de DeepMotion.</li>
+      <li><b>Gratis y de uso libre:</b> free-exercise-db (876 ejercicios con 2 fotos cada uno, licencia Unlicense: dominio público, sin obligaciones) es la mejor base. Para lo que falte, Everkinetic (289 ejercicios en dibujo, CC BY-SA 4.0: exige créditos y compartir igual las imágenes que se modifiquen). En 3D no hay nada libre con ejercicios de barra: Quaternius es CC0 pero no trae ejercicios, y la base de captura de movimiento de CMU se puede usar libremente pero falta ver si tiene los movimientos. wger exige compartir igual y revisar la licencia de cada imagen.</li>
+      <li><b>Como el proyecto es personal (sin fines comerciales):</b> se abren las licencias no comerciales. Para el 3D: el plan gratis de DeepMotion (uso personal) y la versión FBX de la base de CMU (CC BY-NC) quedan permitidos, junto con Mixamo para el personaje. ExerciseDB tiene 1.500 GIF gratis por API, pero sus términos prohíben guardarlos y la app tiene que funcionar sin señal en el gimnasio, así que no calza. Si algún día se publica con cobro, hay que revisar todo de nuevo.</li>
+      <li><b>Fuente ya hecha recomendada:</b> free-exercise-db cubre unos 65 de los 67 ejercicios de la app, cruzados por nombre (faltan pull over en polea y peso muerto rumano con mancuernas; la sentadilla búlgara va con una variante parecida). Son 2 fotos por ejercicio, inicio y fin, que se guardan en la app y se pueden alternar para dar sensación de movimiento. Animaciones ya hechas y libres no hay: MuscleWiki prohíbe guardar sus videos, wger tiene 78, y los packs de animación pagados (TricksUp en Fab, unos CLP 26.000) vienen sin personaje y no tienen la licencia publicada.</li>
+    </ul>
+  </section>
+</main>
+
+<script src="maqueta.js"></script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// ── Ejercicios ───────────────────────────────────────────────────────────────
+// Cada cuadro: t (0 a 1 del ciclo), dy y dz de la pelvis (m), inclinación del tronco (grados),
+// brazos (grados hacia adelante desde colgando). Las piernas se resuelven solas para que los
+// pies no se muevan del suelo.
+const EJ = {
+  sentadilla: {
+    nombre: 'Sentadilla', ceja: 'Piernas · peso corporal o barra', periodo: 3.2,
+    pies: { izq: [0.08, 0], der: [0.08, 0], talonAtras: 0 },
+    cuadros: [
+      { t: 0, dy: 0, dz: 0, inc: 4, br: 15 },
+      { t: 0.12, dy: 0, dz: 0, inc: 4, br: 15 },
+      { t: 0.5, dy: -0.45, dz: -0.17, inc: 42, br: 90 },
+      { t: 0.6, dy: -0.45, dz: -0.17, inc: 42, br: 90 },
+      { t: 1, dy: 0, dz: 0, inc: 4, br: 15 },
+    ],
+    trabajan: ['Cuádriceps', 'Glúteos'], ayudan: ['Aductores', 'Core'], pintar: ['muslos', 'pelvis'],
+    pasos: [
+      [0, 'Pies al ancho de los hombros, la mirada al frente.'],
+      [0.12, 'Baja llevando la cadera atrás y las rodillas hacia afuera.'],
+      [0.5, 'Abajo, los muslos quedan paralelos al suelo.'],
+      [0.6, 'Sube empujando el suelo con todo el pie.'],
+    ],
+  },
+  rumano: {
+    nombre: 'Peso muerto rumano', ceja: 'Piernas · barra', periodo: 3.6, barra: true,
+    pies: { izq: [0.08, 0], der: [0.08, 0], talonAtras: 0 },
+    cuadros: [
+      { t: 0, dy: 0, dz: 0, inc: 3, br: 0 },
+      { t: 0.12, dy: 0, dz: 0, inc: 3, br: 0 },
+      { t: 0.52, dy: -0.03, dz: -0.18, inc: 78, br: 0 },
+      { t: 0.62, dy: -0.03, dz: -0.18, inc: 78, br: 0 },
+      { t: 1, dy: 0, dz: 0, inc: 3, br: 0 },
+    ],
+    trabajan: ['Isquiotibiales', 'Glúteos'], ayudan: ['Espalda baja', 'Antebrazos'], pintar: ['muslos', 'pelvis'],
+    pasos: [
+      [0, 'Rodillas apenas flexionadas y la barra pegada a las piernas.'],
+      [0.12, 'Lleva la cadera atrás con la espalda recta.'],
+      [0.52, 'Abajo, sientes el estiramiento atrás del muslo.'],
+      [0.62, 'Sube apretando los glúteos, sin echarte atrás.'],
+    ],
+  },
+  zancada: {
+    nombre: 'Zancadas con mancuernas', ceja: 'Piernas · mancuernas', periodo: 3.2, mancuernas: true,
+    pies: { izq: [0.08, 0.38], der: [0.13, -0.42], talonAtras: 0.6 },
+    cuadros: [
+      { t: 0, dy: -0.11, dz: -0.02, inc: 4, br: 0 },
+      { t: 0.12, dy: -0.11, dz: -0.02, inc: 4, br: 0 },
+      { t: 0.5, dy: -0.45, dz: -0.02, inc: 6, br: 0 },
+      { t: 0.6, dy: -0.45, dz: -0.02, inc: 6, br: 0 },
+      { t: 1, dy: -0.11, dz: -0.02, inc: 4, br: 0 },
+    ],
+    trabajan: ['Cuádriceps', 'Glúteos'], ayudan: ['Isquiotibiales', 'Pantorrillas'], pintar: ['muslos', 'pelvis'],
+    pasos: [
+      [0, 'Un pie adelante y el de atrás en punta.'],
+      [0.12, 'Baja recto: la rodilla de atrás va hacia el suelo.'],
+      [0.5, 'Abajo, las dos rodillas quedan en ángulo recto.'],
+      [0.6, 'Sube empujando con el pie de adelante.'],
+    ],
+  },
+};
+
+// ── Medidas del maniquí (metros) ─────────────────────────────────────────────
+const MUSLO = 0.44, PIERNA = 0.43, PELVIS_Y = 0.96, CADERA_Y = -0.03;
+const rad = THREE.MathUtils.degToRad;
+
+function capsula(r, largo, mat) {
+  return new THREE.Mesh(new THREE.CapsuleGeometry(r, largo, 6, 16), mat);
+}
+
+function maniqui(mats) {
+  const partes = { muslos: [], pelvis: [], resto: [] };
+  const suma = (m, parte = 'resto') => { partes[parte].push(m); return m; };
+  const raiz = new THREE.Group();
+
+  const pelvis = suma(capsula(0.09, 0.16, mats.cuerpo), 'pelvis'); pelvis.rotation.z = Math.PI / 2; raiz.add(pelvis);
+  const columna = new THREE.Group(); columna.position.y = 0.04; raiz.add(columna);
+  const abdomen = suma(capsula(0.1, 0.16, mats.cuerpo)); abdomen.position.y = 0.14; columna.add(abdomen);
+  const torax = suma(capsula(0.13, 0.14, mats.cuerpo)); torax.position.y = 0.37; torax.scale.set(1.25, 1, 0.85); columna.add(torax);
+  const pecho = new THREE.Group(); pecho.position.y = 0.5; columna.add(pecho);
+  const cuello = suma(capsula(0.045, 0.05, mats.cuerpo)); cuello.position.y = 0.04; pecho.add(cuello);
+  const cabeza = suma(new THREE.Mesh(new THREE.SphereGeometry(0.1, 24, 16), mats.cuerpo)); cabeza.position.y = 0.17; pecho.add(cabeza);
+
+  const brazos = [-1, 1].map((lado) => {
+    const hombro = new THREE.Group(); hombro.position.set(0.2 * lado, -0.05, 0); pecho.add(hombro);
+    const sup = suma(capsula(0.045, 0.22, mats.cuerpo)); sup.position.y = -0.15; hombro.add(sup);
+    const codo = new THREE.Group(); codo.position.y = -0.3; hombro.add(codo);
+    const ant = suma(capsula(0.04, 0.2, mats.cuerpo)); ant.position.y = -0.13; codo.add(ant);
+    const mano = new THREE.Group(); mano.position.y = -0.28; codo.add(mano);
+    mano.add(suma(new THREE.Mesh(new THREE.SphereGeometry(0.045, 16, 12), mats.cuerpo)));
+    return { hombro, codo, mano };
+  });
+
+  const piernas = [-1, 1].map((lado) => {
+    const cadera = new THREE.Group(); cadera.position.set(0.1 * lado, CADERA_Y, 0); raiz.add(cadera);
+    const muslo = suma(capsula(0.07, 0.3, mats.cuerpo), 'muslos'); muslo.position.y = -0.22; cadera.add(muslo);
+    const rodilla = new THREE.Group(); rodilla.position.y = -MUSLO; cadera.add(rodilla);
+    rodilla.add(suma(new THREE.Mesh(new THREE.SphereGeometry(0.058, 16, 12), mats.cuerpo)));
+    const pierna = suma(capsula(0.055, 0.32, mats.cuerpo)); pierna.position.y = -0.215; rodilla.add(pierna);
+    const tobillo = new THREE.Group(); tobillo.position.y = -PIERNA; rodilla.add(tobillo);
+    const pie = suma(new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.06, 0.25), mats.cuerpo)); pie.position.set(0, -0.05, 0.07); tobillo.add(pie);
+    return { cadera, rodilla, tobillo };
+  });
+  return { raiz, columna, brazos, piernas, partes };
+}
+
+// Pierna de dos huesos en el plano de lado: con la cadera y el tobillo dados, la rodilla sale sola.
+function resolverPierna(p, cadera, tobillo, piso) {
+  const dy = tobillo.y - cadera.y, dz = tobillo.z - cadera.z;
+  const d = Math.min(Math.hypot(dy, dz), MUSLO + PIERNA - 1e-4);
+  const recta = Math.atan2(dz, -dy);
+  const a = Math.acos(THREE.MathUtils.clamp((MUSLO ** 2 + d ** 2 - PIERNA ** 2) / (2 * MUSLO * d), -1, 1));
+  const muslo = recta + a;
+  const rodilla = Math.PI - Math.acos(THREE.MathUtils.clamp((MUSLO ** 2 + PIERNA ** 2 - d ** 2) / (2 * MUSLO * PIERNA), -1, 1));
+  p.cadera.rotation.x = -muslo;
+  p.rodilla.rotation.x = rodilla;
+  p.tobillo.rotation.x = piso + muslo - rodilla;
+}
+
+const suave = (x) => x * x * (3 - 2 * x);
+function muestra(cuadros, t) {
+  let i = 0; while (i < cuadros.length - 2 && t > cuadros[i + 1].t) i++;
+  const a = cuadros[i], b = cuadros[i + 1];
+  const k = suave(THREE.MathUtils.clamp((t - a.t) / (b.t - a.t || 1), 0, 1));
+  const r = {}; for (const c of ['dy', 'dz', 'inc', 'br']) r[c] = a[c] + (b[c] - a[c]) * k;
+  return r;
+}
+
+// ── Un visor por teléfono ────────────────────────────────────────────────────
+const VISTAS = { frente: [0.0, 1.0, 3.5], lado: [3.5, 1.0, 0.1], tres: [2.45, 1.2, 2.5] };
+const reproduccion = {
+  jugando: !matchMedia('(prefers-reduced-motion: reduce)').matches,
+  velocidad: 1, t: 0.08, vista: 'tres',
+};
+let visores = [];
+window.reproduccion3d = reproduccion; // para revisar poses desde la consola
+
+function crearVisor(caja, tel, clave) {
+  const ej = EJ[clave];
+  const css = getComputedStyle(tel);
+  const color = (v) => new THREE.Color(css.getPropertyValue(v).trim());
+  const oscuro = tel.dataset.tema === 'gimnasio';
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  caja.prepend(renderer.domElement);
+  const escena = new THREE.Scene();
+  escena.background = color('--sup');
+  const camara = new THREE.PerspectiveCamera(28, 1, 0.1, 50);
+  const controles = new OrbitControls(camara, renderer.domElement);
+  controles.target.set(0, 0.78, 0);
+  controles.enableZoom = false; controles.enablePan = false; controles.enableDamping = true;
+  controles.minPolarAngle = 0.95; controles.maxPolarAngle = 1.75;
+
+  escena.add(new THREE.HemisphereLight(0xffffff, oscuro ? 0x2a2e33 : 0xc8ccd0, oscuro ? 1.6 : 1.9));
+  const luz = new THREE.DirectionalLight(0xffffff, oscuro ? 1.8 : 1.4); luz.position.set(2, 4, 3); escena.add(luz);
+
+  const piso = new THREE.Mesh(new THREE.CircleGeometry(1.0, 64), new THREE.MeshBasicMaterial({ color: color('--sup-alta') }));
+  piso.rotation.x = -Math.PI / 2; escena.add(piso);
+
+  const mats = {
+    cuerpo: new THREE.MeshStandardMaterial({ color: oscuro ? 0xa0a6ad : 0x8a9097, roughness: 0.8 }),
+    trabaja: new THREE.MeshStandardMaterial({ color: 0xf5b83d, roughness: 0.7 }),
+    fierro: new THREE.MeshStandardMaterial({ color: oscuro ? 0xe4e6e8 : 0x24282c, roughness: 0.5, metalness: 0.2 }),
+    disco: new THREE.MeshStandardMaterial({ color: oscuro ? 0x5a6067 : 0x555b62, roughness: 0.9 }),
+  };
+  const fig = maniqui(mats);
+  for (const parte of ej.pintar) for (const m of fig.partes[parte]) m.material = mats.trabaja;
+  escena.add(fig.raiz);
+
+  // Barra o mancuernas: siguen a las manos.
+  let barra = null; const mancuernas = [];
+  if (ej.barra) {
+    barra = new THREE.Group();
+    const eje = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 1.5, 12), mats.fierro); eje.rotation.z = Math.PI / 2; barra.add(eje);
+    for (const x of [-0.58, 0.58]) {
+      const d = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.06, 40), mats.disco); d.rotation.z = Math.PI / 2; d.position.x = x; barra.add(d);
+    }
+    escena.add(barra);
+  }
+  if (ej.mancuernas) {
+    for (let k = 0; k < 2; k++) {
+      const g = new THREE.Group();
+      const mango = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.14, 10), mats.fierro); mango.rotation.x = Math.PI / 2; g.add(mango);
+      for (const z of [-0.085, 0.085]) {
+        const d = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.04, 24), mats.disco); d.rotation.x = Math.PI / 2; d.position.z = z; g.add(d);
+      }
+      escena.add(g); mancuernas.push(g);
+    }
+  }
+
+  function vista(nombre, inmediata) {
+    const [x, y, z] = VISTAS[nombre];
+    camara.position.set(x, y, z); controles.update();
+    if (inmediata) controles.update();
+  }
+  vista(reproduccion.vista, true);
+
+  function medir() {
+    const w = caja.clientWidth, h = caja.clientHeight;
+    renderer.setSize(w, h, false); camara.aspect = w / h; camara.updateProjectionMatrix();
+  }
+  medir();
+
+  const v = new THREE.Vector3();
+  function posar(fase) {
+    const c = muestra(ej.cuadros, fase);
+    fig.raiz.position.set(0, PELVIS_Y + c.dy, c.dz);
+    fig.columna.rotation.x = rad(c.inc);
+    for (const b of fig.brazos) { b.hombro.rotation.x = -rad(c.br) - rad(c.inc); b.codo.rotation.x = 0; }
+    fig.raiz.updateMatrixWorld(true);
+    const pies = [ej.pies.izq, ej.pies.der];
+    fig.piernas.forEach((p, k) => {
+      p.cadera.getWorldPosition(v);
+      const [y, z] = pies[k];
+      const piso = k === 1 ? ej.pies.talonAtras : 0;
+      resolverPierna(p, v.clone(), new THREE.Vector3(0, y, z), piso);
+    });
+    fig.raiz.updateMatrixWorld(true);
+    if (barra) {
+      const a = fig.brazos[0].mano.getWorldPosition(new THREE.Vector3());
+      const b = fig.brazos[1].mano.getWorldPosition(new THREE.Vector3());
+      barra.position.copy(a.add(b).multiplyScalar(0.5));
+    }
+    mancuernas.forEach((g, k) => fig.brazos[k].mano.getWorldPosition(g.position));
+  }
+
+  return {
+    tel, ej, vista, medir, posar,
+    dibujar() { controles.update(); renderer.render(escena, camara); },
+    destruir() { controles.dispose(); renderer.dispose(); renderer.domElement.remove(); },
+  };
+}
+
+// ── Teléfono ─────────────────────────────────────────────────────────────────
+const icoVolver = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>';
+const icoPlay = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>';
+const icoPausa = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>';
+
+function telefono(tema, ctl) {
+  const ej = EJ[ctl.estado] || EJ.sentadilla;
+  const vista = (k, t) => `<button class="chip texto" data-accion="vista" data-v="${k}" aria-pressed="${reproduccion.vista === k}" data-toque><span>${t}</span></button>`;
+  return `<div class="tel" data-tema="${tema}">
+    <div class="tel-estado"><span class="cifra" style="font-weight:600">9:41</span><span>5G · 82 %</span></div>
+    <div class="barra"><button class="btn-icono" data-ir="ejercicios.html" aria-label="Volver a Ejercicios" data-toque>${icoVolver}</button>
+      <span class="ceja">Ejercicios</span></div>
+    <div class="tel-contenido">
+      <div class="cabeza-ej"><p class="ceja">${ej.ceja}</p><h1 class="titulo">${ej.nombre}</h1></div>
+      <div class="visor" data-visor aria-label="Figura en 3D de ${ej.nombre}. Arrastra para girarla.">
+        <p class="fase cifra" data-fase></p><p class="pista">Arrastra para girar</p></div>
+      <div class="mandos">
+        <button class="btn-icono reproducir" data-accion="jugar" aria-label="${reproduccion.jugando ? 'Pausar' : 'Reproducir'}" data-toque>${reproduccion.jugando ? icoPausa : icoPlay}</button>
+        <div class="vistas" role="group" aria-label="Vista">${vista('frente', 'Frente')}${vista('lado', 'Lado')}${vista('tres', '3/4')}</div>
+        <button class="chip texto vel" data-accion="velocidad" aria-label="Velocidad" data-toque><span>${reproduccion.velocidad === 1 ? '1×' : '0,5×'}</span></button>
+      </div>
+      <div class="seccion-cabeza"><h3 class="h3">Trabajan</h3></div>
+      <div class="musculos">${ej.trabajan.map((m) => `<span class="musculo">${m}</span>`).join('')}${ej.ayudan.map((m) => `<span class="musculo ayuda">${m}</span>`).join('')}</div>
+      <div class="seccion-cabeza"><h3 class="h3">Cómo se hace</h3></div>
+      <ol class="pasos">${ej.pasos.map(([, txt], i) => `<li data-paso="${i}"><b>${i + 1}</b><span>${txt}</span></li>`).join('')}</ol>
+    </div>
+    <div class="tel-gesto"></div>
+    <div class="aviso" role="status"></div>
+  </div>`;
+}
+
+// ── Maqueta y bucle ──────────────────────────────────────────────────────────
+function montar() {
+  visores.forEach((v) => v.destruir());
+  visores = [...document.querySelectorAll('#escenario .tel')].map((tel) =>
+    crearVisor(tel.querySelector('[data-visor]'), tel, m.ctl.estado in EJ ? m.ctl.estado : 'sentadilla'));
+}
+// m se declara antes para que el primer pintado (dentro de iniciarMaqueta) no la toque aún.
+let m = null;
+m = iniciarMaqueta({ telefono, porDefecto: { estado: 'sentadilla' }, alPintar: () => { if (m) montar(); } });
+montar();
+
+let antes = performance.now();
+function bucle(ahora) {
+  const dt = Math.min(0.05, (ahora - antes) / 1000); antes = ahora;
+  if (reproduccion.jugando && visores.length) reproduccion.t = (reproduccion.t + (dt * reproduccion.velocidad) / visores[0].ej.periodo) % 1;
+  for (const v of visores) {
+    v.posar(reproduccion.t); v.dibujar();
+    const pasos = v.ej.pasos; let idx = 0; pasos.forEach(([t], i) => { if (reproduccion.t >= t) idx = i; });
+    v.tel.querySelectorAll('.pasos li').forEach((li, i) => li.classList.toggle('ahora', i === idx));
+    const f = v.tel.querySelector('[data-fase]'); if (f) f.textContent = `${idx + 1} / ${pasos.length}`;
+  }
+  requestAnimationFrame(bucle);
+}
+requestAnimationFrame(bucle);
+addEventListener('resize', () => visores.forEach((v) => v.medir()));
+
+m.escenario.addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-accion]'); if (!b) return;
+  // Se actualiza en el lugar, sin repintar, para no perder el giro que hizo la persona.
+  const todos = (sel) => m.escenario.querySelectorAll(sel);
+  if (b.dataset.accion === 'jugar') {
+    reproduccion.jugando = !reproduccion.jugando;
+    todos('[data-accion="jugar"]').forEach((x) => {
+      x.innerHTML = reproduccion.jugando ? icoPausa : icoPlay;
+      x.setAttribute('aria-label', reproduccion.jugando ? 'Pausar' : 'Reproducir');
+    });
+  }
+  if (b.dataset.accion === 'velocidad') {
+    reproduccion.velocidad = reproduccion.velocidad === 1 ? 0.5 : 1;
+    todos('[data-accion="velocidad"] span').forEach((x) => { x.textContent = reproduccion.velocidad === 1 ? '1×' : '0,5×'; });
+  }
+  if (b.dataset.accion === 'vista') {
+    reproduccion.vista = b.dataset.v;
+    visores.forEach((v) => v.vista(reproduccion.vista));
+    todos('[data-accion="vista"]').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.v === reproduccion.vista)));
+  }
+});
+</script>
+</body>
+</html>

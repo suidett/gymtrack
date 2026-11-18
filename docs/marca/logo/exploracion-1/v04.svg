@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none" style="color:#131A17">
+  <!-- 04 El signo por: el x de "30 kg x 10", subrayado -->
+  <path d="M21 15L43 37M43 15L21 37" stroke="currentColor" stroke-width="9" stroke-linecap="round"/>
+  <rect class="acento" x="18" y="47" width="28" height="7" rx="2" fill="#45B392"/>
+</svg>

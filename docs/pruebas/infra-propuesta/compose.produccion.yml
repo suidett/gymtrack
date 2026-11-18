@@ -1,0 +1,62 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Override de producción · BORRADOR
+#
+# Se suma a compose.yml. Fija el nombre del proyecto, los archivos de variables,
+# la llave de la cuenta de servicio de Storage, el alias en la red «borde» y los
+# límites de memoria pensados para un VPS de 2 GB (ver el presupuesto en
+# docs/pruebas/infraestructura-vps-firebase.md, «Servicios de Compose»).
+#
+# memswap_limit igual a mem_limit: un contenedor que se pasa no usa swap, lo mata
+# el kernel y Docker lo reinicia. Es mejor que dejar al servidor arrastrándose.
+# En el servidor va en /opt/gymtrack/app/compose.produccion.yml.
+# ─────────────────────────────────────────────────────────────────────────────
+name: gymtrack-produccion
+
+services:
+  api:
+    env_file: /opt/gymtrack/produccion/app.env
+    environment:
+      APP_ENTORNO: produccion
+      # Que V8 limpie antes de chocar con el límite del contenedor.
+      NODE_OPTIONS: --max-old-space-size=192
+      GOOGLE_APPLICATION_CREDENTIALS: /run/secretos/storage-api.json
+    volumes:
+      - /opt/gymtrack/produccion/secretos/storage-api.json:/run/secretos/storage-api.json:ro
+    networks:
+      borde:
+        aliases: [api-produccion]   # Caddy apunta aquí; nunca a «api», que es ambiguo
+    mem_limit: 320m
+    memswap_limit: 320m
+    cpus: 1.0
+
+  worker:
+    env_file: /opt/gymtrack/produccion/app.env
+    environment:
+      APP_ENTORNO: produccion
+      NODE_OPTIONS: --max-old-space-size=128
+      GOOGLE_APPLICATION_CREDENTIALS: /run/secretos/storage-api.json
+    volumes:
+      - /opt/gymtrack/produccion/secretos/storage-api.json:/run/secretos/storage-api.json:ro
+    mem_limit: 192m
+    memswap_limit: 192m
+    cpus: 0.5
+
+  db:
+    # Solo POSTGRES_USER, POSTGRES_PASSWORD y POSTGRES_DB: la base no necesita
+    # los secretos de la aplicación.
+    env_file: /opt/gymtrack/produccion/db.env
+    command:
+      - postgres
+      - -c
+      - shared_buffers=128MB
+      - -c
+      - effective_cache_size=320MB
+      - -c
+      - work_mem=4MB
+      - -c
+      - maintenance_work_mem=32MB
+      - -c
+      - max_connections=30
+    mem_limit: 448m
+    memswap_limit: 448m
+    cpus: 1.0

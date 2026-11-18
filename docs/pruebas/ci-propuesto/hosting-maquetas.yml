@@ -1,0 +1,112 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Maquetas en Firebase Hosting · borrador
+#
+#   push a main      publica docs/pantallas en el sitio «maquetas» del proyecto de staging
+#   pull_request     publica un canal de vista previa por PR, que vence a los 7 días,
+#                    y deja el enlace en el PR (solo PR del mismo repo: los de forks no
+#                    reciben secretos ni token de OIDC)
+#
+# Necesita firebase.json y .firebaserc en la raíz (borradores en
+# docs/pruebas/infra-propuesta/). Las maquetas tienen datos falsos, pero igual se
+# sirven con X-Robots-Tag: noindex. Solo se publica docs/pantallas; el resto del
+# repo no sale nunca (INF-30).
+#
+# Entra con Workload Identity Federation. La cuenta de servicio «gh-hosting» del
+# proyecto de staging solo tiene el rol «Firebase Hosting Admin».
+# PENDIENTE (no verificado): que firebase-tools acepte las credenciales de WIF para
+# deploy; si no, usar la llave JSON de esa cuenta en un secreto FIREBASE_SA_HOSTING.
+# ─────────────────────────────────────────────────────────────────────────────
+name: Maquetas
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/pantallas/**"
+      - "firebase.json"
+  pull_request:
+    paths:
+      - "docs/pantallas/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: maquetas-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FIREBASE_TOOLS_VERSION: "PENDIENTE"
+
+jobs:
+  publicar:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVEEDOR_STAGING }}
+          service_account: ${{ vars.GCP_SA_HOSTING }}
+
+      - name: Publicar
+        run: |
+          npx --yes "firebase-tools@${FIREBASE_TOOLS_VERSION}" deploy \
+            --only hosting:maquetas --project staging --non-interactive \
+            --message "$(git log -1 --pretty='%h %s')"
+
+      # INF-29: la portada y sus recursos responden y no se indexan; INF-30: nada fuera de docs/pantallas.
+      - name: Revisar el sitio
+        env:
+          SITIO: ${{ vars.MAQUETAS_URL }}   # https://<sitio-maquetas>.web.app
+        run: |
+          curl -fsSI "$SITIO/index.html" | tee cabeceras.txt
+          grep -qi '^x-robots-tag: noindex' cabeceras.txt
+          curl -fsS -o /dev/null "$SITIO/hoy.html"
+          curl -fsS -o /dev/null "$SITIO/sistema.css"
+          curl -fsS -o /dev/null "$SITIO/maqueta.js"
+          test "$(curl -s -o /dev/null -w '%{http_code}' "$SITIO/revision.md")" = 404
+
+  vista-previa:
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVEEDOR_STAGING }}
+          service_account: ${{ vars.GCP_SA_HOSTING }}
+
+      - name: Canal de vista previa
+        id: canal
+        env:
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          npx --yes "firebase-tools@${FIREBASE_TOOLS_VERSION}" hosting:channel:deploy "pr-$PR" \
+            --only maquetas --project staging --expires 7d --json > canal.json
+          # PENDIENTE: confirmar la forma del JSON con la versión fijada.
+          echo "url=$(jq -r '.result[].url' canal.json | head -n1)" >> "$GITHUB_OUTPUT"
+
+      - name: Dejar el enlace en el PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          URL: ${{ steps.canal.outputs.url }}
+        run: |
+          gh pr comment "$PR" --edit-last --body "Maquetas de este PR: $URL (vence en 7 días)" \
+            || gh pr comment "$PR" --body "Maquetas de este PR: $URL (vence en 7 días)"

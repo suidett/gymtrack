@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none" style="color:#131A17">
+  <!-- 03 Series marcadas: dos series hechas y la que sigue -->
+  <rect x="5" y="24.5" width="15" height="15" rx="2.5" fill="currentColor"/>
+  <rect x="24.5" y="24.5" width="15" height="15" rx="2.5" fill="currentColor"/>
+  <path fill="currentColor" fill-rule="evenodd" d="M46.5 24.5h10a2.5 2.5 0 0 1 2.5 2.5v10a2.5 2.5 0 0 1-2.5 2.5h-10a2.5 2.5 0 0 1-2.5-2.5v-10a2.5 2.5 0 0 1 2.5-2.5zM48 28.5v7h7v-7z"/>
+</svg>

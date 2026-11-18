@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none" style="color:#131A17">
+  <!-- 07C Borde redondo -->
+  <path fill="currentColor" d="M18.7 12H41.3A2 2 0 0 1 43.3 14V17A2 2 0 0 1 41.3 19H18.7A2 2 0 0 1 16.7 17V14A2 2 0 0 1 18.7 12Z"/>
+  <path fill="currentColor" d="M12.18 23H22A2 2 0 0 1 24 25V28A2 2 0 0 1 22 30H12.18A2 2 0 0 1 10.18 28V25A2 2 0 0 1 12.18 23Z"/>
+  <path fill="currentColor" d="M12.18 34H22A2 2 0 0 1 24 36V39A2 2 0 0 1 22 41H12.18A2 2 0 0 1 10.18 39V36A2 2 0 0 1 12.18 34Z"/>
+  <path class="acento" fill="#45B392" d="M35 34H51.82A2 2 0 0 1 53.82 36V39A2 2 0 0 1 51.82 41H35A2 2 0 0 1 33 39V36A2 2 0 0 1 35 34Z"/>
+  <path fill="currentColor" d="M18.7 45H45.3A2 2 0 0 1 47.3 47V50A2 2 0 0 1 45.3 52H18.7A2 2 0 0 1 16.7 50V47A2 2 0 0 1 18.7 45Z"/>
+</svg>

@@ -1,0 +1,97 @@
+{
+  "boards": {
+    "Comp2DHoy.dc.html": {
+      "x": 0,
+      "y": 1800,
+      "w": 412,
+      "h": 892,
+      "title": "D · Paso a paso · Hoy",
+      "page": "composicion"
+    },
+    "Comp2DAntes.dc.html": {
+      "x": 492,
+      "y": 1800,
+      "w": 412,
+      "h": 892,
+      "title": "D · Paso a paso · Antes de la serie",
+      "page": "composicion"
+    },
+    "Comp2DAnotar.dc.html": {
+      "x": 984,
+      "y": 1800,
+      "w": 412,
+      "h": 892,
+      "title": "D · Paso a paso · Anotar la serie",
+      "page": "composicion"
+    },
+    "Comp2DDescanso.dc.html": {
+      "x": 1476,
+      "y": 1800,
+      "w": 412,
+      "h": 892,
+      "title": "D · Paso a paso · Descanso",
+      "page": "composicion"
+    },
+    "Comp2EHoy.dc.html": {
+      "x": 2080,
+      "y": 1800,
+      "w": 412,
+      "h": 892,
+      "title": "E · Una tarjeta a la vez · Hoy",
+      "page": "composicion"
+    },
+    "Comp2EAntes.dc.html": {
+      "x": 2572,
+      "y": 1800,
+      "w": 412,
+      "h": 892,
+      "title": "E · Una tarjeta a la vez · Antes de la serie",
+      "page": "composicion"
+    },
+    "Comp2EAnotar.dc.html": {
+      "x": 3064,
+      "y": 1800,
+      "w": 412,
+      "h": 892,
+      "title": "E · Una tarjeta a la vez · Anotar la serie",
+      "page": "composicion"
+    },
+    "Comp2EDescanso.dc.html": {
+      "x": 3556,
+      "y": 1800,
+      "w": 412,
+      "h": 892,
+      "title": "E · Una tarjeta a la vez · Descanso",
+      "page": "composicion"
+    },
+    "Comp2Prueba.dc.html": {
+      "x": 4160,
+      "y": 1800,
+      "w": 1200,
+      "h": 892,
+      "title": "Ronda 2 · Prueba de comprensión",
+      "page": "composicion"
+    }
+  },
+  "order": [
+    "Comp2DHoy.dc.html",
+    "Comp2DAntes.dc.html",
+    "Comp2DAnotar.dc.html",
+    "Comp2DDescanso.dc.html",
+    "Comp2EHoy.dc.html",
+    "Comp2EAntes.dc.html",
+    "Comp2EAnotar.dc.html",
+    "Comp2EDescanso.dc.html",
+    "Comp2Prueba.dc.html"
+  ],
+  "notes": {
+    "mc2": {
+      "x": 0,
+      "y": 1500,
+      "text": "Ronda 2: que se entienda a la primera",
+      "kind": "title1",
+      "maxW": 5360,
+      "page": "composicion"
+    }
+  }
+}

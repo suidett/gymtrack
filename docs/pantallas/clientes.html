@@ -1,0 +1,533 @@
+<!doctype html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GymTrack · Clientes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="sistema.css">
+<style>
+  /* ── Cabeza y saludo (igual que Hoy) ───────────────────────────────────── */
+  .cabeza { display: flex; align-items: center; justify-content: space-between; height: 56px; }
+  .saludo { margin: 4px 0 20px; }
+  .saludo .titulo { margin-top: 2px; }
+  .fila-ceja { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .peligro { color: var(--peligro); }
+
+  /* ── Resumen: adherencia de la semana y cuentas ────────────────────────── */
+  .adh { display: flex; align-items: baseline; gap: 12px; margin: 6px 0 0; }
+  .adh > .cifra { font-size: 40px; line-height: 1; }
+  .adh > .cifra small { font-size: 20px; margin-left: 4px; color: var(--texto-2); }
+  .adh .sec .cifra { color: var(--texto); }
+  /* Lo que falta va en un gris que se alcanza a ver en los dos temas; lo hecho, en ámbar con su borde. */
+  .tel { --pendiente: color-mix(in srgb, var(--borde) 45%, transparent); }
+  .adh-barra { display: flex; gap: 2px; margin-top: 14px; }
+  .adh-barra i { flex: 1; height: 10px; border-radius: 1px; background: var(--pendiente); }
+  .adh-barra i.si, .leyenda i.si { background: var(--hecho-fondo); border: 1px solid var(--hecho-borde); }
+  .adh-barra i.no, .leyenda i.no { background: var(--peligro); }
+  .leyenda { display: flex; align-items: center; gap: 6px; margin: 10px 0 0; font-size: 13px; color: var(--texto-2); }
+  .leyenda i { display: inline-block; width: 10px; height: 10px; border-radius: 1px; background: var(--pendiente); }
+  .leyenda i:not(:first-child) { margin-left: 8px; }
+  .cuentas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--sup-alta); }
+  .cuenta .cifra { display: block; font-size: 24px; line-height: 1.1; }
+  .cuenta .sec { font-size: 13px; margin-top: 2px; }
+
+  /* ── Alertas por revisar ───────────────────────────────────────────────── */
+  .seccion-cabeza .btn-fantasma { margin: -12px -12px -12px 0; }
+  .seccion-cabeza .h3 .cifra { font-size: 15px; color: var(--texto-2); margin-left: 4px; }
+  .nuevas-txt { margin: -4px 0 8px; font-size: 14px; }
+  .nuevas-txt .cifra { color: var(--texto); }
+  .tarjeta.lista-filas { padding: 0; overflow: hidden; }
+  .lista-filas.filas-boton > li { display: block; min-height: 0; }
+  .fila-boton { width: 100%; display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 10px 16px;
+    background: transparent; border: 0; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+  .fila-boton:active { background: var(--fantasma-pres); }
+  .fila-boton:focus-visible { outline: 2px solid var(--foco); outline-offset: -2px; }
+  .alerta-marca { flex: 0 0 4px; align-self: stretch; margin: 4px 0; border-radius: 1px; background: var(--borde); }
+  .alerta-marca.dolor { background: var(--peligro); }
+  .fila-texto { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .fila-nombre { display: flex; align-items: center; gap: 8px; font: 600 16px/1.3 var(--letra); }
+  /* Hasta dos líneas: lo que pasa con cada persona se lee entero. */
+  .fila-det { font-size: 13px; line-height: 1.35; color: var(--texto-2); overflow: hidden;
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+  .fila-det b { font-weight: 600; }
+  .fila-det.peligro { color: var(--peligro); }
+  .cuando { flex: 0 0 auto; font-size: 13px; color: var(--texto-2); }
+
+  /* ── Lista de clientes ─────────────────────────────────────────────────── */
+  .buscador { position: relative; display: flex; align-items: center; gap: 10px; width: 100%; height: 48px; padding: 0 12px;
+    border-radius: var(--radio); border: 2px solid var(--campo-borde); background: var(--campo-fondo);
+    color: var(--texto-2); font: 500 16px/1 var(--letra); text-align: left; cursor: text; }
+  .buscador:focus-visible { outline: 2px solid var(--foco); outline-offset: 2px; }
+  .ico { display: block; width: 24px; height: 24px; flex: 0 0 24px; }
+  .ico path { stroke: currentColor; fill: none; stroke-width: 2.5; stroke-linecap: square; }
+  .filtros { margin: 8px 0 8px; gap: 6px; }
+  .filtros .chip { flex: 1 1 auto; }
+  .filtros .chip > span { padding: 0 10px; gap: 6px; }
+  .filtros .chip .cifra { font-size: 14px; }
+  .avatar { flex: 0 0 40px; height: 40px; border-radius: var(--radio); background: var(--sup-alta);
+    display: flex; align-items: center; justify-content: center; font-size: 14px; color: var(--texto); }
+  /* Etiqueta chica común: 24 dp, radio 4. «Revisar» va en la variante de acento. */
+  .etiqueta { flex: 0 0 auto; display: inline-flex; align-items: center; height: 24px; padding: 0 8px; border-radius: 4px;
+    border: 1px solid var(--borde); color: var(--texto-2); font: 600 12px/1 var(--letra); white-space: nowrap; }
+  .etiqueta.acento { color: var(--acento-texto); border-color: var(--hecho-borde); }
+  .cli-sem { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+  .mini { display: flex; gap: 2px; }
+  .mini i { width: 10px; height: 8px; border-radius: 1px; background: var(--pendiente); }
+  .mini i.si { background: var(--hecho-fondo); border: 1px solid var(--hecho-borde); }
+  .mini i.no { background: var(--peligro); }
+  .cli-sem .sem-txt { font-size: 12px; color: var(--texto-2); }
+  .cli-sem .sem-txt .cifra { color: var(--texto); font-weight: 700; }
+  .coincide { background: none; color: inherit; text-decoration: underline; text-decoration-thickness: 3px; text-underline-offset: 4px; text-decoration-color: var(--hecho-fondo); }
+  .sin-filtro { padding: 20px 16px; }
+
+  /* ── Búsqueda abierta ──────────────────────────────────────────────────── */
+  .barra-busqueda { flex: 0 0 56px; display: flex; align-items: center; gap: 4px; padding: 0 12px 0 4px; }
+  .campo-busqueda { position: relative; flex: 1; min-width: 0; }
+  .campo-busqueda input { width: 100%; height: 48px; padding: 0 48px 0 12px; border-radius: var(--radio);
+    border: 2px solid var(--accion); background: var(--campo-fondo); color: var(--texto); font: 500 16px/1 var(--letra); }
+  [data-tema="clara"] .campo-busqueda input { border-color: var(--texto); }
+  .campo-busqueda input:focus { outline: none; }
+  .campo-busqueda input::placeholder { color: var(--texto-2); }
+  .campo-busqueda .btn-icono { position: absolute; right: 0; top: 0; }
+  .res-cuenta { margin: 8px 0 8px; }
+  /* Teclado dibujado: el mismo de Perfil y Ejercicios. Tapa las pestañas mientras se busca; las teclas escriben. */
+  .teclado { flex: 0 0 auto; padding: 8px 3px 2px; background: var(--sup); border-top: 1px solid var(--sup-alta); }
+  .t-fila { display: flex; justify-content: center; gap: 4px; margin-bottom: 8px; }
+  .tecla { flex: 1; max-width: 37px; height: 44px; padding: 0; border: 0; border-radius: 6px; cursor: pointer;
+    background: var(--sup-alta); color: var(--texto); font: 500 19px/1 var(--letra);
+    display: flex; align-items: center; justify-content: center; }
+  .tecla:active { background: var(--fantasma-pres); outline: 1px solid var(--borde); }
+  .tecla.esp { flex: 1.5; max-width: 54px; font-size: 14px; font-weight: 600; }
+  .tecla.espacio { flex: 5; max-width: none; font-size: 13px; color: var(--texto-2); }
+  .tecla.listo { background: var(--accion); color: var(--accion-texto); }
+  .tecla svg { width: 22px; height: 22px; }
+  .tecla path { fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: round; }
+  .vacio-busqueda { padding: 32px 4px 0; }
+  .vacio-busqueda .sec { margin-top: 6px; }
+  .vacio-busqueda .btn { margin-top: 20px; }
+
+  /* ── Código de invitación ──────────────────────────────────────────────── */
+  /* Seis cajas del código, las mismas de Encuesta y Perfil: 44 × 56 dp, radio 8, cifra 700 28 px. Para mostrar, sin borde. */
+  .codigo { display: flex; justify-content: center; gap: 8px; margin: 20px 0 0; }
+  .codigo span { flex: 0 0 44px; height: 56px; border-radius: var(--radio); background: var(--sup-alta);
+    display: flex; align-items: center; justify-content: center; font: 700 28px/1 var(--mono); color: var(--texto); }
+  .vence { margin-top: 12px; text-align: center; font-size: 13px; }
+  .hoja-cabeza { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin: -8px -8px 0 0; }
+  .hoja-cabeza .h2 { padding-top: 8px; }
+  .hoja .otro { margin-top: 8px; }
+  /* El aviso flota sobre el botón de abajo, no encima de él. Con una hoja abierta, sale arriba y por encima del velo. */
+  .tel:has(.tel-accion) .aviso { bottom: 177px; }
+  .tel:has(.velo.ver) .aviso { z-index: 7; top: 40px; bottom: auto; }
+
+  /* Insignia de alertas nuevas sobre la pestaña Alertas (la misma de Alertas y Perfil). */
+  .pestana .insignia { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px;
+    padding: 0 4px; margin-left: 4px; border-radius: 4px; background: var(--hecho-fondo); color: var(--visto);
+    font: 700 11px/1 var(--mono); vertical-align: 1px; }
+
+  /* ── Sin clientes ──────────────────────────────────────────────────────── */
+  .vacio .sec { margin-top: 6px; }
+  .vacio-acciones { display: flex; gap: 8px; margin-top: 20px; }
+  .vacio-acciones .btn { flex: 1; }
+  .pasos { list-style: none; margin: 0; padding: 0; }
+  .pasos li { display: flex; gap: 12px; align-items: flex-start; padding: 8px 0; font-size: 15px; line-height: 1.4; }
+  .pasos .n { flex: 0 0 28px; height: 28px; border-radius: var(--radio); border: 2px solid var(--borde);
+    display: flex; align-items: center; justify-content: center; font: 700 13px/1 var(--mono); margin-top: -2px; }
+
+  /* ── Cargando y sin conexión ───────────────────────────────────────────── */
+  .esq { display: block; height: 14px; border-radius: 4px; background: var(--sup-alta); }
+  .esq.av { flex: 0 0 40px; height: 40px; border-radius: var(--radio); }
+  .esq-col { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+  .sin-red { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 0 16px;
+    padding: 4px 4px 4px 14px; border-radius: var(--radio); background: var(--sup-alta); font-size: 14px; line-height: 1.35; }
+  .sin-red b { display: block; font-weight: 700; }
+
+  .notas-maqueta { max-width: 860px; margin: 32px auto 0; color: var(--p-texto-2); font-size: 14px; }
+  .notas-maqueta h2 { color: var(--p-texto); font-size: 16px; margin: 0 0 8px; }
+  .notas-maqueta ul { margin: 0; padding-left: 18px; }
+  .notas-maqueta li { margin: 4px 0; }
+</style>
+</head>
+<body>
+<main class="maqueta">
+  <header class="maqueta-cabeza">
+    <h1>Pantalla 16 · Clientes</h1>
+    <p>Dirección Más · 412 × 892 dp · entrenadora · <a href="ficha.html">Ficha del cliente</a> · <a href="index.html">todas las pantallas</a></p>
+  </header>
+
+  <div class="controles" role="group" aria-label="Controles de la maqueta">
+    <label class="grupo"><span class="rot">Estado</span>
+      <select class="ctl" data-ctl="estado">
+        <option value="normal">Normal</option>
+        <option value="buscando">Buscando</option>
+        <option value="sinresultados">Búsqueda sin resultados</option>
+        <option value="invitar">Invitar (código abierto)</option>
+        <option value="vacio">Sin clientes</option>
+        <option value="cargando">Cargando</option>
+        <option value="sinconexion">Sin conexión</option>
+      </select></label>
+    <label class="grupo"><span class="rot">Tema</span>
+      <select class="ctl" data-ctl="tema">
+        <option value="gimnasio">Modo gimnasio</option>
+        <option value="clara">Clara</option>
+        <option value="ambos">Las dos</option>
+      </select></label>
+    <label class="grupo"><span class="rot">Tamaño</span>
+      <select class="ctl" data-ctl="zoom">
+        <option value="ajustar">Ajustar al ancho</option>
+        <option value="100">Real (1 dp = 1 px)</option>
+        <option value="150">150 %</option>
+      </select></label>
+    <label class="grupo"><input type="checkbox" data-ctl="medidas"><span>Medidas de toque</span></label>
+  </div>
+
+  <div class="escenario" id="escenario"></div>
+
+  <section class="notas-maqueta">
+    <h2>Qué mirar</h2>
+    <ul>
+      <li>Es el inicio de la entrenadora, como Hoy para la clienta: arriba la adherencia de la semana (barra de sesiones hechas, perdidas y por venir), cuántos clientes activos, cuántos entrenan hoy y cuántos no tienen rutina.</li>
+      <li>«Por revisar» cuenta las 6 alertas abiertas, las mismas de Alertas, y lista las 3 nuevas (dolor, sin avance, sin sesiones). Tocar una lleva a Alertas; la insignia de la pestaña también marca las 3 nuevas.</li>
+      <li>La lista va por orden alfabético. Cada fila dice qué pasa con esa persona y, a la derecha, cuántas sesiones lleva de las que tiene esta semana, según su rutina (Fuerza 4 días, Cuerpo completo 3 días, Hipertrofia 5 días o Fuerza 5 × 5). La etiqueta «Revisar» marca a los 6 con una alerta abierta. Los filtros Hoy, Revisar y Sin rutina funcionan.</li>
+      <li>Toca el buscador y escribe, con tu teclado o con el dibujado (el mismo de Perfil y Ejercicios): filtra en vivo, sin importar tildes. Con un nombre que no está, ofrece invitar.</li>
+      <li>«Invitar cliente» abre el código de 6 caracteres (vence en 7 días y sirve para una persona). Copiar, compartir y generar otro responden.</li>
+      <li>Martina abre su ficha completa y Sebastián la ficha de un cliente sin rutina. Las demás filas avisan, porque solo esas dos fichas están maquetadas.</li>
+    </ul>
+  </section>
+</main>
+
+<script src="maqueta.js"></script>
+<script>
+// ── Datos de prueba: Camila Rojas y sus 12 clientes ─────────────────────────
+// sem: sesiones de esta semana (h hechas, p perdidas, t planificadas). Sin sem = sin rutina.
+const FECHA = 'Martes 17 de noviembre';
+// Rutinas: Fuerza 4 días (4 por semana): Martina, Diego, Josefa y Matías. Cuerpo completo 3 días (3): Catalina, Antonia
+// y Valentina. Hipertrofia 5 días (5): Ignacio y Joaquín. Fuerza 5 × 5 (3): Fernanda. Sin rutina: Sebastián y Florencia.
+// alerta: tiene una alerta abierta en Alertas (las 6 «por revisar»).
+const CLIENTES = [
+  { id: 'antonia', n: 'Antonia Herrera', ini: 'AH', estado: 'Entrena hoy · Cuerpo completo B', hoy: true, alerta: true, sem: { h: 1, p: 0, t: 3 } },
+  { id: 'catalina', n: 'Catalina Pérez', ini: 'CP', estado: 'Entrenó hoy a las 7:05 · Cuerpo completo A', hoy: true, sem: { h: 1, p: 0, t: 3 } },
+  { id: 'diego', n: 'Diego Araya', ini: 'DA', estado: 'Press de banca sin avance en 3 sesiones', alerta: true, sem: { h: 1, p: 0, t: 4 } },
+  { id: 'fernanda', n: 'Fernanda Silva', ini: 'FS', estado: 'Entrenó ayer · Pierna', alerta: true, sem: { h: 1, p: 0, t: 3 } },
+  { id: 'florencia', n: 'Florencia Castro', ini: 'FC', estado: 'Sin rutina · terminó su rutina' },
+  { id: 'ignacio', n: 'Ignacio Soto', ini: 'IS', estado: '8 días sin entrenar', alerta: true, sem: { h: 0, p: 1, t: 5 } },
+  { id: 'joaquin', n: 'Joaquín Reyes', ini: 'JR', estado: 'Entrenó ayer · Empuje A', sem: { h: 1, p: 0, t: 5 } },
+  { id: 'josefa', n: 'Josefa Muñoz', ini: 'JM', estado: 'Dolor en la rodilla izquierda · 7 de 10', alerta: 'dolor', sem: { h: 1, p: 0, t: 4 } },
+  { id: 'martina', n: 'Martina Fuentes', ini: 'MF', estado: 'Entrena hoy · Pierna A', hoy: true, alerta: true, sem: { h: 1, p: 0, t: 4 }, ir: 'ficha.html' },
+  { id: 'matias', n: 'Matías Contreras', ini: 'MC', estado: 'Entrena hoy · Pierna A', hoy: true, sem: { h: 1, p: 0, t: 4 } },
+  { id: 'sebastian', n: 'Sebastián Morales', ini: 'SM', estado: 'Sin rutina · se vinculó ayer', ir: 'ficha.html#estado=sinrutina' },
+  { id: 'valentina', n: 'Valentina Díaz', ini: 'VD', estado: 'Entrena hoy · Cuerpo completo A', hoy: true, sem: { h: 1, p: 0, t: 3 } },
+];
+// Las 3 nuevas de Alertas. Las otras 3 abiertas (Martina, Fernanda y Antonia) ya están vistas.
+const ALERTAS = [
+  { tipo: 'Dolor', cli: 'Josefa Muñoz', det: 'Rodilla izquierda · 7 de 10', cuando: 'ayer', dolor: true },
+  { tipo: 'Sin avance', cli: 'Diego Araya', det: 'Press de banca · 3 sesiones iguales', cuando: 'hoy' },
+  { tipo: 'Sin sesiones', cli: 'Ignacio Soto', det: '8 días sin entrenar', cuando: 'hoy' },
+];
+const SEMANA_PASADA = 84;
+const CODIGOS = ['K7P2QX', 'R4M8TD', 'H9W3NC'];
+const VENCE = 'mar 24 nov';
+const FILTROS = [['todos', 'Todos'], ['hoy', 'Hoy'], ['revisar', 'Revisar'], ['sinrutina', 'Sin rutina']];
+
+// ── Ayudas ───────────────────────────────────────────────────────────────────
+const norm = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+const esc = (s) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const icoAtras = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H5M11 5l-7 7 7 7"/></svg>';
+const icoLupa = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 4.5a6 6 0 1 0 0 12a6 6 0 1 0 0-12zM15 15l5 5"/></svg>';
+const icoX = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+const icoMayus = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l7 8h-4v7H9v-7H5z"/></svg>';
+const icoRetro = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12v12H8l-5-6z"/><path d="M11 9.5l5 5M16 9.5l-5 5"/></svg>';
+const icoListo = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5 9.5-10"/></svg>';
+
+// ── Estado en memoria ────────────────────────────────────────────────────────
+let filtro = 'todos', busqueda = '', codigo = 0, base = 'normal', fuera = null, conTeclado = true;
+
+const lista = () => CLIENTES.filter((c) => c.id !== fuera);
+function cuentas() {
+  const l = lista(), con = l.filter((c) => c.sem);
+  const h = con.reduce((a, c) => a + c.sem.h, 0), p = con.reduce((a, c) => a + c.sem.p, 0), t = con.reduce((a, c) => a + c.sem.t, 0);
+  return {
+    activos: l.length, hoy: l.filter((c) => c.hoy).length, sinrutina: l.length - con.length,
+    revisar: l.filter((c) => c.alerta).length, todos: l.length, h, p, t, adh: Math.round((h / (h + p)) * 100),
+  };
+}
+const filtrar = (l) => l.filter((c) => filtro === 'todos' || (filtro === 'hoy' && c.hoy) || (filtro === 'revisar' && c.alerta) || (filtro === 'sinrutina' && !c.sem));
+
+// ── Piezas ───────────────────────────────────────────────────────────────────
+function resaltar(nombre, q) {
+  // Cada letra con tilde ocupa un carácter, así que los índices calzan entre el nombre y su versión sin tildes.
+  const i = [...nombre].map((ch) => norm(ch)).join('').indexOf(q);
+  if (i < 0) return nombre;
+  return `${nombre.slice(0, i)}<mark class="coincide">${nombre.slice(i, i + q.length)}</mark>${nombre.slice(i + q.length)}`;
+}
+
+function miniSemana(s) {
+  if (!s) return '';
+  const seg = Array.from({ length: s.t }, (_, i) => `<i class="${i < s.h ? 'si' : i < s.h + s.p ? 'no' : ''}"></i>`).join('');
+  return `<span class="cli-sem"><span class="mini" aria-hidden="true">${seg}</span>
+    <span class="sem-txt"><span class="cifra">${s.h}</span> de <span class="cifra">${s.t}</span></span></span>`;
+}
+
+// Solo Martina y Sebastián tienen ficha maquetada; las demás filas avisan en vez de abrir la de otra persona.
+function filaCliente(c, q) {
+  const destino = c.ir ? `data-ir="${c.ir}"` : `data-accion="sin-ficha" data-nombre="${c.n}"`;
+  return `<li><button class="fila-boton" ${destino} data-toque>
+    <span class="avatar cifra" aria-hidden="true">${c.ini}</span>
+    <span class="fila-texto"><span class="fila-nombre"><span>${q ? resaltar(c.n, q) : c.n}</span>${c.alerta ? '<span class="etiqueta acento">Revisar</span>' : ''}</span>
+      <span class="fila-det${c.alerta === 'dolor' ? ' peligro' : ''}">${c.estado}</span></span>
+    ${miniSemana(c.sem)}</button></li>`;
+}
+
+function resumen(k) {
+  const seg = Array.from({ length: k.t }, (_, i) => `<i class="${i < k.h ? 'si' : i < k.h + k.p ? 'no' : ''}"></i>`).join('');
+  return `<section class="tarjeta" aria-label="Resumen de la semana">
+    <div class="fila-ceja"><p class="ceja">Adherencia de la semana</p><p class="ceja">la pasada <span class="cifra">${SEMANA_PASADA}</span> %</p></div>
+    <p class="adh"><span class="cifra">${k.adh}<small>%</small></span>
+      <span class="sec"><span class="cifra">${k.h}</span> de <span class="cifra">${k.h + k.p}</span> sesiones hasta hoy</span></p>
+    <div class="adh-barra" aria-hidden="true">${seg}</div>
+    <p class="leyenda"><i class="si"></i>hechas <i class="no"></i>perdidas <i></i>quedan <span class="cifra">${k.t - k.h - k.p}</span></p>
+    <div class="cuentas">
+      <div class="cuenta"><span class="cifra">${k.activos}</span><p class="sec">activos</p></div>
+      <div class="cuenta"><span class="cifra">${k.hoy}</span><p class="sec">entrenan hoy</p></div>
+      <div class="cuenta"><span class="cifra">${k.sinrutina}</span><p class="sec">sin rutina</p></div>
+    </div>
+  </section>`;
+}
+
+function bloqueAlertas(k) {
+  const filas = ALERTAS.map((a) => `<li><button class="fila-boton" data-ir="alertas.html" data-toque>
+    <span class="alerta-marca${a.dolor ? ' dolor' : ''}" aria-hidden="true"></span>
+    <span class="fila-texto"><span class="fila-nombre">${a.cli}</span>
+      <span class="fila-det"><b class="${a.dolor ? 'peligro' : ''}">${a.tipo}</b> · ${a.det}</span></span>
+    <span class="cuando">${a.cuando}</span></button></li>`).join('');
+  return `<div class="seccion-cabeza"><h2 class="h3">Por revisar<span class="cifra">${k.revisar}</span></h2>
+      <button class="btn btn-fantasma" data-ir="alertas.html" data-toque>Ver todas</button></div>
+    <p class="sec nuevas-txt"><span class="cifra">${ALERTAS.length}</span> nuevas</p>
+    <ul class="tarjeta lista-filas filas-boton">${filas}</ul>`;
+}
+
+function bloqueClientes(k) {
+  const chips = FILTROS.map(([v, t]) => `<button class="chip texto" data-accion="filtro" data-v="${v}" aria-pressed="${filtro === v}" data-toque>
+    <span>${t} <span class="cifra">${k[v]}</span></span></button>`).join('');
+  const l = filtrar(lista());
+  const filas = l.length ? l.map((c) => filaCliente(c)).join('') : '<li class="sin-filtro sec">Nadie en este filtro.</li>';
+  return `<div class="seccion-cabeza"><h2 class="h3">Clientes</h2><span class="sec">esta semana</span></div>
+    <button class="buscador" data-accion="buscar" data-toque>${icoLupa}<span>Buscar por nombre</span></button>
+    <div class="chips filtros" role="group" aria-label="Filtrar clientes">${chips}</div>
+    <ul class="tarjeta lista-filas filas-boton">${filas}</ul>`;
+}
+
+function bloqueCodigo() {
+  const c = CODIGOS[codigo];
+  return `<div class="codigo" role="img" aria-label="Código ${[...c].join(' ')}">${[...c].map((x) => `<span>${x}</span>`).join('')}</div>
+    <p class="sec vence">Vence el ${VENCE} · sirve para una persona</p>`;
+}
+
+function resultados() {
+  const q = norm(busqueda.trim());
+  if (!q) {
+    return `<p class="sec res-cuenta">Tus <span class="cifra">${lista().length}</span> clientes</p>
+      <ul class="tarjeta lista-filas filas-boton">${lista().map((c) => filaCliente(c)).join('')}</ul>`;
+  }
+  const r = lista().filter((c) => norm(c.n).includes(q));
+  if (!r.length) {
+    return `<div class="vacio-busqueda"><p class="h3">Nadie con «${esc(busqueda.trim())}» entre tus clientes</p>
+      <p class="sec">Revisa cómo lo escribiste. Si es alguien nuevo, invítalo con tu código.</p>
+      <button class="btn btn-secundario ancho" data-accion="invitar" data-toque>Invitar cliente</button></div>`;
+  }
+  return `<p class="sec res-cuenta"><span class="cifra">${r.length}</span> ${r.length === 1 ? 'cliente' : 'clientes'}</p>
+    <ul class="tarjeta lista-filas filas-boton">${r.map((c) => filaCliente(c, q)).join('')}</ul>`;
+}
+
+// Teclado dibujado, el mismo de Perfil y Ejercicios. Las teclas escriben en el buscador sin quitarle el foco.
+function teclado() {
+  const k = (c) => `<button class="tecla" data-tecla="${c}" tabindex="-1">${c}</button>`;
+  const fila = (s) => `<div class="t-fila">${[...s].map(k).join('')}</div>`;
+  return `<div class="teclado" aria-hidden="true">${fila('1234567890')}${fila('QWERTYUIOP')}${fila('ASDFGHJKLÑ')}
+    <div class="t-fila"><button class="tecla esp" data-tecla="mayus" tabindex="-1">${icoMayus}</button>${[...'ZXCVBNM'].map(k).join('')}<button class="tecla esp" data-tecla="borrar" tabindex="-1">${icoRetro}</button></div>
+    <div class="t-fila"><button class="tecla esp" data-tecla="num" tabindex="-1">?123</button>${k(',')}<button class="tecla espacio" data-tecla="espacio" tabindex="-1">Español</button>${k('.')}<button class="tecla esp listo" data-tecla="listo" tabindex="-1" aria-label="Listo">${icoListo}</button></div>
+  </div>`;
+}
+// La pestaña Alertas lleva las nuevas en todas las pantallas de la entrenadora.
+// Sin clientes no hay alertas, y mientras carga todavía no se sabe cuántas hay (igual que en Alertas).
+const pestanasEntrenador = (fondo) => (['vacio', 'cargando'].includes(fondo) ? pestanas(PESTANAS_ENTRENADOR, 'Clientes')
+  : pestanas(PESTANAS_ENTRENADOR, 'Clientes')
+    .replace('>Alertas</button>', `>Alertas<span class="insignia" aria-label="${ALERTAS.length} nuevas">${ALERTAS.length}</span></button>`));
+
+function cargando() {
+  const fila = '<li><div class="fila-boton"><span class="esq av"></span><span class="esq-col"><span class="esq" style="width:58%"></span><span class="esq" style="width:40%;height:10px"></span></span></div></li>';
+  return `<div aria-busy="true" aria-label="Cargando tus clientes">
+    <section class="tarjeta"><span class="esq" style="width:46%;height:12px"></span><span class="esq" style="width:30%;height:36px;margin-top:12px"></span>
+      <span class="esq" style="height:10px;margin-top:14px"></span>
+      <div class="cuentas"><span class="esq" style="height:40px"></span><span class="esq" style="height:40px"></span><span class="esq" style="height:40px"></span></div></section>
+    <div class="seccion-cabeza"><span class="esq" style="width:110px;height:18px"></span></div>
+    <ul class="tarjeta lista-filas filas-boton">${fila.repeat(3)}</ul>
+    <div class="seccion-cabeza"><span class="esq" style="width:80px;height:18px"></span></div>
+    <ul class="tarjeta lista-filas filas-boton">${fila.repeat(3)}</ul></div>`;
+}
+
+function vacio() {
+  return `<section class="tarjeta vacio" aria-label="Sin clientes">
+      <h2 class="h2">Todavía no tienes clientes</h2>
+      <p class="sec">Comparte este código con tu primer cliente. Lo ingresa en su perfil y quedan conectados.</p>
+      ${bloqueCodigo()}
+      <div class="vacio-acciones"><button class="btn btn-secundario" data-accion="copiar" data-toque>Copiar código</button>
+        <button class="btn btn-fantasma" data-accion="otro-codigo" data-toque>Generar otro</button></div>
+    </section>
+    <div class="seccion-cabeza"><h2 class="h3">Cómo funciona</h2></div>
+    <ol class="pasos">
+      <li><span class="n">1</span><span>Le mandas el código por WhatsApp o se lo dictas.</span></li>
+      <li><span class="n">2</span><span>Lo ingresa en su perfil, en «Mi entrenador».</span></li>
+      <li><span class="n">3</span><span>Aparece aquí con su encuesta y le armas la rutina.</span></li>
+    </ol>`;
+}
+
+function hojaInvitar(tema, ver) {
+  return `<div class="velo${ver ? ' ver' : ''}" data-hoja="invitar"><div class="hoja" role="dialog" aria-modal="true" aria-labelledby="t-inv-${tema}">
+    <div class="hoja-cabeza"><h2 class="h2" id="t-inv-${tema}">Invitar cliente</h2>
+      <button class="btn-icono" data-accion="cerrar-hoja" aria-label="Cerrar" data-toque>${icoX}</button></div>
+    <p class="sec" style="margin-top:4px">Tu cliente ingresa este código en su perfil y quedan conectados. Verás su encuesta apenas entre.</p>
+    ${bloqueCodigo()}
+    <div class="acciones"><button class="btn btn-secundario" data-accion="copiar" data-toque>Copiar</button>
+      <button class="btn btn-primario" data-accion="compartir" data-toque>Compartir</button></div>
+    <button class="btn btn-fantasma ancho otro" data-accion="otro-codigo" data-toque>Generar otro código</button>
+  </div></div>`;
+}
+
+function telefono(tema, ctl) {
+  const e = ctl.estado, fondo = e === 'invitar' ? base : e;
+  const buscando = fondo === 'buscando' || fondo === 'sinresultados';
+  const k = cuentas();
+  const saludo = `<div class="cabeza">${simbolo()}</div>
+    <div class="saludo"><p class="ceja">${FECHA}</p><h1 class="titulo">Hola, Camila</h1></div>`;
+  let cuerpo, accion = '';
+  if (buscando) {
+    cuerpo = `<div data-resultados>${resultados()}</div>`;
+  } else if (fondo === 'vacio') {
+    cuerpo = saludo + vacio();
+    accion = '<button class="btn btn-primario ancho alto" data-accion="compartir" data-toque>Compartir código</button>';
+  } else if (fondo === 'cargando') {
+    cuerpo = saludo + cargando();
+  } else {
+    const red = fondo === 'sinconexion'
+      ? `<div class="sin-red" role="status"><span><b>Sin conexión</b>Lo que ves es de hoy a las 8:12.</span>
+          <button class="btn btn-fantasma" data-accion="reintentar" data-toque>Reintentar</button></div>` : '';
+    cuerpo = saludo + red + resumen(k) + bloqueAlertas(k) + bloqueClientes(k);
+    accion = '<button class="btn btn-secundario ancho alto" data-accion="invitar" data-toque>Invitar cliente</button>';
+  }
+  const barra = buscando ? `<div class="barra-busqueda">
+      <button class="btn-icono" data-accion="cerrar-busqueda" aria-label="Volver" data-toque>${icoAtras}</button>
+      <div class="campo-busqueda"><input type="text" data-buscar value="${esc(busqueda)}" placeholder="Buscar por nombre" aria-label="Buscar cliente" autocomplete="off" enterkeyhint="search">
+        <button class="btn-icono" data-accion="limpiar" aria-label="Borrar búsqueda" data-toque${busqueda ? '' : ' hidden'}>${icoX}</button></div>
+    </div>` : '';
+  return `<div class="tel" data-tema="${tema}">
+    <div class="tel-estado"><span class="cifra" style="font-weight:600">9:41</span><span>5G · 82 %</span></div>
+    ${barra}
+    <div class="tel-contenido">${cuerpo}</div>
+    ${accion ? `<div class="tel-accion">${accion}</div>` : ''}
+    ${buscando && conTeclado ? teclado() : pestanasEntrenador(fondo)}
+    <div class="tel-gesto"></div>
+    <div class="aviso" role="status"></div>
+    ${hojaInvitar(tema, e === 'invitar')}
+  </div>`;
+}
+
+// ── Maqueta ──────────────────────────────────────────────────────────────────
+function alCambiarEstado(estado) {
+  filtro = 'todos'; base = 'normal';
+  busqueda = { buscando: 'Jo', sinresultados: 'Rodrigo' }[estado] || '';
+  conTeclado = true;
+}
+const m = iniciarMaqueta({
+  telefono, porDefecto: { estado: 'normal' }, alCambiarEstado,
+  alPintar: () => {
+    // Solo para revisar: #bajar=600 o #bajar=fin deja el contenido desplazado.
+    const b = new URLSearchParams(location.hash.slice(1)).get('bajar');
+    if (b) document.querySelectorAll('#escenario .tel-contenido').forEach((c) => { c.scrollTop = b === 'fin' ? c.scrollHeight : +b; });
+  },
+});
+const { ctl, escenario } = m;
+const todos = (sel) => escenario.querySelectorAll(sel);
+const avisarTodos = (t) => todos('.tel').forEach((tel) => avisar(tel, t));
+
+function repintar() {
+  const scroll = [...todos('.tel-contenido')].map((c) => c.scrollTop);
+  m.pintar();
+  todos('.tel-contenido').forEach((c, i) => { c.scrollTop = scroll[i] || 0; });
+}
+function cambiar(estado, tel, foco, arriba) {
+  const tema = tel && tel.dataset.tema;
+  ctl.estado = estado;
+  if (arriba) m.pintar(); else repintar();
+  if (foco && tema) { const f = escenario.querySelector(`.tel[data-tema="${tema}"] ${foco}`); if (f) f.focus(); }
+}
+
+// Al volver de una ficha desvinculada, la lista ya no la trae.
+if (ctl.desvinculado) {
+  fuera = ctl.desvinculado; m.pintar();
+  const c = CLIENTES.find((x) => x.id === fuera);
+  if (c) document.fonts.ready.then(() => setTimeout(() => avisarTodos(`Desvinculaste a ${c.n}. Su historial queda con ${c.id === 'sebastian' ? 'él' : 'ella'}.`), 60));
+}
+
+// Lo escrito en un teléfono se copia al otro y la lista se filtra sin repintar (el campo no pierde el foco).
+function aplicarBusqueda(origen) {
+  todos('[data-buscar]').forEach((x) => { if (x !== origen) x.value = busqueda; });
+  todos('[data-resultados]').forEach((r) => { r.innerHTML = resultados(); });
+  todos('[data-accion="limpiar"]').forEach((b) => { b.hidden = !busqueda; });
+  m.medir();
+}
+escenario.addEventListener('input', (ev) => {
+  const i = ev.target.closest('[data-buscar]'); if (!i) return;
+  busqueda = i.value; aplicarBusqueda(i);
+});
+escenario.addEventListener('focusin', (ev) => {
+  if (ev.target.matches('[data-buscar]') && !conTeclado) { conTeclado = true; repintar(); }
+});
+escenario.addEventListener('pointerdown', (ev) => { if (ev.target.closest('[data-tecla]')) ev.preventDefault(); });
+function teclear(t) {
+  const k = t.dataset.tecla;
+  if (k === 'listo') { conTeclado = false; repintar(); return; }
+  if (['mayus', 'num'].includes(k)) return;
+  // Como el teclado de Android: la primera letra va en mayúscula y las demás en minúscula.
+  if (k === 'borrar') busqueda = busqueda.slice(0, -1);
+  else if (k === 'espacio') busqueda += ' ';
+  else busqueda += busqueda && !busqueda.endsWith(' ') ? k.toLowerCase() : k;
+  aplicarBusqueda(null);
+}
+
+escenario.addEventListener('click', (ev) => {
+  if (ev.target.classList.contains('velo')) { cambiar(base); return; }
+  const t = ev.target.closest('[data-tecla]');
+  if (t) { teclear(t); return; }
+  const b = ev.target.closest('[data-accion]'); if (!b) return;
+  const tel = b.closest('.tel');
+  switch (b.dataset.accion) {
+    case 'filtro': filtro = b.dataset.v; repintar(); break;
+    case 'sin-ficha': avisar(tel, `Aquí se abre la ficha de ${b.dataset.nombre}. En la maqueta, prueba con Martina.`); break;
+    case 'buscar': busqueda = ''; base = 'normal'; conTeclado = true; cambiar('buscando', tel, '[data-buscar]', true); break;
+    case 'cerrar-busqueda': busqueda = ''; conTeclado = true; cambiar('normal', null, null, true); break;
+    case 'limpiar': {
+      const tema = tel.dataset.tema; busqueda = ''; repintar();
+      escenario.querySelector(`.tel[data-tema="${tema}"] [data-buscar]`).focus();
+      break;
+    }
+    case 'invitar':
+      if (ctl.estado === 'sinconexion') { avisar(tel, 'Necesitas conexión para crear un código.'); break; }
+      base = ctl.estado; cambiar('invitar', tel, '[data-accion="cerrar-hoja"]');
+      break;
+    case 'cerrar-hoja': cambiar(base); break;
+    case 'copiar': avisar(tel, `Copiaste el código ${CODIGOS[codigo]}.`); break;
+    case 'compartir': avisar(tel, 'Se abre el menú de compartir de Android con el código y el enlace a la app.'); break;
+    case 'otro-codigo':
+      codigo = (codigo + 1) % CODIGOS.length; repintar();
+      avisarTodos(`Nuevo código: ${CODIGOS[codigo]}. El anterior ya no sirve.`);
+      break;
+    case 'reintentar': cambiar('normal'); avisarTodos('Listo, todo al día.'); break;
+  }
+});
+document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && ctl.estado === 'invitar') cambiar(base); });
+</script>
+</body>
+</html>

@@ -1,0 +1,463 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2400" height="1450" viewBox="0 0 2400 1450">
+<rect width="2400" height="1450" fill="#FFFFFF"/>
+<rect x="40" y="40" width="120" height="120" fill="#F5F7F5"/>
+<svg x="50" y="50" width="100" height="100" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#131A17"><rect x="12" y="12" width="36" height="7" rx="3.5" fill="currentColor"/>
+  <rect x="12" y="23" width="12" height="7" rx="3.5" fill="currentColor"/>
+  <rect x="12" y="34" width="12" height="7" rx="3.5" fill="currentColor"/>
+  <rect class="acento" x="32" y="34" width="20" height="7" rx="3.5" fill="#45B392"/>
+  <rect x="12" y="45" width="40" height="7" rx="3.5" fill="currentColor"/></svg>
+<text x="100" y="186" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="17" fill="#5E6D67">ronda 1</text>
+<text x="190" y="86" font-family="Helvetica, Arial, sans-serif" font-size="38" font-weight="bold" fill="#131A17">GymTrack · Símbolo, ronda 2: mutaciones de la 07 «G de renglones»</text>
+<text x="190" y="128" font-family="Helvetica, Arial, sans-serif" font-size="21" fill="#5E6D67">Fase 3 · Cuaderno Exacto · Cada variante cambia una sola cosa respecto de la 07. Todas pasan de puntas de píldora a radio 2, salvo F (a escuadra).</text>
+<text x="190" y="158" font-family="Helvetica, Arial, sans-serif" font-size="21" fill="#5E6D67">Tinta #131A17, papel #F5F7F5. El menta #45B392 subraya el travesaño (en E, el renglón de abajo). La tira de 64, 32 y 16 px va en un solo color, sin acento.</text>
+<line x1="40" y1="230" x2="590" y2="230" stroke="#131A17" stroke-width="2"/>
+<text x="40" y="296" font-family="Helvetica, Arial, sans-serif" font-size="58" font-weight="bold" fill="#131A17">A</text>
+<text x="102" y="290" font-family="Helvetica, Arial, sans-serif" font-size="27" fill="#131A17">Interlínea fina</text>
+<text x="40" y="332" font-family="Helvetica, Arial, sans-serif" font-size="19" fill="#5E6D67">Barras de 8,5 e interlínea de 2,5 (antes 7 y 4)</text>
+<rect x="40" y="354" width="265" height="265" fill="#F5F7F5"/>
+<svg x="67.5" y="381.5" width="210" height="210" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#131A17"><path fill="currentColor" d="M14 11.25H46A2 2 0 0 1 48 13.25V17.75A2 2 0 0 1 46 19.75H14A2 2 0 0 1 12 17.75V13.25A2 2 0 0 1 14 11.25Z"/>
+  <path fill="currentColor" d="M14 22.25H22A2 2 0 0 1 24 24.25V28.75A2 2 0 0 1 22 30.75H14A2 2 0 0 1 12 28.75V24.25A2 2 0 0 1 14 22.25Z"/>
+  <path fill="currentColor" d="M14 33.25H22A2 2 0 0 1 24 35.25V39.75A2 2 0 0 1 22 41.75H14A2 2 0 0 1 12 39.75V35.25A2 2 0 0 1 14 33.25Z"/>
+  <path class="acento" fill="#45B392" d="M34 33.25H50A2 2 0 0 1 52 35.25V39.75A2 2 0 0 1 50 41.75H34A2 2 0 0 1 32 39.75V35.25A2 2 0 0 1 34 33.25Z"/>
+  <path fill="currentColor" d="M14 44.25H50A2 2 0 0 1 52 46.25V50.75A2 2 0 0 1 50 52.75H14A2 2 0 0 1 12 50.75V46.25A2 2 0 0 1 14 44.25Z"/></svg>
+<text x="40" y="643" font-family="Helvetica, Arial, sans-serif" font-size="16" fill="#5E6D67">papel, con acento</text>
+<rect x="325" y="354" width="265" height="265" fill="#131A17"/>
+<svg x="352.5" y="381.5" width="210" height="210" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#F5F7F5"><path fill="currentColor" d="M14 11.25H46A2 2 0 0 1 48 13.25V17.75A2 2 0 0 1 46 19.75H14A2 2 0 0 1 12 17.75V13.25A2 2 0 0 1 14 11.25Z"/>
+  <path fill="currentColor" d="M14 22.25H22A2 2 0 0 1 24 24.25V28.75A2 2 0 0 1 22 30.75H14A2 2 0 0 1 12 28.75V24.25A2 2 0 0 1 14 22.25Z"/>
+  <path fill="currentColor" d="M14 33.25H22A2 2 0 0 1 24 35.25V39.75A2 2 0 0 1 22 41.75H14A2 2 0 0 1 12 39.75V35.25A2 2 0 0 1 14 33.25Z"/>
+  <path class="acento" fill="#45B392" d="M34 33.25H50A2 2 0 0 1 52 35.25V39.75A2 2 0 0 1 50 41.75H34A2 2 0 0 1 32 39.75V35.25A2 2 0 0 1 34 33.25Z"/>
+  <path fill="currentColor" d="M14 44.25H50A2 2 0 0 1 52 46.25V50.75A2 2 0 0 1 50 52.75H14A2 2 0 0 1 12 50.75V46.25A2 2 0 0 1 14 44.25Z"/></svg>
+<text x="325" y="643" font-family="Helvetica, Arial, sans-serif" font-size="16" fill="#5E6D67">tinta, con acento</text>
+<rect x="40" y="659" width="265" height="110" fill="#F5F7F5"/>
+<svg x="62" y="673.0" width="64" height="64" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#131A17"><path fill="currentColor" d="M14 11.25H46A2 2 0 0 1 48 13.25V17.75A2 2 0 0 1 46 19.75H14A2 2 0 0 1 12 17.75V13.25A2 2 0 0 1 14 11.25Z"/>
+  <path fill="currentColor" d="M14 22.25H22A2 2 0 0 1 24 24.25V28.75A2 2 0 0 1 22 30.75H14A2 2 0 0 1 12 28.75V24.25A2 2 0 0 1 14 22.25Z"/>
+  <path fill="currentColor" d="M14 33.25H22A2 2 0 0 1 24 35.25V39.75A2 2 0 0 1 22 41.75H14A2 2 0 0 1 12 39.75V35.25A2 2 0 0 1 14 33.25Z"/>
+  <path class="acento" fill="currentColor" d="M34 33.25H50A2 2 0 0 1 52 35.25V39.75A2 2 0 0 1 50 41.75H34A2 2 0 0 1 32 39.75V35.25A2 2 0 0 1 34 33.25Z"/>
+  <path fill="currentColor" d="M14 44.25H50A2 2 0 0 1 52 46.25V50.75A2 2 0 0 1 50 52.75H14A2 2 0 0 1 12 50.75V46.25A2 2 0 0 1 14 44.25Z"/></svg>
+<text x="94.0" y="758" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#5E6D67">64</text>
+<svg x="186" y="689.0" width="32" height="32" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#131A17"><path fill="currentColor" d="M14 11.25H46A2 2 0 0 1 48 13.25V17.75A2 2 0 0 1 46 19.75H14A2 2 0 0 1 12 17.75V13.25A2 2 0 0 1 14 11.25Z"/>
+  <path fill="currentColor" d="M14 22.25H22A2 2 0 0 1 24 24.25V28.75A2 2 0 0 1 22 30.75H14A2 2 0 0 1 12 28.75V24.25A2 2 0 0 1 14 22.25Z"/>
+  <path fill="currentColor" d="M14 33.25H22A2 2 0 0 1 24 35.25V39.75A2 2 0 0 1 22 41.75H14A2 2 0 0 1 12 39.75V35.25A2 2 0 0 1 14 33.25Z"/>
+  <path class="acento" fill="currentColor" d="M34 33.25H50A2 2 0 0 1 52 35.25V39.75A2 2 0 0 1 50 41.75H34A2 2 0 0 1 32 39.75V35.25A2 2 0 0 1 34 33.25Z"/>
+  <path fill="currentColor" d="M14 44.25H50A2 2 0 0 1 52 46.25V50.75A2 2 0 0 1 50 52.75H14A2 2 0 0 1 12 50.75V46.25A2 2 0 0 1 14 44.25Z"/></svg>
+<text x="202.0" y="758" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#5E6D67">32</text>
+<svg x="274" y="697.0" width="16" height="16" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#131A17"><path fill="currentColor" d="M14 11.25H46A2 2 0 0 1 48 13.25V17.75A2 2 0 0 1 46 19.75H14A2 2 0 0 1 12 17.75V13.25A2 2 0 0 1 14 11.25Z"/>
+  <path fill="currentColor" d="M14 22.25H22A2 2 0 0 1 24 24.25V28.75A2 2 0 0 1 22 30.75H14A2 2 0 0 1 12 28.75V24.25A2 2 0 0 1 14 22.25Z"/>
+  <path fill="currentColor" d="M14 33.25H22A2 2 0 0 1 24 35.25V39.75A2 2 0 0 1 22 41.75H14A2 2 0 0 1 12 39.75V35.25A2 2 0 0 1 14 33.25Z"/>
+  <path class="acento" fill="currentColor" d="M34 33.25H50A2 2 0 0 1 52 35.25V39.75A2 2 0 0 1 50 41.75H34A2 2 0 0 1 32 39.75V35.25A2 2 0 0 1 34 33.25Z"/>
+  <path fill="currentColor" d="M14 44.25H50A2 2 0 0 1 52 46.25V50.75A2 2 0 0 1 50 52.75H14A2 2 0 0 1 12 50.75V46.25A2 2 0 0 1 14 44.25Z"/></svg>
+<text x="282.0" y="758" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#5E6D67">16</text>
+<rect x="325" y="659" width="265" height="110" fill="#131A17"/>
+<svg x="347" y="673.0" width="64" height="64" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#F5F7F5"><path fill="currentColor" d="M14 11.25H46A2 2 0 0 1 48 13.25V17.75A2 2 0 0 1 46 19.75H14A2 2 0 0 1 12 17.75V13.25A2 2 0 0 1 14 11.25Z"/>
+  <path fill="currentColor" d="M14 22.25H22A2 2 0 0 1 24 24.25V28.75A2 2 0 0 1 22 30.75H14A2 2 0 0 1 12 28.75V24.25A2 2 0 0 1 14 22.25Z"/>
+  <path fill="currentColor" d="M14 33.25H22A2 2 0 0 1 24 35.25V39.75A2 2 0 0 1 22 41.75H14A2 2 0 0 1 12 39.75V35.25A2 2 0 0 1 14 33.25Z"/>
+  <path class="acento" fill="currentColor" d="M34 33.25H50A2 2 0 0 1 52 35.25V39.75A2 2 0 0 1 50 41.75H34A2 2 0 0 1 32 39.75V35.25A2 2 0 0 1 34 33.25Z"/>
+  <path fill="currentColor" d="M14 44.25H50A2 2 0 0 1 52 46.25V50.75A2 2 0 0 1 50 52.75H14A2 2 0 0 1 12 50.75V46.25A2 2 0 0 1 14 44.25Z"/></svg>
+<text x="379.0" y="758" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#9AA59F">64</text>
+<svg x="471" y="689.0" width="32" height="32" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#F5F7F5"><path fill="currentColor" d="M14 11.25H46A2 2 0 0 1 48 13.25V17.75A2 2 0 0 1 46 19.75H14A2 2 0 0 1 12 17.75V13.25A2 2 0 0 1 14 11.25Z"/>
+  <path fill="currentColor" d="M14 22.25H22A2 2 0 0 1 24 24.25V28.75A2 2 0 0 1 22 30.75H14A2 2 0 0 1 12 28.75V24.25A2 2 0 0 1 14 22.25Z"/>
+  <path fill="currentColor" d="M14 33.25H22A2 2 0 0 1 24 35.25V39.75A2 2 0 0 1 22 41.75H14A2 2 0 0 1 12 39.75V35.25A2 2 0 0 1 14 33.25Z"/>
+  <path class="acento" fill="currentColor" d="M34 33.25H50A2 2 0 0 1 52 35.25V39.75A2 2 0 0 1 50 41.75H34A2 2 0 0 1 32 39.75V35.25A2 2 0 0 1 34 33.25Z"/>
+  <path fill="currentColor" d="M14 44.25H50A2 2 0 0 1 52 46.25V50.75A2 2 0 0 1 50 52.75H14A2 2 0 0 1 12 50.75V46.25A2 2 0 0 1 14 44.25Z"/></svg>
+<text x="487.0" y="758" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#9AA59F">32</text>
+<svg x="559" y="697.0" width="16" height="16" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#F5F7F5"><path fill="currentColor" d="M14 11.25H46A2 2 0 0 1 48 13.25V17.75A2 2 0 0 1 46 19.75H14A2 2 0 0 1 12 17.75V13.25A2 2 0 0 1 14 11.25Z"/>
+  <path fill="currentColor" d="M14 22.25H22A2 2 0 0 1 24 24.25V28.75A2 2 0 0 1 22 30.75H14A2 2 0 0 1 12 28.75V24.25A2 2 0 0 1 14 22.25Z"/>
+  <path fill="currentColor" d="M14 33.25H22A2 2 0 0 1 24 35.25V39.75A2 2 0 0 1 22 41.75H14A2 2 0 0 1 12 39.75V35.25A2 2 0 0 1 14 33.25Z"/>
+  <path class="acento" fill="currentColor" d="M34 33.25H50A2 2 0 0 1 52 35.25V39.75A2 2 0 0 1 50 41.75H34A2 2 0 0 1 32 39.75V35.25A2 2 0 0 1 34 33.25Z"/>
+  <path fill="currentColor" d="M14 44.25H50A2 2 0 0 1 52 46.25V50.75A2 2 0 0 1 50 52.75H14A2 2 0 0 1 12 50.75V46.25A2 2 0 0 1 14 44.25Z"/></svg>
+<text x="567.0" y="758" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#9AA59F">16</text>
+<text x="40" y="793" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#5E6D67">64, 32 y 16 px a tamaño real, un solo color</text>
+<line x1="630" y1="230" x2="1180" y2="230" stroke="#131A17" stroke-width="2"/>
+<text x="630" y="296" font-family="Helvetica, Arial, sans-serif" font-size="58" font-weight="bold" fill="#131A17">B</text>
+<text x="692" y="290" font-family="Helvetica, Arial, sans-serif" font-size="27" fill="#131A17">Cinco renglones</text>
+<text x="630" y="332" font-family="Helvetica, Arial, sans-serif" font-size="19" fill="#5E6D67">Cinco filas; la cuarta suma un espolón a la derecha</text>
+<rect x="630" y="354" width="265" height="265" fill="#F5F7F5"/>
+<svg x="657.5" y="381.5" width="210" height="210" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#131A17"><path fill="currentColor" d="M14 10H46A2 2 0 0 1 48 12V14A2 2 0 0 1 46 16H14A2 2 0 0 1 12 14V12A2 2 0 0 1 14 10Z"/>
+  <path fill="currentColor" d="M14 19.5H21A2 2 0 0 1 23 21.5V23.5A2 2 0 0 1 21 25.5H14A2 2 0 0 1 12 23.5V21.5A2 2 0 0 1 14 19.5Z"/>
+  <path fill="currentColor" d="M14 29H21A2 2 0 0 1 23 31V33A2 2 0 0 1 21 35H14A2 2 0 0 1 12 33V31A2 2 0 0 1 14 29Z"/>
+  <path class="acento" fill="#45B392" d="M33 29H50A2 2 0 0 1 52 31V33A2 2 0 0 1 50 35H33A2 2 0 0 1 31 33V31A2 2 0 0 1 33 29Z"/>
+  <path fill="currentColor" d="M14 38.5H21A2 2 0 0 1 23 40.5V42.5A2 2 0 0 1 21 44.5H14A2 2 0 0 1 12 42.5V40.5A2 2 0 0 1 14 38.5Z"/>
+  <path fill="currentColor" d="M43 38.5H50A2 2 0 0 1 52 40.5V42.5A2 2 0 0 1 50 44.5H43A2 2 0 0 1 41 42.5V40.5A2 2 0 0 1 43 38.5Z"/>
+  <path fill="currentColor" d="M14 48H50A2 2 0 0 1 52 50V52A2 2 0 0 1 50 54H14A2 2 0 0 1 12 52V50A2 2 0 0 1 14 48Z"/></svg>
+<text x="630" y="643" font-family="Helvetica, Arial, sans-serif" font-size="16" fill="#5E6D67">papel, con acento</text>
+<rect x="915" y="354" width="265" height="265" fill="#131A17"/>
+<svg x="942.5" y="381.5" width="210" height="210" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#F5F7F5"><path fill="currentColor" d="M14 10H46A2 2 0 0 1 48 12V14A2 2 0 0 1 46 16H14A2 2 0 0 1 12 14V12A2 2 0 0 1 14 10Z"/>
+  <path fill="currentColor" d="M14 19.5H21A2 2 0 0 1 23 21.5V23.5A2 2 0 0 1 21 25.5H14A2 2 0 0 1 12 23.5V21.5A2 2 0 0 1 14 19.5Z"/>
+  <path fill="currentColor" d="M14 29H21A2 2 0 0 1 23 31V33A2 2 0 0 1 21 35H14A2 2 0 0 1 12 33V31A2 2 0 0 1 14 29Z"/>
+  <path class="acento" fill="#45B392" d="M33 29H50A2 2 0 0 1 52 31V33A2 2 0 0 1 50 35H33A2 2 0 0 1 31 33V31A2 2 0 0 1 33 29Z"/>
+  <path fill="currentColor" d="M14 38.5H21A2 2 0 0 1 23 40.5V42.5A2 2 0 0 1 21 44.5H14A2 2 0 0 1 12 42.5V40.5A2 2 0 0 1 14 38.5Z"/>
+  <path fill="currentColor" d="M43 38.5H50A2 2 0 0 1 52 40.5V42.5A2 2 0 0 1 50 44.5H43A2 2 0 0 1 41 42.5V40.5A2 2 0 0 1 43 38.5Z"/>
+  <path fill="currentColor" d="M14 48H50A2 2 0 0 1 52 50V52A2 2 0 0 1 50 54H14A2 2 0 0 1 12 52V50A2 2 0 0 1 14 48Z"/></svg>
+<text x="915" y="643" font-family="Helvetica, Arial, sans-serif" font-size="16" fill="#5E6D67">tinta, con acento</text>
+<rect x="630" y="659" width="265" height="110" fill="#F5F7F5"/>
+<svg x="652" y="673.0" width="64" height="64" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#131A17"><path fill="currentColor" d="M14 10H46A2 2 0 0 1 48 12V14A2 2 0 0 1 46 16H14A2 2 0 0 1 12 14V12A2 2 0 0 1 14 10Z"/>
+  <path fill="currentColor" d="M14 19.5H21A2 2 0 0 1 23 21.5V23.5A2 2 0 0 1 21 25.5H14A2 2 0 0 1 12 23.5V21.5A2 2 0 0 1 14 19.5Z"/>
+  <path fill="currentColor" d="M14 29H21A2 2 0 0 1 23 31V33A2 2 0 0 1 21 35H14A2 2 0 0 1 12 33V31A2 2 0 0 1 14 29Z"/>
+  <path class="acento" fill="currentColor" d="M33 29H50A2 2 0 0 1 52 31V33A2 2 0 0 1 50 35H33A2 2 0 0 1 31 33V31A2 2 0 0 1 33 29Z"/>
+  <path fill="currentColor" d="M14 38.5H21A2 2 0 0 1 23 40.5V42.5A2 2 0 0 1 21 44.5H14A2 2 0 0 1 12 42.5V40.5A2 2 0 0 1 14 38.5Z"/>
+  <path fill="currentColor" d="M43 38.5H50A2 2 0 0 1 52 40.5V42.5A2 2 0 0 1 50 44.5H43A2 2 0 0 1 41 42.5V40.5A2 2 0 0 1 43 38.5Z"/>
+  <path fill="currentColor" d="M14 48H50A2 2 0 0 1 52 50V52A2 2 0 0 1 50 54H14A2 2 0 0 1 12 52V50A2 2 0 0 1 14 48Z"/></svg>
+<text x="684.0" y="758" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#5E6D67">64</text>
+<svg x="776" y="689.0" width="32" height="32" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#131A17"><path fill="currentColor" d="M14 10H46A2 2 0 0 1 48 12V14A2 2 0 0 1 46 16H14A2 2 0 0 1 12 14V12A2 2 0 0 1 14 10Z"/>
+  <path fill="currentColor" d="M14 19.5H21A2 2 0 0 1 23 21.5V23.5A2 2 0 0 1 21 25.5H14A2 2 0 0 1 12 23.5V21.5A2 2 0 0 1 14 19.5Z"/>
+  <path fill="currentColor" d="M14 29H21A2 2 0 0 1 23 31V33A2 2 0 0 1 21 35H14A2 2 0 0 1 12 33V31A2 2 0 0 1 14 29Z"/>
+  <path class="acento" fill="currentColor" d="M33 29H50A2 2 0 0 1 52 31V33A2 2 0 0 1 50 35H33A2 2 0 0 1 31 33V31A2 2 0 0 1 33 29Z"/>
+  <path fill="currentColor" d="M14 38.5H21A2 2 0 0 1 23 40.5V42.5A2 2 0 0 1 21 44.5H14A2 2 0 0 1 12 42.5V40.5A2 2 0 0 1 14 38.5Z"/>
+  <path fill="currentColor" d="M43 38.5H50A2 2 0 0 1 52 40.5V42.5A2 2 0 0 1 50 44.5H43A2 2 0 0 1 41 42.5V40.5A2 2 0 0 1 43 38.5Z"/>
+  <path fill="currentColor" d="M14 48H50A2 2 0 0 1 52 50V52A2 2 0 0 1 50 54H14A2 2 0 0 1 12 52V50A2 2 0 0 1 14 48Z"/></svg>
+<text x="792.0" y="758" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#5E6D67">32</text>
+<svg x="864" y="697.0" width="16" height="16" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#131A17"><path fill="currentColor" d="M14 10H46A2 2 0 0 1 48 12V14A2 2 0 0 1 46 16H14A2 2 0 0 1 12 14V12A2 2 0 0 1 14 10Z"/>
+  <path fill="currentColor" d="M14 19.5H21A2 2 0 0 1 23 21.5V23.5A2 2 0 0 1 21 25.5H14A2 2 0 0 1 12 23.5V21.5A2 2 0 0 1 14 19.5Z"/>
+  <path fill="currentColor" d="M14 29H21A2 2 0 0 1 23 31V33A2 2 0 0 1 21 35H14A2 2 0 0 1 12 33V31A2 2 0 0 1 14 29Z"/>
+  <path class="acento" fill="currentColor" d="M33 29H50A2 2 0 0 1 52 31V33A2 2 0 0 1 50 35H33A2 2 0 0 1 31 33V31A2 2 0 0 1 33 29Z"/>
+  <path fill="currentColor" d="M14 38.5H21A2 2 0 0 1 23 40.5V42.5A2 2 0 0 1 21 44.5H14A2 2 0 0 1 12 42.5V40.5A2 2 0 0 1 14 38.5Z"/>
+  <path fill="currentColor" d="M43 38.5H50A2 2 0 0 1 52 40.5V42.5A2 2 0 0 1 50 44.5H43A2 2 0 0 1 41 42.5V40.5A2 2 0 0 1 43 38.5Z"/>
+  <path fill="currentColor" d="M14 48H50A2 2 0 0 1 52 50V52A2 2 0 0 1 50 54H14A2 2 0 0 1 12 52V50A2 2 0 0 1 14 48Z"/></svg>
+<text x="872.0" y="758" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#5E6D67">16</text>
+<rect x="915" y="659" width="265" height="110" fill="#131A17"/>
+<svg x="937" y="673.0" width="64" height="64" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#F5F7F5"><path fill="currentColor" d="M14 10H46A2 2 0 0 1 48 12V14A2 2 0 0 1 46 16H14A2 2 0 0 1 12 14V12A2 2 0 0 1 14 10Z"/>
+  <path fill="currentColor" d="M14 19.5H21A2 2 0 0 1 23 21.5V23.5A2 2 0 0 1 21 25.5H14A2 2 0 0 1 12 23.5V21.5A2 2 0 0 1 14 19.5Z"/>
+  <path fill="currentColor" d="M14 29H21A2 2 0 0 1 23 31V33A2 2 0 0 1 21 35H14A2 2 0 0 1 12 33V31A2 2 0 0 1 14 29Z"/>
+  <path class="acento" fill="currentColor" d="M33 29H50A2 2 0 0 1 52 31V33A2 2 0 0 1 50 35H33A2 2 0 0 1 31 33V31A2 2 0 0 1 33 29Z"/>
+  <path fill="currentColor" d="M14 38.5H21A2 2 0 0 1 23 40.5V42.5A2 2 0 0 1 21 44.5H14A2 2 0 0 1 12 42.5V40.5A2 2 0 0 1 14 38.5Z"/>
+  <path fill="currentColor" d="M43 38.5H50A2 2 0 0 1 52 40.5V42.5A2 2 0 0 1 50 44.5H43A2 2 0 0 1 41 42.5V40.5A2 2 0 0 1 43 38.5Z"/>
+  <path fill="currentColor" d="M14 48H50A2 2 0 0 1 52 50V52A2 2 0 0 1 50 54H14A2 2 0 0 1 12 52V50A2 2 0 0 1 14 48Z"/></svg>
+<text x="969.0" y="758" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#9AA59F">64</text>
+<svg x="1061" y="689.0" width="32" height="32" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#F5F7F5"><path fill="currentColor" d="M14 10H46A2 2 0 0 1 48 12V14A2 2 0 0 1 46 16H14A2 2 0 0 1 12 14V12A2 2 0 0 1 14 10Z"/>
+  <path fill="currentColor" d="M14 19.5H21A2 2 0 0 1 23 21.5V23.5A2 2 0 0 1 21 25.5H14A2 2 0 0 1 12 23.5V21.5A2 2 0 0 1 14 19.5Z"/>
+  <path fill="currentColor" d="M14 29H21A2 2 0 0 1 23 31V33A2 2 0 0 1 21 35H14A2 2 0 0 1 12 33V31A2 2 0 0 1 14 29Z"/>
+  <path class="acento" fill="currentColor" d="M33 29H50A2 2 0 0 1 52 31V33A2 2 0 0 1 50 35H33A2 2 0 0 1 31 33V31A2 2 0 0 1 33 29Z"/>
+  <path fill="currentColor" d="M14 38.5H21A2 2 0 0 1 23 40.5V42.5A2 2 0 0 1 21 44.5H14A2 2 0 0 1 12 42.5V40.5A2 2 0 0 1 14 38.5Z"/>
+  <path fill="currentColor" d="M43 38.5H50A2 2 0 0 1 52 40.5V42.5A2 2 0 0 1 50 44.5H43A2 2 0 0 1 41 42.5V40.5A2 2 0 0 1 43 38.5Z"/>
+  <path fill="currentColor" d="M14 48H50A2 2 0 0 1 52 50V52A2 2 0 0 1 50 54H14A2 2 0 0 1 12 52V50A2 2 0 0 1 14 48Z"/></svg>
+<text x="1077.0" y="758" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#9AA59F">32</text>
+<svg x="1149" y="697.0" width="16" height="16" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#F5F7F5"><path fill="currentColor" d="M14 10H46A2 2 0 0 1 48 12V14A2 2 0 0 1 46 16H14A2 2 0 0 1 12 14V12A2 2 0 0 1 14 10Z"/>
+  <path fill="currentColor" d="M14 19.5H21A2 2 0 0 1 23 21.5V23.5A2 2 0 0 1 21 25.5H14A2 2 0 0 1 12 23.5V21.5A2 2 0 0 1 14 19.5Z"/>
+  <path fill="currentColor" d="M14 29H21A2 2 0 0 1 23 31V33A2 2 0 0 1 21 35H14A2 2 0 0 1 12 33V31A2 2 0 0 1 14 29Z"/>
+  <path class="acento" fill="currentColor" d="M33 29H50A2 2 0 0 1 52 31V33A2 2 0 0 1 50 35H33A2 2 0 0 1 31 33V31A2 2 0 0 1 33 29Z"/>
+  <path fill="currentColor" d="M14 38.5H21A2 2 0 0 1 23 40.5V42.5A2 2 0 0 1 21 44.5H14A2 2 0 0 1 12 42.5V40.5A2 2 0 0 1 14 38.5Z"/>
+  <path fill="currentColor" d="M43 38.5H50A2 2 0 0 1 52 40.5V42.5A2 2 0 0 1 50 44.5H43A2 2 0 0 1 41 42.5V40.5A2 2 0 0 1 43 38.5Z"/>
+  <path fill="currentColor" d="M14 48H50A2 2 0 0 1 52 50V52A2 2 0 0 1 50 54H14A2 2 0 0 1 12 52V50A2 2 0 0 1 14 48Z"/></svg>
+<text x="1157.0" y="758" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#9AA59F">16</text>
+<text x="630" y="793" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#5E6D67">64, 32 y 16 px a tamaño real, un solo color</text>
+<line x1="1220" y1="230" x2="1770" y2="230" stroke="#131A17" stroke-width="2"/>
+<text x="1220" y="296" font-family="Helvetica, Arial, sans-serif" font-size="58" font-weight="bold" fill="#131A17">C</text>
+<text x="1282" y="290" font-family="Helvetica, Arial, sans-serif" font-size="27" fill="#131A17">Borde redondo</text>
+<text x="1220" y="332" font-family="Helvetica, Arial, sans-serif" font-size="19" fill="#5E6D67">Las puntas de los renglones siguen un círculo</text>
+<rect x="1220" y="354" width="265" height="265" fill="#F5F7F5"/>
+<svg x="1247.5" y="381.5" width="210" height="210" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#131A17"><path fill="currentColor" d="M18.7 12H41.3A2 2 0 0 1 43.3 14V17A2 2 0 0 1 41.3 19H18.7A2 2 0 0 1 16.7 17V14A2 2 0 0 1 18.7 12Z"/>
+  <path fill="currentColor" d="M12.18 23H22A2 2 0 0 1 24 25V28A2 2 0 0 1 22 30H12.18A2 2 0 0 1 10.18 28V25A2 2 0 0 1 12.18 23Z"/>
+  <path fill="currentColor" d="M12.18 34H22A2 2 0 0 1 24 36V39A2 2 0 0 1 22 41H12.18A2 2 0 0 1 10.18 39V36A2 2 0 0 1 12.18 34Z"/>
+  <path class="acento" fill="#45B392" d="M35 34H51.82A2 2 0 0 1 53.82 36V39A2 2 0 0 1 51.82 41H35A2 2 0 0 1 33 39V36A2 2 0 0 1 35 34Z"/>
+  <path fill="currentColor" d="M18.7 45H45.3A2 2 0 0 1 47.3 47V50A2 2 0 0 1 45.3 52H18.7A2 2 0 0 1 16.7 50V47A2 2 0 0 1 18.7 45Z"/></svg>
+<text x="1220" y="643" font-family="Helvetica, Arial, sans-serif" font-size="16" fill="#5E6D67">papel, con acento</text>
+<rect x="1505" y="354" width="265" height="265" fill="#131A17"/>
+<svg x="1532.5" y="381.5" width="210" height="210" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#F5F7F5"><path fill="currentColor" d="M18.7 12H41.3A2 2 0 0 1 43.3 14V17A2 2 0 0 1 41.3 19H18.7A2 2 0 0 1 16.7 17V14A2 2 0 0 1 18.7 12Z"/>
+  <path fill="currentColor" d="M12.18 23H22A2 2 0 0 1 24 25V28A2 2 0 0 1 22 30H12.18A2 2 0 0 1 10.18 28V25A2 2 0 0 1 12.18 23Z"/>
+  <path fill="currentColor" d="M12.18 34H22A2 2 0 0 1 24 36V39A2 2 0 0 1 22 41H12.18A2 2 0 0 1 10.18 39V36A2 2 0 0 1 12.18 34Z"/>
+  <path class="acento" fill="#45B392" d="M35 34H51.82A2 2 0 0 1 53.82 36V39A2 2 0 0 1 51.82 41H35A2 2 0 0 1 33 39V36A2 2 0 0 1 35 34Z"/>
+  <path fill="currentColor" d="M18.7 45H45.3A2 2 0 0 1 47.3 47V50A2 2 0 0 1 45.3 52H18.7A2 2 0 0 1 16.7 50V47A2 2 0 0 1 18.7 45Z"/></svg>
+<text x="1505" y="643" font-family="Helvetica, Arial, sans-serif" font-size="16" fill="#5E6D67">tinta, con acento</text>
+<rect x="1220" y="659" width="265" height="110" fill="#F5F7F5"/>
+<svg x="1242" y="673.0" width="64" height="64" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#131A17"><path fill="currentColor" d="M18.7 12H41.3A2 2 0 0 1 43.3 14V17A2 2 0 0 1 41.3 19H18.7A2 2 0 0 1 16.7 17V14A2 2 0 0 1 18.7 12Z"/>
+  <path fill="currentColor" d="M12.18 23H22A2 2 0 0 1 24 25V28A2 2 0 0 1 22 30H12.18A2 2 0 0 1 10.18 28V25A2 2 0 0 1 12.18 23Z"/>
+  <path fill="currentColor" d="M12.18 34H22A2 2 0 0 1 24 36V39A2 2 0 0 1 22 41H12.18A2 2 0 0 1 10.18 39V36A2 2 0 0 1 12.18 34Z"/>
+  <path class="acento" fill="currentColor" d="M35 34H51.82A2 2 0 0 1 53.82 36V39A2 2 0 0 1 51.82 41H35A2 2 0 0 1 33 39V36A2 2 0 0 1 35 34Z"/>
+  <path fill="currentColor" d="M18.7 45H45.3A2 2 0 0 1 47.3 47V50A2 2 0 0 1 45.3 52H18.7A2 2 0 0 1 16.7 50V47A2 2 0 0 1 18.7 45Z"/></svg>
+<text x="1274.0" y="758" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#5E6D67">64</text>
+<svg x="1366" y="689.0" width="32" height="32" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#131A17"><path fill="currentColor" d="M18.7 12H41.3A2 2 0 0 1 43.3 14V17A2 2 0 0 1 41.3 19H18.7A2 2 0 0 1 16.7 17V14A2 2 0 0 1 18.7 12Z"/>
+  <path fill="currentColor" d="M12.18 23H22A2 2 0 0 1 24 25V28A2 2 0 0 1 22 30H12.18A2 2 0 0 1 10.18 28V25A2 2 0 0 1 12.18 23Z"/>
+  <path fill="currentColor" d="M12.18 34H22A2 2 0 0 1 24 36V39A2 2 0 0 1 22 41H12.18A2 2 0 0 1 10.18 39V36A2 2 0 0 1 12.18 34Z"/>
+  <path class="acento" fill="currentColor" d="M35 34H51.82A2 2 0 0 1 53.82 36V39A2 2 0 0 1 51.82 41H35A2 2 0 0 1 33 39V36A2 2 0 0 1 35 34Z"/>
+  <path fill="currentColor" d="M18.7 45H45.3A2 2 0 0 1 47.3 47V50A2 2 0 0 1 45.3 52H18.7A2 2 0 0 1 16.7 50V47A2 2 0 0 1 18.7 45Z"/></svg>
+<text x="1382.0" y="758" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#5E6D67">32</text>
+<svg x="1454" y="697.0" width="16" height="16" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#131A17"><path fill="currentColor" d="M18.7 12H41.3A2 2 0 0 1 43.3 14V17A2 2 0 0 1 41.3 19H18.7A2 2 0 0 1 16.7 17V14A2 2 0 0 1 18.7 12Z"/>
+  <path fill="currentColor" d="M12.18 23H22A2 2 0 0 1 24 25V28A2 2 0 0 1 22 30H12.18A2 2 0 0 1 10.18 28V25A2 2 0 0 1 12.18 23Z"/>
+  <path fill="currentColor" d="M12.18 34H22A2 2 0 0 1 24 36V39A2 2 0 0 1 22 41H12.18A2 2 0 0 1 10.18 39V36A2 2 0 0 1 12.18 34Z"/>
+  <path class="acento" fill="currentColor" d="M35 34H51.82A2 2 0 0 1 53.82 36V39A2 2 0 0 1 51.82 41H35A2 2 0 0 1 33 39V36A2 2 0 0 1 35 34Z"/>
+  <path fill="currentColor" d="M18.7 45H45.3A2 2 0 0 1 47.3 47V50A2 2 0 0 1 45.3 52H18.7A2 2 0 0 1 16.7 50V47A2 2 0 0 1 18.7 45Z"/></svg>
+<text x="1462.0" y="758" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#5E6D67">16</text>
+<rect x="1505" y="659" width="265" height="110" fill="#131A17"/>
+<svg x="1527" y="673.0" width="64" height="64" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#F5F7F5"><path fill="currentColor" d="M18.7 12H41.3A2 2 0 0 1 43.3 14V17A2 2 0 0 1 41.3 19H18.7A2 2 0 0 1 16.7 17V14A2 2 0 0 1 18.7 12Z"/>
+  <path fill="currentColor" d="M12.18 23H22A2 2 0 0 1 24 25V28A2 2 0 0 1 22 30H12.18A2 2 0 0 1 10.18 28V25A2 2 0 0 1 12.18 23Z"/>
+  <path fill="currentColor" d="M12.18 34H22A2 2 0 0 1 24 36V39A2 2 0 0 1 22 41H12.18A2 2 0 0 1 10.18 39V36A2 2 0 0 1 12.18 34Z"/>
+  <path class="acento" fill="currentColor" d="M35 34H51.82A2 2 0 0 1 53.82 36V39A2 2 0 0 1 51.82 41H35A2 2 0 0 1 33 39V36A2 2 0 0 1 35 34Z"/>
+  <path fill="currentColor" d="M18.7 45H45.3A2 2 0 0 1 47.3 47V50A2 2 0 0 1 45.3 52H18.7A2 2 0 0 1 16.7 50V47A2 2 0 0 1 18.7 45Z"/></svg>
+<text x="1559.0" y="758" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#9AA59F">64</text>
+<svg x="1651" y="689.0" width="32" height="32" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#F5F7F5"><path fill="currentColor" d="M18.7 12H41.3A2 2 0 0 1 43.3 14V17A2 2 0 0 1 41.3 19H18.7A2 2 0 0 1 16.7 17V14A2 2 0 0 1 18.7 12Z"/>
+  <path fill="currentColor" d="M12.18 23H22A2 2 0 0 1 24 25V28A2 2 0 0 1 22 30H12.18A2 2 0 0 1 10.18 28V25A2 2 0 0 1 12.18 23Z"/>
+  <path fill="currentColor" d="M12.18 34H22A2 2 0 0 1 24 36V39A2 2 0 0 1 22 41H12.18A2 2 0 0 1 10.18 39V36A2 2 0 0 1 12.18 34Z"/>
+  <path class="acento" fill="currentColor" d="M35 34H51.82A2 2 0 0 1 53.82 36V39A2 2 0 0 1 51.82 41H35A2 2 0 0 1 33 39V36A2 2 0 0 1 35 34Z"/>
+  <path fill="currentColor" d="M18.7 45H45.3A2 2 0 0 1 47.3 47V50A2 2 0 0 1 45.3 52H18.7A2 2 0 0 1 16.7 50V47A2 2 0 0 1 18.7 45Z"/></svg>
+<text x="1667.0" y="758" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#9AA59F">32</text>
+<svg x="1739" y="697.0" width="16" height="16" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#F5F7F5"><path fill="currentColor" d="M18.7 12H41.3A2 2 0 0 1 43.3 14V17A2 2 0 0 1 41.3 19H18.7A2 2 0 0 1 16.7 17V14A2 2 0 0 1 18.7 12Z"/>
+  <path fill="currentColor" d="M12.18 23H22A2 2 0 0 1 24 25V28A2 2 0 0 1 22 30H12.18A2 2 0 0 1 10.18 28V25A2 2 0 0 1 12.18 23Z"/>
+  <path fill="currentColor" d="M12.18 34H22A2 2 0 0 1 24 36V39A2 2 0 0 1 22 41H12.18A2 2 0 0 1 10.18 39V36A2 2 0 0 1 12.18 34Z"/>
+  <path class="acento" fill="currentColor" d="M35 34H51.82A2 2 0 0 1 53.82 36V39A2 2 0 0 1 51.82 41H35A2 2 0 0 1 33 39V36A2 2 0 0 1 35 34Z"/>
+  <path fill="currentColor" d="M18.7 45H45.3A2 2 0 0 1 47.3 47V50A2 2 0 0 1 45.3 52H18.7A2 2 0 0 1 16.7 50V47A2 2 0 0 1 18.7 45Z"/></svg>
+<text x="1747.0" y="758" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#9AA59F">16</text>
+<text x="1220" y="793" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#5E6D67">64, 32 y 16 px a tamaño real, un solo color</text>
+<line x1="1810" y1="230" x2="2360" y2="230" stroke="#131A17" stroke-width="2"/>
+<text x="1810" y="296" font-family="Helvetica, Arial, sans-serif" font-size="58" font-weight="bold" fill="#131A17">D</text>
+<text x="1872" y="290" font-family="Helvetica, Arial, sans-serif" font-size="27" fill="#131A17">Abertura amplia</text>
+<text x="1810" y="332" font-family="Helvetica, Arial, sans-serif" font-size="19" fill="#5E6D67">Renglón de arriba más corto; el travesaño entra más</text>
+<rect x="1810" y="354" width="265" height="265" fill="#F5F7F5"/>
+<svg x="1837.5" y="381.5" width="210" height="210" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#131A17"><path fill="currentColor" d="M14 12H38A2 2 0 0 1 40 14V17A2 2 0 0 1 38 19H14A2 2 0 0 1 12 17V14A2 2 0 0 1 14 12Z"/>
+  <path fill="currentColor" d="M14 23H22A2 2 0 0 1 24 25V28A2 2 0 0 1 22 30H14A2 2 0 0 1 12 28V25A2 2 0 0 1 14 23Z"/>
+  <path fill="currentColor" d="M14 34H22A2 2 0 0 1 24 36V39A2 2 0 0 1 22 41H14A2 2 0 0 1 12 39V36A2 2 0 0 1 14 34Z"/>
+  <path class="acento" fill="#45B392" d="M31 34H50A2 2 0 0 1 52 36V39A2 2 0 0 1 50 41H31A2 2 0 0 1 29 39V36A2 2 0 0 1 31 34Z"/>
+  <path fill="currentColor" d="M14 45H50A2 2 0 0 1 52 47V50A2 2 0 0 1 50 52H14A2 2 0 0 1 12 50V47A2 2 0 0 1 14 45Z"/></svg>
+<text x="1810" y="643" font-family="Helvetica, Arial, sans-serif" font-size="16" fill="#5E6D67">papel, con acento</text>
+<rect x="2095" y="354" width="265" height="265" fill="#131A17"/>
+<svg x="2122.5" y="381.5" width="210" height="210" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#F5F7F5"><path fill="currentColor" d="M14 12H38A2 2 0 0 1 40 14V17A2 2 0 0 1 38 19H14A2 2 0 0 1 12 17V14A2 2 0 0 1 14 12Z"/>
+  <path fill="currentColor" d="M14 23H22A2 2 0 0 1 24 25V28A2 2 0 0 1 22 30H14A2 2 0 0 1 12 28V25A2 2 0 0 1 14 23Z"/>
+  <path fill="currentColor" d="M14 34H22A2 2 0 0 1 24 36V39A2 2 0 0 1 22 41H14A2 2 0 0 1 12 39V36A2 2 0 0 1 14 34Z"/>
+  <path class="acento" fill="#45B392" d="M31 34H50A2 2 0 0 1 52 36V39A2 2 0 0 1 50 41H31A2 2 0 0 1 29 39V36A2 2 0 0 1 31 34Z"/>
+  <path fill="currentColor" d="M14 45H50A2 2 0 0 1 52 47V50A2 2 0 0 1 50 52H14A2 2 0 0 1 12 50V47A2 2 0 0 1 14 45Z"/></svg>
+<text x="2095" y="643" font-family="Helvetica, Arial, sans-serif" font-size="16" fill="#5E6D67">tinta, con acento</text>
+<rect x="1810" y="659" width="265" height="110" fill="#F5F7F5"/>
+<svg x="1832" y="673.0" width="64" height="64" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#131A17"><path fill="currentColor" d="M14 12H38A2 2 0 0 1 40 14V17A2 2 0 0 1 38 19H14A2 2 0 0 1 12 17V14A2 2 0 0 1 14 12Z"/>
+  <path fill="currentColor" d="M14 23H22A2 2 0 0 1 24 25V28A2 2 0 0 1 22 30H14A2 2 0 0 1 12 28V25A2 2 0 0 1 14 23Z"/>
+  <path fill="currentColor" d="M14 34H22A2 2 0 0 1 24 36V39A2 2 0 0 1 22 41H14A2 2 0 0 1 12 39V36A2 2 0 0 1 14 34Z"/>
+  <path class="acento" fill="currentColor" d="M31 34H50A2 2 0 0 1 52 36V39A2 2 0 0 1 50 41H31A2 2 0 0 1 29 39V36A2 2 0 0 1 31 34Z"/>
+  <path fill="currentColor" d="M14 45H50A2 2 0 0 1 52 47V50A2 2 0 0 1 50 52H14A2 2 0 0 1 12 50V47A2 2 0 0 1 14 45Z"/></svg>
+<text x="1864.0" y="758" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#5E6D67">64</text>
+<svg x="1956" y="689.0" width="32" height="32" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#131A17"><path fill="currentColor" d="M14 12H38A2 2 0 0 1 40 14V17A2 2 0 0 1 38 19H14A2 2 0 0 1 12 17V14A2 2 0 0 1 14 12Z"/>
+  <path fill="currentColor" d="M14 23H22A2 2 0 0 1 24 25V28A2 2 0 0 1 22 30H14A2 2 0 0 1 12 28V25A2 2 0 0 1 14 23Z"/>
+  <path fill="currentColor" d="M14 34H22A2 2 0 0 1 24 36V39A2 2 0 0 1 22 41H14A2 2 0 0 1 12 39V36A2 2 0 0 1 14 34Z"/>
+  <path class="acento" fill="currentColor" d="M31 34H50A2 2 0 0 1 52 36V39A2 2 0 0 1 50 41H31A2 2 0 0 1 29 39V36A2 2 0 0 1 31 34Z"/>
+  <path fill="currentColor" d="M14 45H50A2 2 0 0 1 52 47V50A2 2 0 0 1 50 52H14A2 2 0 0 1 12 50V47A2 2 0 0 1 14 45Z"/></svg>
+<text x="1972.0" y="758" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#5E6D67">32</text>
+<svg x="2044" y="697.0" width="16" height="16" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#131A17"><path fill="currentColor" d="M14 12H38A2 2 0 0 1 40 14V17A2 2 0 0 1 38 19H14A2 2 0 0 1 12 17V14A2 2 0 0 1 14 12Z"/>
+  <path fill="currentColor" d="M14 23H22A2 2 0 0 1 24 25V28A2 2 0 0 1 22 30H14A2 2 0 0 1 12 28V25A2 2 0 0 1 14 23Z"/>
+  <path fill="currentColor" d="M14 34H22A2 2 0 0 1 24 36V39A2 2 0 0 1 22 41H14A2 2 0 0 1 12 39V36A2 2 0 0 1 14 34Z"/>
+  <path class="acento" fill="currentColor" d="M31 34H50A2 2 0 0 1 52 36V39A2 2 0 0 1 50 41H31A2 2 0 0 1 29 39V36A2 2 0 0 1 31 34Z"/>
+  <path fill="currentColor" d="M14 45H50A2 2 0 0 1 52 47V50A2 2 0 0 1 50 52H14A2 2 0 0 1 12 50V47A2 2 0 0 1 14 45Z"/></svg>
+<text x="2052.0" y="758" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#5E6D67">16</text>
+<rect x="2095" y="659" width="265" height="110" fill="#131A17"/>
+<svg x="2117" y="673.0" width="64" height="64" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#F5F7F5"><path fill="currentColor" d="M14 12H38A2 2 0 0 1 40 14V17A2 2 0 0 1 38 19H14A2 2 0 0 1 12 17V14A2 2 0 0 1 14 12Z"/>
+  <path fill="currentColor" d="M14 23H22A2 2 0 0 1 24 25V28A2 2 0 0 1 22 30H14A2 2 0 0 1 12 28V25A2 2 0 0 1 14 23Z"/>
+  <path fill="currentColor" d="M14 34H22A2 2 0 0 1 24 36V39A2 2 0 0 1 22 41H14A2 2 0 0 1 12 39V36A2 2 0 0 1 14 34Z"/>
+  <path class="acento" fill="currentColor" d="M31 34H50A2 2 0 0 1 52 36V39A2 2 0 0 1 50 41H31A2 2 0 0 1 29 39V36A2 2 0 0 1 31 34Z"/>
+  <path fill="currentColor" d="M14 45H50A2 2 0 0 1 52 47V50A2 2 0 0 1 50 52H14A2 2 0 0 1 12 50V47A2 2 0 0 1 14 45Z"/></svg>
+<text x="2149.0" y="758" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#9AA59F">64</text>
+<svg x="2241" y="689.0" width="32" height="32" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#F5F7F5"><path fill="currentColor" d="M14 12H38A2 2 0 0 1 40 14V17A2 2 0 0 1 38 19H14A2 2 0 0 1 12 17V14A2 2 0 0 1 14 12Z"/>
+  <path fill="currentColor" d="M14 23H22A2 2 0 0 1 24 25V28A2 2 0 0 1 22 30H14A2 2 0 0 1 12 28V25A2 2 0 0 1 14 23Z"/>
+  <path fill="currentColor" d="M14 34H22A2 2 0 0 1 24 36V39A2 2 0 0 1 22 41H14A2 2 0 0 1 12 39V36A2 2 0 0 1 14 34Z"/>
+  <path class="acento" fill="currentColor" d="M31 34H50A2 2 0 0 1 52 36V39A2 2 0 0 1 50 41H31A2 2 0 0 1 29 39V36A2 2 0 0 1 31 34Z"/>
+  <path fill="currentColor" d="M14 45H50A2 2 0 0 1 52 47V50A2 2 0 0 1 50 52H14A2 2 0 0 1 12 50V47A2 2 0 0 1 14 45Z"/></svg>
+<text x="2257.0" y="758" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#9AA59F">32</text>
+<svg x="2329" y="697.0" width="16" height="16" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#F5F7F5"><path fill="currentColor" d="M14 12H38A2 2 0 0 1 40 14V17A2 2 0 0 1 38 19H14A2 2 0 0 1 12 17V14A2 2 0 0 1 14 12Z"/>
+  <path fill="currentColor" d="M14 23H22A2 2 0 0 1 24 25V28A2 2 0 0 1 22 30H14A2 2 0 0 1 12 28V25A2 2 0 0 1 14 23Z"/>
+  <path fill="currentColor" d="M14 34H22A2 2 0 0 1 24 36V39A2 2 0 0 1 22 41H14A2 2 0 0 1 12 39V36A2 2 0 0 1 14 34Z"/>
+  <path class="acento" fill="currentColor" d="M31 34H50A2 2 0 0 1 52 36V39A2 2 0 0 1 50 41H31A2 2 0 0 1 29 39V36A2 2 0 0 1 31 34Z"/>
+  <path fill="currentColor" d="M14 45H50A2 2 0 0 1 52 47V50A2 2 0 0 1 50 52H14A2 2 0 0 1 12 50V47A2 2 0 0 1 14 45Z"/></svg>
+<text x="2337.0" y="758" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#9AA59F">16</text>
+<text x="1810" y="793" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#5E6D67">64, 32 y 16 px a tamaño real, un solo color</text>
+<line x1="40" y1="830" x2="590" y2="830" stroke="#131A17" stroke-width="2"/>
+<text x="40" y="896" font-family="Helvetica, Arial, sans-serif" font-size="58" font-weight="bold" fill="#131A17">E</text>
+<text x="102" y="890" font-family="Helvetica, Arial, sans-serif" font-size="27" fill="#131A17">Renglón en curso</text>
+<text x="40" y="932" font-family="Helvetica, Arial, sans-serif" font-size="19" fill="#5E6D67">El menta pasa del travesaño al renglón de abajo</text>
+<rect x="40" y="954" width="265" height="265" fill="#F5F7F5"/>
+<svg x="67.5" y="981.5" width="210" height="210" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#131A17"><path fill="currentColor" d="M14 12H46A2 2 0 0 1 48 14V17A2 2 0 0 1 46 19H14A2 2 0 0 1 12 17V14A2 2 0 0 1 14 12Z"/>
+  <path fill="currentColor" d="M14 23H22A2 2 0 0 1 24 25V28A2 2 0 0 1 22 30H14A2 2 0 0 1 12 28V25A2 2 0 0 1 14 23Z"/>
+  <path fill="currentColor" d="M14 34H22A2 2 0 0 1 24 36V39A2 2 0 0 1 22 41H14A2 2 0 0 1 12 39V36A2 2 0 0 1 14 34Z"/>
+  <path fill="currentColor" d="M34 34H50A2 2 0 0 1 52 36V39A2 2 0 0 1 50 41H34A2 2 0 0 1 32 39V36A2 2 0 0 1 34 34Z"/>
+  <path class="acento" fill="#45B392" d="M14 45H50A2 2 0 0 1 52 47V50A2 2 0 0 1 50 52H14A2 2 0 0 1 12 50V47A2 2 0 0 1 14 45Z"/></svg>
+<text x="40" y="1243" font-family="Helvetica, Arial, sans-serif" font-size="16" fill="#5E6D67">papel, con acento</text>
+<rect x="325" y="954" width="265" height="265" fill="#131A17"/>
+<svg x="352.5" y="981.5" width="210" height="210" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#F5F7F5"><path fill="currentColor" d="M14 12H46A2 2 0 0 1 48 14V17A2 2 0 0 1 46 19H14A2 2 0 0 1 12 17V14A2 2 0 0 1 14 12Z"/>
+  <path fill="currentColor" d="M14 23H22A2 2 0 0 1 24 25V28A2 2 0 0 1 22 30H14A2 2 0 0 1 12 28V25A2 2 0 0 1 14 23Z"/>
+  <path fill="currentColor" d="M14 34H22A2 2 0 0 1 24 36V39A2 2 0 0 1 22 41H14A2 2 0 0 1 12 39V36A2 2 0 0 1 14 34Z"/>
+  <path fill="currentColor" d="M34 34H50A2 2 0 0 1 52 36V39A2 2 0 0 1 50 41H34A2 2 0 0 1 32 39V36A2 2 0 0 1 34 34Z"/>
+  <path class="acento" fill="#45B392" d="M14 45H50A2 2 0 0 1 52 47V50A2 2 0 0 1 50 52H14A2 2 0 0 1 12 50V47A2 2 0 0 1 14 45Z"/></svg>
+<text x="325" y="1243" font-family="Helvetica, Arial, sans-serif" font-size="16" fill="#5E6D67">tinta, con acento</text>
+<rect x="40" y="1259" width="265" height="110" fill="#F5F7F5"/>
+<svg x="62" y="1273.0" width="64" height="64" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#131A17"><path fill="currentColor" d="M14 12H46A2 2 0 0 1 48 14V17A2 2 0 0 1 46 19H14A2 2 0 0 1 12 17V14A2 2 0 0 1 14 12Z"/>
+  <path fill="currentColor" d="M14 23H22A2 2 0 0 1 24 25V28A2 2 0 0 1 22 30H14A2 2 0 0 1 12 28V25A2 2 0 0 1 14 23Z"/>
+  <path fill="currentColor" d="M14 34H22A2 2 0 0 1 24 36V39A2 2 0 0 1 22 41H14A2 2 0 0 1 12 39V36A2 2 0 0 1 14 34Z"/>
+  <path fill="currentColor" d="M34 34H50A2 2 0 0 1 52 36V39A2 2 0 0 1 50 41H34A2 2 0 0 1 32 39V36A2 2 0 0 1 34 34Z"/>
+  <path class="acento" fill="currentColor" d="M14 45H50A2 2 0 0 1 52 47V50A2 2 0 0 1 50 52H14A2 2 0 0 1 12 50V47A2 2 0 0 1 14 45Z"/></svg>
+<text x="94.0" y="1358" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#5E6D67">64</text>
+<svg x="186" y="1289.0" width="32" height="32" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#131A17"><path fill="currentColor" d="M14 12H46A2 2 0 0 1 48 14V17A2 2 0 0 1 46 19H14A2 2 0 0 1 12 17V14A2 2 0 0 1 14 12Z"/>
+  <path fill="currentColor" d="M14 23H22A2 2 0 0 1 24 25V28A2 2 0 0 1 22 30H14A2 2 0 0 1 12 28V25A2 2 0 0 1 14 23Z"/>
+  <path fill="currentColor" d="M14 34H22A2 2 0 0 1 24 36V39A2 2 0 0 1 22 41H14A2 2 0 0 1 12 39V36A2 2 0 0 1 14 34Z"/>
+  <path fill="currentColor" d="M34 34H50A2 2 0 0 1 52 36V39A2 2 0 0 1 50 41H34A2 2 0 0 1 32 39V36A2 2 0 0 1 34 34Z"/>
+  <path class="acento" fill="currentColor" d="M14 45H50A2 2 0 0 1 52 47V50A2 2 0 0 1 50 52H14A2 2 0 0 1 12 50V47A2 2 0 0 1 14 45Z"/></svg>
+<text x="202.0" y="1358" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#5E6D67">32</text>
+<svg x="274" y="1297.0" width="16" height="16" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#131A17"><path fill="currentColor" d="M14 12H46A2 2 0 0 1 48 14V17A2 2 0 0 1 46 19H14A2 2 0 0 1 12 17V14A2 2 0 0 1 14 12Z"/>
+  <path fill="currentColor" d="M14 23H22A2 2 0 0 1 24 25V28A2 2 0 0 1 22 30H14A2 2 0 0 1 12 28V25A2 2 0 0 1 14 23Z"/>
+  <path fill="currentColor" d="M14 34H22A2 2 0 0 1 24 36V39A2 2 0 0 1 22 41H14A2 2 0 0 1 12 39V36A2 2 0 0 1 14 34Z"/>
+  <path fill="currentColor" d="M34 34H50A2 2 0 0 1 52 36V39A2 2 0 0 1 50 41H34A2 2 0 0 1 32 39V36A2 2 0 0 1 34 34Z"/>
+  <path class="acento" fill="currentColor" d="M14 45H50A2 2 0 0 1 52 47V50A2 2 0 0 1 50 52H14A2 2 0 0 1 12 50V47A2 2 0 0 1 14 45Z"/></svg>
+<text x="282.0" y="1358" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#5E6D67">16</text>
+<rect x="325" y="1259" width="265" height="110" fill="#131A17"/>
+<svg x="347" y="1273.0" width="64" height="64" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#F5F7F5"><path fill="currentColor" d="M14 12H46A2 2 0 0 1 48 14V17A2 2 0 0 1 46 19H14A2 2 0 0 1 12 17V14A2 2 0 0 1 14 12Z"/>
+  <path fill="currentColor" d="M14 23H22A2 2 0 0 1 24 25V28A2 2 0 0 1 22 30H14A2 2 0 0 1 12 28V25A2 2 0 0 1 14 23Z"/>
+  <path fill="currentColor" d="M14 34H22A2 2 0 0 1 24 36V39A2 2 0 0 1 22 41H14A2 2 0 0 1 12 39V36A2 2 0 0 1 14 34Z"/>
+  <path fill="currentColor" d="M34 34H50A2 2 0 0 1 52 36V39A2 2 0 0 1 50 41H34A2 2 0 0 1 32 39V36A2 2 0 0 1 34 34Z"/>
+  <path class="acento" fill="currentColor" d="M14 45H50A2 2 0 0 1 52 47V50A2 2 0 0 1 50 52H14A2 2 0 0 1 12 50V47A2 2 0 0 1 14 45Z"/></svg>
+<text x="379.0" y="1358" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#9AA59F">64</text>
+<svg x="471" y="1289.0" width="32" height="32" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#F5F7F5"><path fill="currentColor" d="M14 12H46A2 2 0 0 1 48 14V17A2 2 0 0 1 46 19H14A2 2 0 0 1 12 17V14A2 2 0 0 1 14 12Z"/>
+  <path fill="currentColor" d="M14 23H22A2 2 0 0 1 24 25V28A2 2 0 0 1 22 30H14A2 2 0 0 1 12 28V25A2 2 0 0 1 14 23Z"/>
+  <path fill="currentColor" d="M14 34H22A2 2 0 0 1 24 36V39A2 2 0 0 1 22 41H14A2 2 0 0 1 12 39V36A2 2 0 0 1 14 34Z"/>
+  <path fill="currentColor" d="M34 34H50A2 2 0 0 1 52 36V39A2 2 0 0 1 50 41H34A2 2 0 0 1 32 39V36A2 2 0 0 1 34 34Z"/>
+  <path class="acento" fill="currentColor" d="M14 45H50A2 2 0 0 1 52 47V50A2 2 0 0 1 50 52H14A2 2 0 0 1 12 50V47A2 2 0 0 1 14 45Z"/></svg>
+<text x="487.0" y="1358" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#9AA59F">32</text>
+<svg x="559" y="1297.0" width="16" height="16" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#F5F7F5"><path fill="currentColor" d="M14 12H46A2 2 0 0 1 48 14V17A2 2 0 0 1 46 19H14A2 2 0 0 1 12 17V14A2 2 0 0 1 14 12Z"/>
+  <path fill="currentColor" d="M14 23H22A2 2 0 0 1 24 25V28A2 2 0 0 1 22 30H14A2 2 0 0 1 12 28V25A2 2 0 0 1 14 23Z"/>
+  <path fill="currentColor" d="M14 34H22A2 2 0 0 1 24 36V39A2 2 0 0 1 22 41H14A2 2 0 0 1 12 39V36A2 2 0 0 1 14 34Z"/>
+  <path fill="currentColor" d="M34 34H50A2 2 0 0 1 52 36V39A2 2 0 0 1 50 41H34A2 2 0 0 1 32 39V36A2 2 0 0 1 34 34Z"/>
+  <path class="acento" fill="currentColor" d="M14 45H50A2 2 0 0 1 52 47V50A2 2 0 0 1 50 52H14A2 2 0 0 1 12 50V47A2 2 0 0 1 14 45Z"/></svg>
+<text x="567.0" y="1358" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#9AA59F">16</text>
+<text x="40" y="1393" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#5E6D67">64, 32 y 16 px a tamaño real, un solo color</text>
+<line x1="630" y1="830" x2="1180" y2="830" stroke="#131A17" stroke-width="2"/>
+<text x="630" y="896" font-family="Helvetica, Arial, sans-serif" font-size="58" font-weight="bold" fill="#131A17">F</text>
+<text x="692" y="890" font-family="Helvetica, Arial, sans-serif" font-size="27" fill="#131A17">Canto recto</text>
+<text x="630" y="932" font-family="Helvetica, Arial, sans-serif" font-size="19" fill="#5E6D67">Puntas a escuadra, sin radio (las demás: radio 2)</text>
+<rect x="630" y="954" width="265" height="265" fill="#F5F7F5"/>
+<svg x="657.5" y="981.5" width="210" height="210" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#131A17"><path fill="currentColor" d="M12 12H48V19H12Z"/>
+  <path fill="currentColor" d="M12 23H24V30H12Z"/>
+  <path fill="currentColor" d="M12 34H24V41H12Z"/>
+  <path class="acento" fill="#45B392" d="M32 34H52V41H32Z"/>
+  <path fill="currentColor" d="M12 45H52V52H12Z"/></svg>
+<text x="630" y="1243" font-family="Helvetica, Arial, sans-serif" font-size="16" fill="#5E6D67">papel, con acento</text>
+<rect x="915" y="954" width="265" height="265" fill="#131A17"/>
+<svg x="942.5" y="981.5" width="210" height="210" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#F5F7F5"><path fill="currentColor" d="M12 12H48V19H12Z"/>
+  <path fill="currentColor" d="M12 23H24V30H12Z"/>
+  <path fill="currentColor" d="M12 34H24V41H12Z"/>
+  <path class="acento" fill="#45B392" d="M32 34H52V41H32Z"/>
+  <path fill="currentColor" d="M12 45H52V52H12Z"/></svg>
+<text x="915" y="1243" font-family="Helvetica, Arial, sans-serif" font-size="16" fill="#5E6D67">tinta, con acento</text>
+<rect x="630" y="1259" width="265" height="110" fill="#F5F7F5"/>
+<svg x="652" y="1273.0" width="64" height="64" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#131A17"><path fill="currentColor" d="M12 12H48V19H12Z"/>
+  <path fill="currentColor" d="M12 23H24V30H12Z"/>
+  <path fill="currentColor" d="M12 34H24V41H12Z"/>
+  <path class="acento" fill="currentColor" d="M32 34H52V41H32Z"/>
+  <path fill="currentColor" d="M12 45H52V52H12Z"/></svg>
+<text x="684.0" y="1358" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#5E6D67">64</text>
+<svg x="776" y="1289.0" width="32" height="32" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#131A17"><path fill="currentColor" d="M12 12H48V19H12Z"/>
+  <path fill="currentColor" d="M12 23H24V30H12Z"/>
+  <path fill="currentColor" d="M12 34H24V41H12Z"/>
+  <path class="acento" fill="currentColor" d="M32 34H52V41H32Z"/>
+  <path fill="currentColor" d="M12 45H52V52H12Z"/></svg>
+<text x="792.0" y="1358" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#5E6D67">32</text>
+<svg x="864" y="1297.0" width="16" height="16" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#131A17"><path fill="currentColor" d="M12 12H48V19H12Z"/>
+  <path fill="currentColor" d="M12 23H24V30H12Z"/>
+  <path fill="currentColor" d="M12 34H24V41H12Z"/>
+  <path class="acento" fill="currentColor" d="M32 34H52V41H32Z"/>
+  <path fill="currentColor" d="M12 45H52V52H12Z"/></svg>
+<text x="872.0" y="1358" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#5E6D67">16</text>
+<rect x="915" y="1259" width="265" height="110" fill="#131A17"/>
+<svg x="937" y="1273.0" width="64" height="64" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#F5F7F5"><path fill="currentColor" d="M12 12H48V19H12Z"/>
+  <path fill="currentColor" d="M12 23H24V30H12Z"/>
+  <path fill="currentColor" d="M12 34H24V41H12Z"/>
+  <path class="acento" fill="currentColor" d="M32 34H52V41H32Z"/>
+  <path fill="currentColor" d="M12 45H52V52H12Z"/></svg>
+<text x="969.0" y="1358" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#9AA59F">64</text>
+<svg x="1061" y="1289.0" width="32" height="32" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#F5F7F5"><path fill="currentColor" d="M12 12H48V19H12Z"/>
+  <path fill="currentColor" d="M12 23H24V30H12Z"/>
+  <path fill="currentColor" d="M12 34H24V41H12Z"/>
+  <path class="acento" fill="currentColor" d="M32 34H52V41H32Z"/>
+  <path fill="currentColor" d="M12 45H52V52H12Z"/></svg>
+<text x="1077.0" y="1358" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#9AA59F">32</text>
+<svg x="1149" y="1297.0" width="16" height="16" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#F5F7F5"><path fill="currentColor" d="M12 12H48V19H12Z"/>
+  <path fill="currentColor" d="M12 23H24V30H12Z"/>
+  <path fill="currentColor" d="M12 34H24V41H12Z"/>
+  <path class="acento" fill="currentColor" d="M32 34H52V41H32Z"/>
+  <path fill="currentColor" d="M12 45H52V52H12Z"/></svg>
+<text x="1157.0" y="1358" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#9AA59F">16</text>
+<text x="630" y="1393" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#5E6D67">64, 32 y 16 px a tamaño real, un solo color</text>
+<line x1="1220" y1="830" x2="1770" y2="830" stroke="#131A17" stroke-width="2"/>
+<text x="1220" y="896" font-family="Helvetica, Arial, sans-serif" font-size="58" font-weight="bold" fill="#131A17">G</text>
+<text x="1282" y="890" font-family="Helvetica, Arial, sans-serif" font-size="27" fill="#131A17">Página entera</text>
+<text x="1220" y="932" font-family="Helvetica, Arial, sans-serif" font-size="19" fill="#5E6D67">La G va calada dentro de una página en tinta</text>
+<rect x="1220" y="954" width="265" height="265" fill="#F5F7F5"/>
+<svg x="1247.5" y="981.5" width="210" height="210" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#131A17"><path fill="currentColor" fill-rule="evenodd" d="M15 9H49A6 6 0 0 1 55 15V49A6 6 0 0 1 49 55H15A6 6 0 0 1 9 49V15A6 6 0 0 1 15 9ZM17.5 16H42.5A1.5 1.5 0 0 1 44 17.5V21A1.5 1.5 0 0 1 42.5 22.5H17.5A1.5 1.5 0 0 1 16 21V17.5A1.5 1.5 0 0 1 17.5 16ZM17.5 26H24.5A1.5 1.5 0 0 1 26 27.5V31A1.5 1.5 0 0 1 24.5 32.5H17.5A1.5 1.5 0 0 1 16 31V27.5A1.5 1.5 0 0 1 17.5 26ZM17.5 36H24.5A1.5 1.5 0 0 1 26 37.5V41A1.5 1.5 0 0 1 24.5 42.5H17.5A1.5 1.5 0 0 1 16 41V37.5A1.5 1.5 0 0 1 17.5 36ZM33.5 36H46.5A1.5 1.5 0 0 1 48 37.5V41A1.5 1.5 0 0 1 46.5 42.5H33.5A1.5 1.5 0 0 1 32 41V37.5A1.5 1.5 0 0 1 33.5 36ZM17.5 46H46.5A1.5 1.5 0 0 1 48 47.5V51A1.5 1.5 0 0 1 46.5 52.5H17.5A1.5 1.5 0 0 1 16 51V47.5A1.5 1.5 0 0 1 17.5 46Z"/>
+  <path class="acento" fill="#45B392" d="M33.5 36H46.5A1.5 1.5 0 0 1 48 37.5V41A1.5 1.5 0 0 1 46.5 42.5H33.5A1.5 1.5 0 0 1 32 41V37.5A1.5 1.5 0 0 1 33.5 36Z"/></svg>
+<text x="1220" y="1243" font-family="Helvetica, Arial, sans-serif" font-size="16" fill="#5E6D67">papel, con acento</text>
+<rect x="1505" y="954" width="265" height="265" fill="#131A17"/>
+<svg x="1532.5" y="981.5" width="210" height="210" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#F5F7F5"><path fill="currentColor" fill-rule="evenodd" d="M15 9H49A6 6 0 0 1 55 15V49A6 6 0 0 1 49 55H15A6 6 0 0 1 9 49V15A6 6 0 0 1 15 9ZM17.5 16H42.5A1.5 1.5 0 0 1 44 17.5V21A1.5 1.5 0 0 1 42.5 22.5H17.5A1.5 1.5 0 0 1 16 21V17.5A1.5 1.5 0 0 1 17.5 16ZM17.5 26H24.5A1.5 1.5 0 0 1 26 27.5V31A1.5 1.5 0 0 1 24.5 32.5H17.5A1.5 1.5 0 0 1 16 31V27.5A1.5 1.5 0 0 1 17.5 26ZM17.5 36H24.5A1.5 1.5 0 0 1 26 37.5V41A1.5 1.5 0 0 1 24.5 42.5H17.5A1.5 1.5 0 0 1 16 41V37.5A1.5 1.5 0 0 1 17.5 36ZM33.5 36H46.5A1.5 1.5 0 0 1 48 37.5V41A1.5 1.5 0 0 1 46.5 42.5H33.5A1.5 1.5 0 0 1 32 41V37.5A1.5 1.5 0 0 1 33.5 36ZM17.5 46H46.5A1.5 1.5 0 0 1 48 47.5V51A1.5 1.5 0 0 1 46.5 52.5H17.5A1.5 1.5 0 0 1 16 51V47.5A1.5 1.5 0 0 1 17.5 46Z"/>
+  <path class="acento" fill="#45B392" d="M33.5 36H46.5A1.5 1.5 0 0 1 48 37.5V41A1.5 1.5 0 0 1 46.5 42.5H33.5A1.5 1.5 0 0 1 32 41V37.5A1.5 1.5 0 0 1 33.5 36Z"/></svg>
+<text x="1505" y="1243" font-family="Helvetica, Arial, sans-serif" font-size="16" fill="#5E6D67">tinta, con acento</text>
+<rect x="1220" y="1259" width="265" height="110" fill="#F5F7F5"/>
+<svg x="1242" y="1273.0" width="64" height="64" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#131A17"><path fill="currentColor" fill-rule="evenodd" d="M15 9H49A6 6 0 0 1 55 15V49A6 6 0 0 1 49 55H15A6 6 0 0 1 9 49V15A6 6 0 0 1 15 9ZM17.5 16H42.5A1.5 1.5 0 0 1 44 17.5V21A1.5 1.5 0 0 1 42.5 22.5H17.5A1.5 1.5 0 0 1 16 21V17.5A1.5 1.5 0 0 1 17.5 16ZM17.5 26H24.5A1.5 1.5 0 0 1 26 27.5V31A1.5 1.5 0 0 1 24.5 32.5H17.5A1.5 1.5 0 0 1 16 31V27.5A1.5 1.5 0 0 1 17.5 26ZM17.5 36H24.5A1.5 1.5 0 0 1 26 37.5V41A1.5 1.5 0 0 1 24.5 42.5H17.5A1.5 1.5 0 0 1 16 41V37.5A1.5 1.5 0 0 1 17.5 36ZM33.5 36H46.5A1.5 1.5 0 0 1 48 37.5V41A1.5 1.5 0 0 1 46.5 42.5H33.5A1.5 1.5 0 0 1 32 41V37.5A1.5 1.5 0 0 1 33.5 36ZM17.5 46H46.5A1.5 1.5 0 0 1 48 47.5V51A1.5 1.5 0 0 1 46.5 52.5H17.5A1.5 1.5 0 0 1 16 51V47.5A1.5 1.5 0 0 1 17.5 46Z"/></svg>
+<text x="1274.0" y="1358" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#5E6D67">64</text>
+<svg x="1366" y="1289.0" width="32" height="32" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#131A17"><path fill="currentColor" fill-rule="evenodd" d="M15 9H49A6 6 0 0 1 55 15V49A6 6 0 0 1 49 55H15A6 6 0 0 1 9 49V15A6 6 0 0 1 15 9ZM17.5 16H42.5A1.5 1.5 0 0 1 44 17.5V21A1.5 1.5 0 0 1 42.5 22.5H17.5A1.5 1.5 0 0 1 16 21V17.5A1.5 1.5 0 0 1 17.5 16ZM17.5 26H24.5A1.5 1.5 0 0 1 26 27.5V31A1.5 1.5 0 0 1 24.5 32.5H17.5A1.5 1.5 0 0 1 16 31V27.5A1.5 1.5 0 0 1 17.5 26ZM17.5 36H24.5A1.5 1.5 0 0 1 26 37.5V41A1.5 1.5 0 0 1 24.5 42.5H17.5A1.5 1.5 0 0 1 16 41V37.5A1.5 1.5 0 0 1 17.5 36ZM33.5 36H46.5A1.5 1.5 0 0 1 48 37.5V41A1.5 1.5 0 0 1 46.5 42.5H33.5A1.5 1.5 0 0 1 32 41V37.5A1.5 1.5 0 0 1 33.5 36ZM17.5 46H46.5A1.5 1.5 0 0 1 48 47.5V51A1.5 1.5 0 0 1 46.5 52.5H17.5A1.5 1.5 0 0 1 16 51V47.5A1.5 1.5 0 0 1 17.5 46Z"/></svg>
+<text x="1382.0" y="1358" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#5E6D67">32</text>
+<svg x="1454" y="1297.0" width="16" height="16" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#131A17"><path fill="currentColor" fill-rule="evenodd" d="M15 9H49A6 6 0 0 1 55 15V49A6 6 0 0 1 49 55H15A6 6 0 0 1 9 49V15A6 6 0 0 1 15 9ZM17.5 16H42.5A1.5 1.5 0 0 1 44 17.5V21A1.5 1.5 0 0 1 42.5 22.5H17.5A1.5 1.5 0 0 1 16 21V17.5A1.5 1.5 0 0 1 17.5 16ZM17.5 26H24.5A1.5 1.5 0 0 1 26 27.5V31A1.5 1.5 0 0 1 24.5 32.5H17.5A1.5 1.5 0 0 1 16 31V27.5A1.5 1.5 0 0 1 17.5 26ZM17.5 36H24.5A1.5 1.5 0 0 1 26 37.5V41A1.5 1.5 0 0 1 24.5 42.5H17.5A1.5 1.5 0 0 1 16 41V37.5A1.5 1.5 0 0 1 17.5 36ZM33.5 36H46.5A1.5 1.5 0 0 1 48 37.5V41A1.5 1.5 0 0 1 46.5 42.5H33.5A1.5 1.5 0 0 1 32 41V37.5A1.5 1.5 0 0 1 33.5 36ZM17.5 46H46.5A1.5 1.5 0 0 1 48 47.5V51A1.5 1.5 0 0 1 46.5 52.5H17.5A1.5 1.5 0 0 1 16 51V47.5A1.5 1.5 0 0 1 17.5 46Z"/></svg>
+<text x="1462.0" y="1358" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#5E6D67">16</text>
+<rect x="1505" y="1259" width="265" height="110" fill="#131A17"/>
+<svg x="1527" y="1273.0" width="64" height="64" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#F5F7F5"><path fill="currentColor" fill-rule="evenodd" d="M15 9H49A6 6 0 0 1 55 15V49A6 6 0 0 1 49 55H15A6 6 0 0 1 9 49V15A6 6 0 0 1 15 9ZM17.5 16H42.5A1.5 1.5 0 0 1 44 17.5V21A1.5 1.5 0 0 1 42.5 22.5H17.5A1.5 1.5 0 0 1 16 21V17.5A1.5 1.5 0 0 1 17.5 16ZM17.5 26H24.5A1.5 1.5 0 0 1 26 27.5V31A1.5 1.5 0 0 1 24.5 32.5H17.5A1.5 1.5 0 0 1 16 31V27.5A1.5 1.5 0 0 1 17.5 26ZM17.5 36H24.5A1.5 1.5 0 0 1 26 37.5V41A1.5 1.5 0 0 1 24.5 42.5H17.5A1.5 1.5 0 0 1 16 41V37.5A1.5 1.5 0 0 1 17.5 36ZM33.5 36H46.5A1.5 1.5 0 0 1 48 37.5V41A1.5 1.5 0 0 1 46.5 42.5H33.5A1.5 1.5 0 0 1 32 41V37.5A1.5 1.5 0 0 1 33.5 36ZM17.5 46H46.5A1.5 1.5 0 0 1 48 47.5V51A1.5 1.5 0 0 1 46.5 52.5H17.5A1.5 1.5 0 0 1 16 51V47.5A1.5 1.5 0 0 1 17.5 46Z"/></svg>
+<text x="1559.0" y="1358" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#9AA59F">64</text>
+<svg x="1651" y="1289.0" width="32" height="32" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#F5F7F5"><path fill="currentColor" fill-rule="evenodd" d="M15 9H49A6 6 0 0 1 55 15V49A6 6 0 0 1 49 55H15A6 6 0 0 1 9 49V15A6 6 0 0 1 15 9ZM17.5 16H42.5A1.5 1.5 0 0 1 44 17.5V21A1.5 1.5 0 0 1 42.5 22.5H17.5A1.5 1.5 0 0 1 16 21V17.5A1.5 1.5 0 0 1 17.5 16ZM17.5 26H24.5A1.5 1.5 0 0 1 26 27.5V31A1.5 1.5 0 0 1 24.5 32.5H17.5A1.5 1.5 0 0 1 16 31V27.5A1.5 1.5 0 0 1 17.5 26ZM17.5 36H24.5A1.5 1.5 0 0 1 26 37.5V41A1.5 1.5 0 0 1 24.5 42.5H17.5A1.5 1.5 0 0 1 16 41V37.5A1.5 1.5 0 0 1 17.5 36ZM33.5 36H46.5A1.5 1.5 0 0 1 48 37.5V41A1.5 1.5 0 0 1 46.5 42.5H33.5A1.5 1.5 0 0 1 32 41V37.5A1.5 1.5 0 0 1 33.5 36ZM17.5 46H46.5A1.5 1.5 0 0 1 48 47.5V51A1.5 1.5 0 0 1 46.5 52.5H17.5A1.5 1.5 0 0 1 16 51V47.5A1.5 1.5 0 0 1 17.5 46Z"/></svg>
+<text x="1667.0" y="1358" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#9AA59F">32</text>
+<svg x="1739" y="1297.0" width="16" height="16" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#F5F7F5"><path fill="currentColor" fill-rule="evenodd" d="M15 9H49A6 6 0 0 1 55 15V49A6 6 0 0 1 49 55H15A6 6 0 0 1 9 49V15A6 6 0 0 1 15 9ZM17.5 16H42.5A1.5 1.5 0 0 1 44 17.5V21A1.5 1.5 0 0 1 42.5 22.5H17.5A1.5 1.5 0 0 1 16 21V17.5A1.5 1.5 0 0 1 17.5 16ZM17.5 26H24.5A1.5 1.5 0 0 1 26 27.5V31A1.5 1.5 0 0 1 24.5 32.5H17.5A1.5 1.5 0 0 1 16 31V27.5A1.5 1.5 0 0 1 17.5 26ZM17.5 36H24.5A1.5 1.5 0 0 1 26 37.5V41A1.5 1.5 0 0 1 24.5 42.5H17.5A1.5 1.5 0 0 1 16 41V37.5A1.5 1.5 0 0 1 17.5 36ZM33.5 36H46.5A1.5 1.5 0 0 1 48 37.5V41A1.5 1.5 0 0 1 46.5 42.5H33.5A1.5 1.5 0 0 1 32 41V37.5A1.5 1.5 0 0 1 33.5 36ZM17.5 46H46.5A1.5 1.5 0 0 1 48 47.5V51A1.5 1.5 0 0 1 46.5 52.5H17.5A1.5 1.5 0 0 1 16 51V47.5A1.5 1.5 0 0 1 17.5 46Z"/></svg>
+<text x="1747.0" y="1358" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#9AA59F">16</text>
+<text x="1220" y="1393" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#5E6D67">64, 32 y 16 px a tamaño real, un solo color</text>
+<line x1="1810" y1="830" x2="2360" y2="830" stroke="#131A17" stroke-width="2"/>
+<text x="1810" y="896" font-family="Helvetica, Arial, sans-serif" font-size="58" font-weight="bold" fill="#131A17">H</text>
+<text x="1872" y="890" font-family="Helvetica, Arial, sans-serif" font-size="27" fill="#131A17">Ruptura: trazo que baja</text>
+<text x="1810" y="932" font-family="Helvetica, Arial, sans-serif" font-size="19" fill="#5E6D67">Un trazo vertical une el travesaño con la base</text>
+<rect x="1810" y="954" width="265" height="265" fill="#F5F7F5"/>
+<svg x="1837.5" y="981.5" width="210" height="210" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#131A17"><path fill="currentColor" d="M14 12H46A2 2 0 0 1 48 14V17A2 2 0 0 1 46 19H14A2 2 0 0 1 12 17V14A2 2 0 0 1 14 12Z"/>
+  <path fill="currentColor" d="M14 23H22A2 2 0 0 1 24 25V28A2 2 0 0 1 22 30H14A2 2 0 0 1 12 28V25A2 2 0 0 1 14 23Z"/>
+  <path fill="currentColor" d="M14 34H22A2 2 0 0 1 24 36V39A2 2 0 0 1 22 41H14A2 2 0 0 1 12 39V36A2 2 0 0 1 14 34Z"/>
+  <path fill="currentColor" d="M47 37H50A2 2 0 0 1 52 39V50A2 2 0 0 1 50 52H47A2 2 0 0 1 45 50V39A2 2 0 0 1 47 37Z"/>
+  <path class="acento" fill="#45B392" d="M34 34H50A2 2 0 0 1 52 36V39A2 2 0 0 1 50 41H34A2 2 0 0 1 32 39V36A2 2 0 0 1 34 34Z"/>
+  <path fill="currentColor" d="M14 45H50A2 2 0 0 1 52 47V50A2 2 0 0 1 50 52H14A2 2 0 0 1 12 50V47A2 2 0 0 1 14 45Z"/></svg>
+<text x="1810" y="1243" font-family="Helvetica, Arial, sans-serif" font-size="16" fill="#5E6D67">papel, con acento</text>
+<rect x="2095" y="954" width="265" height="265" fill="#131A17"/>
+<svg x="2122.5" y="981.5" width="210" height="210" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#F5F7F5"><path fill="currentColor" d="M14 12H46A2 2 0 0 1 48 14V17A2 2 0 0 1 46 19H14A2 2 0 0 1 12 17V14A2 2 0 0 1 14 12Z"/>
+  <path fill="currentColor" d="M14 23H22A2 2 0 0 1 24 25V28A2 2 0 0 1 22 30H14A2 2 0 0 1 12 28V25A2 2 0 0 1 14 23Z"/>
+  <path fill="currentColor" d="M14 34H22A2 2 0 0 1 24 36V39A2 2 0 0 1 22 41H14A2 2 0 0 1 12 39V36A2 2 0 0 1 14 34Z"/>
+  <path fill="currentColor" d="M47 37H50A2 2 0 0 1 52 39V50A2 2 0 0 1 50 52H47A2 2 0 0 1 45 50V39A2 2 0 0 1 47 37Z"/>
+  <path class="acento" fill="#45B392" d="M34 34H50A2 2 0 0 1 52 36V39A2 2 0 0 1 50 41H34A2 2 0 0 1 32 39V36A2 2 0 0 1 34 34Z"/>
+  <path fill="currentColor" d="M14 45H50A2 2 0 0 1 52 47V50A2 2 0 0 1 50 52H14A2 2 0 0 1 12 50V47A2 2 0 0 1 14 45Z"/></svg>
+<text x="2095" y="1243" font-family="Helvetica, Arial, sans-serif" font-size="16" fill="#5E6D67">tinta, con acento</text>
+<rect x="1810" y="1259" width="265" height="110" fill="#F5F7F5"/>
+<svg x="1832" y="1273.0" width="64" height="64" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#131A17"><path fill="currentColor" d="M14 12H46A2 2 0 0 1 48 14V17A2 2 0 0 1 46 19H14A2 2 0 0 1 12 17V14A2 2 0 0 1 14 12Z"/>
+  <path fill="currentColor" d="M14 23H22A2 2 0 0 1 24 25V28A2 2 0 0 1 22 30H14A2 2 0 0 1 12 28V25A2 2 0 0 1 14 23Z"/>
+  <path fill="currentColor" d="M14 34H22A2 2 0 0 1 24 36V39A2 2 0 0 1 22 41H14A2 2 0 0 1 12 39V36A2 2 0 0 1 14 34Z"/>
+  <path fill="currentColor" d="M47 37H50A2 2 0 0 1 52 39V50A2 2 0 0 1 50 52H47A2 2 0 0 1 45 50V39A2 2 0 0 1 47 37Z"/>
+  <path class="acento" fill="currentColor" d="M34 34H50A2 2 0 0 1 52 36V39A2 2 0 0 1 50 41H34A2 2 0 0 1 32 39V36A2 2 0 0 1 34 34Z"/>
+  <path fill="currentColor" d="M14 45H50A2 2 0 0 1 52 47V50A2 2 0 0 1 50 52H14A2 2 0 0 1 12 50V47A2 2 0 0 1 14 45Z"/></svg>
+<text x="1864.0" y="1358" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#5E6D67">64</text>
+<svg x="1956" y="1289.0" width="32" height="32" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#131A17"><path fill="currentColor" d="M14 12H46A2 2 0 0 1 48 14V17A2 2 0 0 1 46 19H14A2 2 0 0 1 12 17V14A2 2 0 0 1 14 12Z"/>
+  <path fill="currentColor" d="M14 23H22A2 2 0 0 1 24 25V28A2 2 0 0 1 22 30H14A2 2 0 0 1 12 28V25A2 2 0 0 1 14 23Z"/>
+  <path fill="currentColor" d="M14 34H22A2 2 0 0 1 24 36V39A2 2 0 0 1 22 41H14A2 2 0 0 1 12 39V36A2 2 0 0 1 14 34Z"/>
+  <path fill="currentColor" d="M47 37H50A2 2 0 0 1 52 39V50A2 2 0 0 1 50 52H47A2 2 0 0 1 45 50V39A2 2 0 0 1 47 37Z"/>
+  <path class="acento" fill="currentColor" d="M34 34H50A2 2 0 0 1 52 36V39A2 2 0 0 1 50 41H34A2 2 0 0 1 32 39V36A2 2 0 0 1 34 34Z"/>
+  <path fill="currentColor" d="M14 45H50A2 2 0 0 1 52 47V50A2 2 0 0 1 50 52H14A2 2 0 0 1 12 50V47A2 2 0 0 1 14 45Z"/></svg>
+<text x="1972.0" y="1358" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#5E6D67">32</text>
+<svg x="2044" y="1297.0" width="16" height="16" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#131A17"><path fill="currentColor" d="M14 12H46A2 2 0 0 1 48 14V17A2 2 0 0 1 46 19H14A2 2 0 0 1 12 17V14A2 2 0 0 1 14 12Z"/>
+  <path fill="currentColor" d="M14 23H22A2 2 0 0 1 24 25V28A2 2 0 0 1 22 30H14A2 2 0 0 1 12 28V25A2 2 0 0 1 14 23Z"/>
+  <path fill="currentColor" d="M14 34H22A2 2 0 0 1 24 36V39A2 2 0 0 1 22 41H14A2 2 0 0 1 12 39V36A2 2 0 0 1 14 34Z"/>
+  <path fill="currentColor" d="M47 37H50A2 2 0 0 1 52 39V50A2 2 0 0 1 50 52H47A2 2 0 0 1 45 50V39A2 2 0 0 1 47 37Z"/>
+  <path class="acento" fill="currentColor" d="M34 34H50A2 2 0 0 1 52 36V39A2 2 0 0 1 50 41H34A2 2 0 0 1 32 39V36A2 2 0 0 1 34 34Z"/>
+  <path fill="currentColor" d="M14 45H50A2 2 0 0 1 52 47V50A2 2 0 0 1 50 52H14A2 2 0 0 1 12 50V47A2 2 0 0 1 14 45Z"/></svg>
+<text x="2052.0" y="1358" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#5E6D67">16</text>
+<rect x="2095" y="1259" width="265" height="110" fill="#131A17"/>
+<svg x="2117" y="1273.0" width="64" height="64" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#F5F7F5"><path fill="currentColor" d="M14 12H46A2 2 0 0 1 48 14V17A2 2 0 0 1 46 19H14A2 2 0 0 1 12 17V14A2 2 0 0 1 14 12Z"/>
+  <path fill="currentColor" d="M14 23H22A2 2 0 0 1 24 25V28A2 2 0 0 1 22 30H14A2 2 0 0 1 12 28V25A2 2 0 0 1 14 23Z"/>
+  <path fill="currentColor" d="M14 34H22A2 2 0 0 1 24 36V39A2 2 0 0 1 22 41H14A2 2 0 0 1 12 39V36A2 2 0 0 1 14 34Z"/>
+  <path fill="currentColor" d="M47 37H50A2 2 0 0 1 52 39V50A2 2 0 0 1 50 52H47A2 2 0 0 1 45 50V39A2 2 0 0 1 47 37Z"/>
+  <path class="acento" fill="currentColor" d="M34 34H50A2 2 0 0 1 52 36V39A2 2 0 0 1 50 41H34A2 2 0 0 1 32 39V36A2 2 0 0 1 34 34Z"/>
+  <path fill="currentColor" d="M14 45H50A2 2 0 0 1 52 47V50A2 2 0 0 1 50 52H14A2 2 0 0 1 12 50V47A2 2 0 0 1 14 45Z"/></svg>
+<text x="2149.0" y="1358" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#9AA59F">64</text>
+<svg x="2241" y="1289.0" width="32" height="32" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#F5F7F5"><path fill="currentColor" d="M14 12H46A2 2 0 0 1 48 14V17A2 2 0 0 1 46 19H14A2 2 0 0 1 12 17V14A2 2 0 0 1 14 12Z"/>
+  <path fill="currentColor" d="M14 23H22A2 2 0 0 1 24 25V28A2 2 0 0 1 22 30H14A2 2 0 0 1 12 28V25A2 2 0 0 1 14 23Z"/>
+  <path fill="currentColor" d="M14 34H22A2 2 0 0 1 24 36V39A2 2 0 0 1 22 41H14A2 2 0 0 1 12 39V36A2 2 0 0 1 14 34Z"/>
+  <path fill="currentColor" d="M47 37H50A2 2 0 0 1 52 39V50A2 2 0 0 1 50 52H47A2 2 0 0 1 45 50V39A2 2 0 0 1 47 37Z"/>
+  <path class="acento" fill="currentColor" d="M34 34H50A2 2 0 0 1 52 36V39A2 2 0 0 1 50 41H34A2 2 0 0 1 32 39V36A2 2 0 0 1 34 34Z"/>
+  <path fill="currentColor" d="M14 45H50A2 2 0 0 1 52 47V50A2 2 0 0 1 50 52H14A2 2 0 0 1 12 50V47A2 2 0 0 1 14 45Z"/></svg>
+<text x="2257.0" y="1358" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#9AA59F">32</text>
+<svg x="2329" y="1297.0" width="16" height="16" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#F5F7F5"><path fill="currentColor" d="M14 12H46A2 2 0 0 1 48 14V17A2 2 0 0 1 46 19H14A2 2 0 0 1 12 17V14A2 2 0 0 1 14 12Z"/>
+  <path fill="currentColor" d="M14 23H22A2 2 0 0 1 24 25V28A2 2 0 0 1 22 30H14A2 2 0 0 1 12 28V25A2 2 0 0 1 14 23Z"/>
+  <path fill="currentColor" d="M14 34H22A2 2 0 0 1 24 36V39A2 2 0 0 1 22 41H14A2 2 0 0 1 12 39V36A2 2 0 0 1 14 34Z"/>
+  <path fill="currentColor" d="M47 37H50A2 2 0 0 1 52 39V50A2 2 0 0 1 50 52H47A2 2 0 0 1 45 50V39A2 2 0 0 1 47 37Z"/>
+  <path class="acento" fill="currentColor" d="M34 34H50A2 2 0 0 1 52 36V39A2 2 0 0 1 50 41H34A2 2 0 0 1 32 39V36A2 2 0 0 1 34 34Z"/>
+  <path fill="currentColor" d="M14 45H50A2 2 0 0 1 52 47V50A2 2 0 0 1 50 52H14A2 2 0 0 1 12 50V47A2 2 0 0 1 14 45Z"/></svg>
+<text x="2337.0" y="1358" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#9AA59F">16</text>
+<text x="1810" y="1393" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#5E6D67">64, 32 y 16 px a tamaño real, un solo color</text>
+</svg>

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <!-- Favicon 48: versión principal sobre tinta -->
+  <rect width="48" height="48" rx="6" fill="#131A17"/>
+  <g transform="translate(24.413 23.587) scale(0.825) translate(-32 -32)"><path fill="#F5F7F5" d="M14 12H46A2 2 0 0 1 48 14V17A2 2 0 0 1 46 19H14A2 2 0 0 1 12 17V14A2 2 0 0 1 14 12ZM14 23H22A2 2 0 0 1 24 25V28A2 2 0 0 1 22 30H14A2 2 0 0 1 12 28V25A2 2 0 0 1 14 23ZM14 34H22A2 2 0 0 1 24 36V39A2 2 0 0 1 22 41H14A2 2 0 0 1 12 39V36A2 2 0 0 1 14 34ZM45 38H51.5V41H52V50A2 2 0 0 1 50 52H14A2 2 0 0 1 12 50V47A2 2 0 0 1 14 45H44A1 1 0 0 0 45 44V42A1 1 0 0 0 44 41H45Z"/>
+  <path fill="#45B392" d="M34 34H50A2 2 0 0 1 52 36V41H34A2 2 0 0 1 32 39V36A2 2 0 0 1 34 34Z"/></g>
+</svg>

@@ -1,0 +1,635 @@
+<!doctype html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GymTrack · Rutinas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="sistema.css">
+<style>
+  /* ── Cabeza de la pestaña: fila de 56 dp bajo la barra de estado ──────── */
+  .cabeza { display: flex; align-items: center; justify-content: space-between; height: 56px; margin-bottom: 4px; }
+  .cabeza-sub { margin: -4px 0 16px; }
+
+  /* Insignia de nuevas sobre la pestaña Alertas (la misma de alertas.html). */
+  .pestana .insignia { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px;
+    padding: 0 4px; margin-left: 4px; border-radius: 4px; background: var(--hecho-fondo); color: var(--visto);
+    font: 700 11px/1 var(--mono); vertical-align: 1px; }
+
+  /* Íconos de trazo simple (fuera de .btn-icono). */
+  .ico { flex: 0 0 24px; width: 24px; height: 24px; }
+  .ico path { stroke: currentColor; fill: none; stroke-width: 2.5; stroke-linecap: square; }
+  .btn-icono rect { fill: currentColor; }
+
+  .fila-ceja { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .fila-ceja .btn-icono { margin: -12px -12px -12px 0; }
+  .ceja.acento { display: inline-flex; align-items: center; gap: 8px; }
+  .ceja.acento::before { content: ""; width: 4px; height: 14px; border-radius: 1px; background: var(--hecho-fondo); }
+
+  /* ── Rutina activa, destacada ──────────────────────────────────────────── */
+  .activa-card { border-color: var(--hecho-borde); }
+  .activa-card .h2 { margin-top: 6px; }
+  .activa-card .sec { margin-top: 4px; }
+  .semanas { display: flex; gap: 3px; margin-top: 16px; }
+  .semanas i { flex: 1; height: 8px; border-radius: 1px; background: var(--sup-alta); }
+  .semanas i.si { background: var(--hecho-fondo); }
+  .semanas i.ahora { background: var(--texto); }
+  .avance-txt { margin: 8px 0 0; font-size: 13px; color: var(--texto-2); }
+  .avance-txt .cifra { color: var(--texto); }
+
+  .dias { list-style: none; margin: 12px 0 0; padding: 0; border-top: 1px solid var(--sup-alta); }
+  .dias li + li { border-top: 1px solid var(--sup-alta); }
+  .dia-fila { width: 100%; min-height: 48px; display: flex; align-items: center; gap: 12px; padding: 0 0 0 2px;
+    border: 0; background: transparent; color: var(--texto); font: 500 16px/1.3 var(--letra); text-align: left; cursor: pointer; }
+  .dia-fila:active { background: var(--fantasma-pres); }
+  .dia-fila:focus-visible { outline: 2px solid var(--foco); outline-offset: -2px; }
+  .dia-fila .letra { flex: 0 0 16px; font: 700 13px/1 var(--mono); color: var(--texto-2); }
+  .dia-fila .nombre { flex: 1; }
+  .dia-fila .ico { color: var(--texto-2); width: 20px; height: 20px; flex-basis: 20px; }
+  .hecho-mini { flex: 0 0 24px; height: 24px; border-radius: 4px; background: var(--hecho-fondo); border: 1px solid var(--hecho-borde);
+    display: flex; align-items: center; justify-content: center; }
+  .hecho-mini svg { width: 16px; height: 16px; }
+  .hecho-mini path { stroke: var(--visto); }
+  /* Etiqueta chica (la misma en todas las pantallas): 24 dp, radio 4. */
+  .etiqueta { display: inline-flex; align-items: center; height: 24px; padding: 0 8px; border-radius: 4px; background: transparent;
+    border: 1px solid var(--borde); font: 600 12px/1 var(--letra); color: var(--texto-2); white-space: nowrap; }
+  .etiqueta.acento { color: var(--acento-texto); border-color: var(--hecho-borde); }
+  .etiqueta.llena { background: var(--hecho-fondo); border-color: var(--hecho-borde); color: var(--visto); }
+  .etiqueta.peligro { color: var(--peligro); border-color: var(--peligro); }
+  .activa-card .ver-plan { margin-top: 16px; }
+
+  /* ── Listas de rutinas (borradores, archivadas, biblioteca) ────────────── */
+  .seccion-cabeza .sec { font-size: 13px; }
+  .lista-rut { padding: 0 0 0 16px; }
+  .lista-rut > li { gap: 0; }
+  .tocable { flex: 1; min-width: 0; min-height: 64px; display: flex; flex-direction: column; justify-content: center; gap: 3px;
+    padding: 10px 0; border: 0; background: transparent; color: var(--texto); text-align: left; cursor: pointer; font: inherit; }
+  .tocable:active { background: var(--fantasma-pres); }
+  .tocable:focus-visible { outline: 2px solid var(--foco); outline-offset: -2px; }
+  .tocable .nombre { font: 600 16px/1.3 var(--letra); display: flex; align-items: center; gap: 8px; }
+  .tocable .meta { font-size: 13px; line-height: 1.35; color: var(--texto-2); }
+  .lista-rut .btn-icono { margin-right: 4px; }
+
+  /* ── Vacíos y avisos ───────────────────────────────────────────────────── */
+  .vacio .h2 { margin-top: 4px; }
+  .vacio .sec { margin-top: 6px; }
+  .vacio .pasos { margin: 16px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .vacio .pasos li { display: flex; gap: 12px; align-items: baseline; font-size: 15px; }
+  .vacio .pasos .cifra { flex: 0 0 16px; color: var(--acento-texto); }
+  .ent-cabeza { display: flex; align-items: center; gap: 12px; }
+  /* Avatar (el mismo en todas las pantallas): 40 dp; chico 32 dp; grande 56 dp. Radio 8. */
+  .avatar { flex: 0 0 40px; width: 40px; height: 40px; border-radius: var(--radio); background: var(--sup-alta); color: var(--texto);
+    display: inline-flex; align-items: center; justify-content: center; font: 700 14px/1 var(--mono); }
+  .avatar.chico { flex-basis: 32px; width: 32px; height: 32px; font-size: 12px; }
+  .avatar.grande { flex-basis: 56px; width: 56px; height: 56px; font-size: 18px; }
+  .nota { margin: 14px 0 0; padding: 2px 0 2px 12px; border-left: 4px solid var(--hecho-fondo); font-size: 15px; line-height: 1.45; }
+  .banda { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; margin-bottom: 16px; border-radius: var(--radio);
+    background: var(--sup); border: 1px solid var(--borde); font-size: 14px; line-height: 1.4; }
+  .banda .ico { color: var(--texto-2); margin-top: -1px; }
+  .banda b { font-weight: 700; }
+
+  /* Esqueleto mientras carga: bloques quietos, sin brillo que se mueve. */
+  .esq { display: block; background: var(--sup-alta); border-radius: 4px; }
+  .esq-card { background: var(--sup); border: 1px solid var(--sup-alta); border-radius: var(--radio); padding: 16px; }
+
+  /* ── Biblioteca del entrenador ─────────────────────────────────────────── */
+  .rut-card { display: flex; align-items: flex-start; padding: 0; overflow: hidden; }
+  .rut-card + .rut-card { margin-top: 8px; }
+  .rut-card .tocable { padding: 14px 0 14px 16px; min-height: 0; gap: 4px; }
+  .rut-card .btn-icono { margin: 4px 4px 0 0; }
+  .asignados { display: flex; align-items: center; gap: 4px; margin-top: 8px; }
+  .asignados .cuenta { margin-left: 8px; font-size: 13px; color: var(--texto-2); }
+  .asignados .cuenta .cifra { color: var(--texto); }
+  .sin-rutina { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 64px; padding: 12px 12px 12px 14px;
+    border: 1px solid var(--borde); border-radius: var(--radio); background: var(--sup); color: var(--texto); text-align: left; cursor: pointer; font: inherit; }
+  .sin-rutina:active { background: var(--sec-pres-fondo); }
+  .sin-rutina .cuanto { flex: 0 0 auto; font: 700 24px/1 var(--mono); color: var(--acento-texto); }
+  .sin-rutina .txt { flex: 1; font-size: 14px; line-height: 1.35; color: var(--texto-2); }
+  .sin-rutina .txt b { display: block; color: var(--texto); font-size: 15px; }
+  .sin-rutina .ico { color: var(--texto-2); }
+  .ver-arch { width: 100%; justify-content: space-between; margin-top: 8px; padding: 0 12px; }
+  .ver-arch .sec { font-size: 14px; }
+
+  /* Botón deshabilitado (sistema.css todavía no lo trae). */
+  .btn:disabled, .btn:disabled:active { background: var(--desh-fondo); color: var(--desh-texto); border-color: transparent; cursor: not-allowed; }
+  /* ── Hojas ─────────────────────────────────────────────────────────────── */
+  .hoja.alta { max-height: calc(100% - 48px); display: flex; flex-direction: column; padding-bottom: 20px; }
+  .hoja-cuerpo { flex: 1; min-height: 0; overflow-y: auto; margin: 0 -16px; padding: 0 16px; scrollbar-width: none; }
+  .hoja-cuerpo::-webkit-scrollbar { display: none; }
+  .hoja .h2 { font-size: 22px; }
+  .hoja .sec { margin-top: 6px; }
+  .menu { list-style: none; margin: 12px -16px 0; padding: 0; border-top: 1px solid var(--sup-alta); }
+  .menu li { border-bottom: 1px solid var(--sup-alta); }
+  .menu-fila { width: 100%; min-height: 56px; display: flex; flex-direction: column; justify-content: center; gap: 2px; padding: 8px 16px;
+    border: 0; background: transparent; color: var(--texto); text-align: left; font: 600 17px/1.25 var(--letra); cursor: pointer; }
+  .menu-fila:active { background: var(--fantasma-pres); }
+  .menu-fila:focus-visible { outline: 2px solid var(--foco); outline-offset: -2px; }
+  .menu-fila small { font: 500 13px/1.35 var(--letra); color: var(--texto-2); }
+  .menu-fila:disabled { color: var(--desh-texto); cursor: not-allowed; background: transparent; }
+  .menu-fila:disabled small { color: var(--desh-texto); }
+  .hoja .motivo { margin: 12px 0 0; font-size: 13px; color: var(--texto-2); }
+
+  .cliente { width: 100%; min-height: 56px; display: flex; align-items: center; gap: 12px; padding: 8px 0;
+    border: 0; border-top: 1px solid var(--sup-alta); background: transparent; color: var(--texto); text-align: left; cursor: pointer; font: inherit; }
+  .cliente:active { background: var(--fantasma-pres); }
+  .cliente:disabled { cursor: default; background: transparent; }
+  .cliente:focus-visible { outline: 2px solid var(--foco); outline-offset: -2px; }
+  .cliente .quien { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .cliente .quien span:first-child { font-size: 16px; }
+  .cliente .quien small { font-size: 13px; color: var(--texto-2); }
+  /* Casilla de lista (la misma en todas las pantallas): 32 dp, radio 8. */
+  .check { flex: 0 0 32px; height: 32px; border-radius: var(--radio); border: 2px solid var(--marcar-borde);
+    display: flex; align-items: center; justify-content: center; }
+  .check svg { width: 20px; height: 20px; }
+  .check path { stroke: var(--visto); }
+  [aria-checked="true"] .check { background: var(--hecho-fondo); border-color: var(--hecho-borde); }
+  .cliente:disabled .check { background: var(--sup-alta); border-color: var(--sup-alta); }
+  .cliente:disabled .check path { stroke: var(--texto-2); }
+  .grupo-rot { margin: 16px 0 4px; font: 600 13px/1.3 var(--letra); color: var(--texto-2); }
+
+  .notas-maqueta { max-width: 860px; margin: 32px auto 0; color: var(--p-texto-2); font-size: 14px; }
+  .notas-maqueta h2 { color: var(--p-texto); font-size: 16px; margin: 0 0 8px; }
+  .notas-maqueta ul { margin: 0; padding-left: 18px; }
+  .notas-maqueta li { margin: 4px 0; }
+</style>
+</head>
+<body>
+<main class="maqueta">
+  <header class="maqueta-cabeza">
+    <h1>Pantalla 6 · Rutinas</h1>
+    <p>Dirección Más · 412 × 892 dp · <a href="rutina.html">Detalle</a> · <a href="nueva-rutina.html">Nueva rutina</a> · <a href="index.html">todas las pantallas</a></p>
+  </header>
+
+  <div class="controles" role="group" aria-label="Controles de la maqueta">
+    <label class="grupo"><span class="rot">Estado</span>
+      <select class="ctl" data-ctl="estado">
+        <optgroup label="Alumna">
+          <option value="vinculada">Con entrenadora</option>
+          <option value="solo">Sin entrenador</option>
+          <option value="espera">Sin rutina, con entrenadora</option>
+          <option value="vacio">Sin rutinas (vacío)</option>
+          <option value="activar">Activar otra (confirmación)</option>
+          <option value="cargando">Cargando</option>
+          <option value="sinred">Sin conexión</option>
+        </optgroup>
+        <optgroup label="Entrenadora">
+          <option value="ent-biblioteca">Biblioteca de Camila</option>
+          <option value="ent-asignar">Asignar a clientes (hoja)</option>
+          <option value="ent-vacia">Biblioteca vacía</option>
+        </optgroup>
+      </select></label>
+    <label class="grupo"><span class="rot">Tema</span>
+      <select class="ctl" data-ctl="tema">
+        <option value="gimnasio">Modo gimnasio</option>
+        <option value="clara">Clara</option>
+        <option value="ambos">Las dos</option>
+      </select></label>
+    <label class="grupo"><span class="rot">Tamaño</span>
+      <select class="ctl" data-ctl="zoom">
+        <option value="ajustar">Ajustar al ancho</option>
+        <option value="100">Real (1 dp = 1 px)</option>
+        <option value="150">150 %</option>
+      </select></label>
+    <label class="grupo"><input type="checkbox" data-ctl="medidas"><span>Medidas de toque</span></label>
+  </div>
+
+  <div class="escenario" id="escenario"></div>
+
+  <section class="notas-maqueta">
+    <h2>Qué mirar</h2>
+    <ul>
+      <li>La rutina activa va arriba, con borde ámbar, la semana del plan en segmentos y sus días. Lunes ya está hecho y hoy toca Pierna A, igual que en Hoy.</li>
+      <li>Los tres puntos abren lo que se puede hacer con cada rutina. Con entrenadora, su rutina se ve y se duplica, pero no se edita ni se archiva: la hoja lo dice en vez de esconderlo.</li>
+      <li>Prueba activar «Básica 3 días»: avisa que la de Camila queda archivada y que ella se entera. Duplicar crea un borrador tuyo que aparece en la lista.</li>
+      <li>«Crear rutina» va abajo, al alcance del pulgar. Con entrenadora es secundario, porque el plan lo arma ella; sola es la acción principal.</li>
+      <li>Con el estado «Biblioteca de Camila» ves la pestaña del entrenador: sus rutinas, a qué clientes está cada una y quién no tiene rutina. «Asignar» elige clientes y avisa que su rutina anterior queda archivada.</li>
+    </ul>
+  </section>
+</main>
+
+<script src="maqueta.js"></script>
+<script>
+// ── Datos de prueba ──────────────────────────────────────────────────────────
+// Martes 17 de noviembre de 2026. «Fuerza 4 días» empezó el lunes 2 de noviembre:
+// va en la semana 3 de 8. Esta semana ya hizo Empuje A (lunes) y hoy toca Pierna A.
+const CAMILA = { nombre: 'Camila Rojas', corto: 'Camila', iniciales: 'CR' };
+const DIAS = {
+  f4: [{ n: 'Empuje A', l: 'L', marca: 'hecho' }, { n: 'Pierna A', l: 'M', marca: 'hoy' }, { n: 'Empuje B', l: 'J' }, { n: 'Tirón A', l: 'V' }],
+  basica: [{ n: 'Día A', l: 'L' }, { n: 'Día B', l: 'X' }, { n: 'Día C', l: 'V' }],
+  adapt: [{ n: 'Día A', l: 'L' }, { n: 'Día B', l: 'X' }, { n: 'Día C', l: 'V' }],
+};
+
+function rutinasAlumna(vinculada) {
+  const f4 = { id: 'f4', n: 'Fuerza 4 días', de: vinculada ? 'camila' : 'yo', metodo: 'Doble progresión', semanas: 8, semana: 3, dias: DIAS.f4, estado: 'activa', fechas: '2 nov a 17 nov', sesiones: 9 };
+  const adapt = { id: 'adapt', n: 'Adaptación', de: 'camila', metodo: 'Lineal', semanas: 4, semana: 1, dias: DIAS.adapt, estado: 'archivada', fechas: '5 oct a 1 nov', sesiones: 11 };
+  const basica = { id: 'basica', n: 'Básica 3 días', de: 'yo', metodo: 'Lineal', semanas: 6, semana: 1, dias: DIAS.basica, estado: 'archivada', fechas: '1 sep a 4 oct', sesiones: 14 };
+  return vinculada ? [f4, adapt, basica] : [f4, basica];
+}
+
+// Biblioteca de Camila y sus 12 clientes. La rutina de cada cliente es una copia asignada
+// de una rutina de la biblioteca; aquí se cuenta a quién está asignada cada una.
+const BIBLIO = [
+  { id: 'f4', n: 'Fuerza 4 días', metodo: 'Doble progresión', ndias: 4, semanas: 8 },
+  { id: 'fb3', n: 'Cuerpo completo 3 días', metodo: 'Lineal', ndias: 3, semanas: 6 },
+  { id: 'h5', n: 'Hipertrofia 5 días', metodo: 'Doble progresión', ndias: 5, semanas: 10 },
+  { id: 'f55', n: 'Fuerza 5 × 5', metodo: 'Lineal', ndias: 3, semanas: 12 },
+  { id: 'pct', n: 'Bloque porcentual', metodo: 'Porcentual', ndias: 4, semanas: 4 },
+  { id: 'adapt', n: 'Adaptación', metodo: 'Lineal', ndias: 3, semanas: 4 },
+  { id: 'glu', n: 'Glúteo y pierna', metodo: 'Doble progresión', ndias: 3, semanas: 6, archivada: true },
+];
+const CLIENTES = [
+  { n: 'Martina Fuentes', i: 'MF', r: 'f4', sem: 3 }, { n: 'Diego Araya', i: 'DA', r: 'f4', sem: 5 },
+  { n: 'Josefa Muñoz', i: 'JM', r: 'f4', sem: 1 }, { n: 'Matías Contreras', i: 'MC', r: 'f4', sem: 7 },
+  { n: 'Catalina Pérez', i: 'CP', r: 'fb3', sem: 2 }, { n: 'Antonia Herrera', i: 'AH', r: 'fb3', sem: 4 },
+  { n: 'Valentina Díaz', i: 'VD', r: 'fb3', sem: 6 }, { n: 'Ignacio Soto', i: 'IS', r: 'h5', sem: 4 },
+  { n: 'Joaquín Reyes', i: 'JR', r: 'h5', sem: 8 }, { n: 'Fernanda Silva', i: 'FS', r: 'f55', sem: 9 },
+  { n: 'Sebastián Morales', i: 'SM', r: null, desde: 'Se vinculó ayer' }, { n: 'Florencia Castro', i: 'FC', r: null, desde: 'Terminó su rutina' },
+];
+
+// ── Estado de la maqueta ─────────────────────────────────────────────────────
+let L, B, C, U; // rutinas de la alumna, biblioteca, clientes, interfaz
+let copias = 0;
+function reiniciar(estado) {
+  const vinculada = !['solo', 'vacio'].includes(estado);
+  L = { vinculada, rutinas: ['espera', 'vacio'].includes(estado) ? [] : rutinasAlumna(vinculada) };
+  B = estado === 'ent-vacia' ? [] : BIBLIO.map((r) => ({ ...r }));
+  C = CLIENTES.map((c) => ({ ...c, r: estado === 'ent-vacia' ? null : c.r }));
+  U = { hoja: null, archAbiertas: false };
+  if (estado === 'activar') U.hoja = { tipo: 'activar', id: 'basica' };
+  if (estado === 'ent-asignar') U.hoja = { tipo: 'asignar', id: 'f4', sel: ['FC'] };
+}
+
+// ── Íconos ───────────────────────────────────────────────────────────────────
+const icoMenu = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="10.25" y="4" width="3.5" height="3.5" rx="1"/><rect x="10.25" y="10.25" width="3.5" height="3.5" rx="1"/><rect x="10.25" y="16.5" width="3.5" height="3.5" rx="1"/></svg>';
+const icoSig = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>';
+const icoAbajo = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9l7 7 7-7"/></svg>';
+const icoArriba = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 15l7-7 7 7"/></svg>';
+const icoSinRed = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19h2M9 19v-4M14 19v-8M19 19V7M3 4l18 18"/></svg>';
+
+// ── Utilidades ───────────────────────────────────────────────────────────────
+const porId = (id) => L.rutinas.find((r) => r.id === id);
+const activa = () => L.rutinas.find((r) => r.estado === 'activa');
+const autor = (r) => (r.de === 'yo' ? 'Tuya' : `De ${CAMILA.nombre}`);
+const autorCorto = (r) => (r.de === 'yo' ? 'Tuya' : `De ${CAMILA.corto}`);
+// Detalles maquetados en rutina.html: Fuerza 4 días (activa, de Camila o archivada), su copia, Adaptación y Básica 3 días archivadas.
+// Lo demás avisa en vez de abrir el detalle de otra rutina.
+function destino(r) {
+  if (r.estado === 'borrador') return r.origen === 'f4' ? 'rutina.html#estado=borrador&r=copia' : '';
+  if (r.id === 'f4') return r.estado === 'activa' ? `rutina.html#estado=${r.de === 'yo' ? 'activa' : 'entrenador'}` : 'rutina.html#estado=archivada&r=fuerza';
+  if (r.estado === 'activa') return '';
+  if (r.id === 'adapt') return 'rutina.html#estado=archivada&r=adaptacion';
+  return 'rutina.html#estado=archivada';
+}
+const sinDetalle = (n) => `data-accion="aviso" data-aviso="Aquí se abre ${n}. En la maqueta, prueba con Fuerza 4 días."`;
+const abrir = (r, extra = '') => { const d = destino(r); return d ? `data-ir="${d}${extra}"` : sinDetalle(r.n); };
+const abrirEnt = (r) => (r.id === 'f4' ? 'data-ir="rutina.html#estado=plantilla&rol=entrenador"' : sinDetalle(r.n));
+const nombres = (lista) => (lista.length < 2 ? lista.join('') : `${lista.slice(0, -1).join(', ')} y ${lista[lista.length - 1]}`);
+
+// ── Piezas: alumna ───────────────────────────────────────────────────────────
+function tarjetaActiva(r) {
+  const segs = Array.from({ length: r.semanas }, (_, i) => `<i class="${i < r.semana - 1 ? 'si' : i === r.semana - 1 ? 'ahora' : ''}"></i>`).join('');
+  const dias = r.dias.map((d, i) => {
+    const marca = d.marca === 'hecho' ? `<span class="hecho-mini" aria-label="hecho esta semana">${visto()}</span>`
+      : d.marca === 'hoy' ? '<span class="etiqueta llena">Hoy</span>' : '';
+    return `<li><button class="dia-fila" ${abrir(r, `&dia=${i}`)} data-toque>
+      <span class="letra">${d.l}</span><span class="nombre">${d.n}</span>${marca}${icoSig}</button></li>`;
+  }).join('');
+  return `<section class="tarjeta activa-card" aria-label="Rutina activa">
+    <div class="fila-ceja"><p class="ceja acento">Activa</p>
+      <button class="btn-icono" data-accion="opciones" data-id="${r.id}" aria-label="Opciones de ${r.n}" data-toque>${icoMenu}</button></div>
+    <h2 class="h2">${r.n}</h2>
+    <p class="sec">${autor(r)} · ${r.metodo}</p>
+    <div class="semanas" aria-hidden="true">${segs}</div>
+    <p class="avance-txt">Semana <span class="cifra">${r.semana}</span> de <span class="cifra">${r.semanas}</span> · <span class="cifra">${r.dias.length}</span> días por semana</p>
+    <ul class="dias">${dias}</ul>
+    <button class="btn btn-secundario ancho ver-plan" ${abrir(r)} data-toque>Ver plan</button>
+  </section>`;
+}
+
+function filaRutina(r) {
+  const meta = r.estado === 'borrador'
+    ? `Tuya · sin activar · <span class="cifra">${r.dias.length}</span> días`
+    : `${autorCorto(r)} · ${r.fechas} · <span class="cifra">${r.sesiones}</span> sesiones`;
+  const tag = r.estado === 'borrador' ? '<span class="etiqueta">Borrador</span>' : '';
+  return `<li><button class="tocable" ${abrir(r)} data-toque>
+      <span class="nombre">${r.n}${tag}</span><span class="meta">${meta}</span></button>
+    <button class="btn-icono" data-accion="opciones" data-id="${r.id}" aria-label="Opciones de ${r.n}" data-toque>${icoMenu}</button></li>`;
+}
+
+function vacioAlumna(estado) {
+  if (estado === 'espera') {
+    return `<section class="tarjeta vacio" aria-label="Sin rutina">
+      <div class="ent-cabeza"><span class="avatar">${CAMILA.iniciales}</span>
+        <div><p class="h3">${CAMILA.nombre}</p><p class="sec" style="margin:0">Tu entrenadora</p></div></div>
+      <h2 class="h2" style="margin-top:16px">Camila está armando tu rutina</h2>
+      <p class="sec">Ya tiene tu encuesta. Cuando la active, aparece aquí y en Hoy. Te avisamos con una notificación.</p>
+    </section>`;
+  }
+  return `<section class="tarjeta vacio" aria-label="Sin rutinas">
+    <h2 class="h2" style="margin-top:0">Todavía no tienes rutinas</h2>
+    <p class="sec">Una rutina son tus días de entrenamiento y lo que haces en cada uno. La app te sugiere cuánto subir cada semana.</p>
+    <ol class="pasos">
+      <li><span class="cifra">1</span><span>Ponle nombre y elige cómo progresar.</span></li>
+      <li><span class="cifra">2</span><span>Arma los días, por ejemplo Empuje A o Pierna.</span></li>
+      <li><span class="cifra">3</span><span>Agrega ejercicios con series y repeticiones.</span></li>
+    </ol>
+  </section>`;
+}
+
+function tarjetaVincular() {
+  return `<div class="seccion-cabeza"><h3 class="h3">¿Entrenas con alguien?</h3></div>
+    <div class="tarjeta">
+      <p class="sec" style="margin:0">Si tu entrenador te dio un código de 6 caracteres, ingrésalo: así te arma la rutina y la ves aquí.</p>
+      <button class="btn btn-secundario ancho" style="margin-top:12px" data-ir="perfil.html#estado=vincular" data-toque>Ingresar código</button>
+    </div>`;
+}
+
+function esqueleto() {
+  const linea = (w, h = 14, m = 0) => `<span class="esq" style="width:${w};height:${h}px;margin-top:${m}px"></span>`;
+  return `<div aria-busy="true" aria-label="Cargando rutinas">
+    <div class="esq-card">${linea('64px', 12)}${linea('70%', 24, 12)}${linea('52%', 12, 10)}${linea('100%', 8, 18)}
+      ${[0, 1, 2, 3].map(() => linea('100%', 20, 20)).join('')}${linea('100%', 48, 20)}</div>
+    <div class="seccion-cabeza">${linea('96px', 16)}</div>
+    <div class="esq-card">${linea('58%', 16)}${linea('80%', 12, 10)}</div>
+  </div>`;
+}
+
+function cuerpoAlumna(estado) {
+  const cabeza = '<div class="cabeza"><h1 class="titulo">Rutinas</h1></div>';
+  if (estado === 'cargando') return cabeza + esqueleto();
+  const banda = estado === 'sinred'
+    ? `<div class="banda" role="status">${icoSinRed}<span><b>Sin conexión.</b> Ves lo guardado en tu teléfono. Activar, duplicar y archivar vuelven con la señal.</span></div>` : '';
+  const act = activa();
+  const borradores = L.rutinas.filter((r) => r.estado === 'borrador');
+  const archivadas = L.rutinas.filter((r) => r.estado === 'archivada');
+  let principal;
+  if (act) principal = tarjetaActiva(act);
+  else if (!L.rutinas.length) principal = vacioAlumna(estado);
+  else {
+    principal = `<section class="tarjeta vacio" aria-label="Sin rutina activa"><p class="ceja">Sin rutina activa</p>
+      <h2 class="h2">Elige con qué seguir</h2><p class="sec">Activa una de tus rutinas o crea una nueva. Mientras, Hoy queda sin plan.</p></section>`;
+  }
+  const secBorr = borradores.length ? `<div class="seccion-cabeza"><h3 class="h3">Borradores</h3><span class="sec cifra">${borradores.length}</span></div>
+    <div class="tarjeta lista-rut" style="padding-top:0;padding-bottom:0"><ul class="lista-filas">${borradores.map(filaRutina).join('')}</ul></div>` : '';
+  const secArch = archivadas.length ? `<div class="seccion-cabeza"><h3 class="h3">Archivadas</h3><span class="sec cifra">${archivadas.length}</span></div>
+    <div class="tarjeta lista-rut" style="padding-top:0;padding-bottom:0"><ul class="lista-filas">${archivadas.map(filaRutina).join('')}</ul></div>` : '';
+  return cabeza + banda + principal + secBorr + secArch + (L.vinculada ? '' : tarjetaVincular());
+}
+
+// ── Piezas: entrenadora ──────────────────────────────────────────────────────
+function clientesDe(id) { return C.filter((c) => c.r === id); }
+
+function tarjetaBiblio(r) {
+  const cl = clientesDe(r.id);
+  const avs = cl.slice(0, 5).map((c) => `<span class="avatar chico" title="${c.n}">${c.i}</span>`).join('');
+  const mas = cl.length > 5 ? `<span class="avatar chico">+${cl.length - 5}</span>` : '';
+  const pie = cl.length
+    ? `<div class="asignados">${avs}${mas}<span class="cuenta"><span class="cifra">${cl.length}</span> ${cl.length === 1 ? 'cliente' : 'clientes'}</span></div>`
+    : '<span class="meta">Sin asignar</span>';
+  return `<div class="tarjeta rut-card">
+    <button class="tocable" ${abrirEnt(r)} data-toque>
+      <span class="nombre">${r.n}</span>
+      <span class="meta">${r.metodo} · <span class="cifra">${r.ndias}</span> días · <span class="cifra">${r.semanas}</span> semanas</span>
+      ${pie}
+    </button>
+    <button class="btn-icono" data-accion="opciones" data-id="${r.id}" aria-label="Opciones de ${r.n}" data-toque>${icoMenu}</button>
+  </div>`;
+}
+
+function cuerpoEntrenadora(estado) {
+  const vivas = B.filter((r) => !r.archivada);
+  const archivadas = B.filter((r) => r.archivada);
+  const conRutina = C.filter((c) => c.r).length;
+  if (!B.length) {
+    return `<div class="cabeza"><h1 class="titulo">Rutinas</h1></div>
+      <section class="tarjeta vacio" aria-label="Biblioteca vacía">
+        <p class="ceja">Tu biblioteca</p>
+        <h2 class="h2">Arma tu primera rutina</h2>
+        <p class="sec">La creas una vez y se la asignas a los clientes que quieras. Cada uno la lleva a su ritmo y tú ves su avance.</p>
+        <ol class="pasos">
+          <li><span class="cifra">1</span><span>Crea la rutina con sus días y ejercicios.</span></li>
+          <li><span class="cifra">2</span><span>Asígnala desde aquí o desde la ficha del cliente.</span></li>
+          <li><span class="cifra">3</span><span>Ajusta las cargas cuando lo necesite.</span></li>
+        </ol>
+      </section>
+      <div class="seccion-cabeza"><h3 class="h3">Tus clientes</h3></div>
+      <button class="sin-rutina" data-ir="clientes.html" data-toque><span class="cuanto">${C.length}</span>
+        <span class="txt"><b>Sin rutina asignada</b>Todos esperan su primera rutina.</span>${icoSig}</button>`;
+  }
+  const libres = C.filter((c) => !c.r);
+  const nudge = libres.length ? `<button class="sin-rutina" data-ir="clientes.html" data-toque><span class="cuanto">${libres.length}</span>
+      <span class="txt"><b>${libres.length === 1 ? 'Cliente sin rutina' : 'Clientes sin rutina'}</b>${nombres(libres.map((c) => c.n.split(' ')[0]))}</span>${icoSig}</button>` : '';
+  const asignadas = vivas.filter((r) => clientesDe(r.id).length);
+  const libresR = vivas.filter((r) => !clientesDe(r.id).length);
+  const filaLibre = (r) => `<li><button class="tocable" ${abrirEnt(r)} data-toque>
+      <span class="nombre">${r.n}</span><span class="meta">${r.metodo} · <span class="cifra">${r.ndias}</span> días · <span class="cifra">${r.semanas}</span> semanas</span></button>
+    <button class="btn-icono" data-accion="opciones" data-id="${r.id}" aria-label="Opciones de ${r.n}" data-toque>${icoMenu}</button></li>`;
+  const arch = archivadas.length ? `<button class="btn btn-fantasma ver-arch" data-accion="ver-arch" aria-expanded="${U.archAbiertas}" data-toque>
+      <span>Archivadas <span class="cifra">${archivadas.length}</span></span>${U.archAbiertas ? icoArriba : icoAbajo}</button>
+    ${U.archAbiertas ? `<div class="tarjeta lista-rut" style="padding-top:0;padding-bottom:0"><ul class="lista-filas">${archivadas.map((r) => `<li><button class="tocable" ${abrirEnt(r)} data-toque>
+      <span class="nombre">${r.n}<span class="etiqueta">Archivada</span></span><span class="meta">${r.metodo} · <span class="cifra">${r.ndias}</span> días</span></button>
+      <button class="btn-icono" data-accion="opciones" data-id="${r.id}" aria-label="Opciones de ${r.n}" data-toque>${icoMenu}</button></li>`).join('')}</ul></div>` : ''}` : '';
+  return `<div class="cabeza"><h1 class="titulo">Rutinas</h1></div>
+    <p class="sec cabeza-sub">Tu biblioteca · <span class="cifra">${vivas.length}</span> rutinas · <span class="cifra">${conRutina}</span> de <span class="cifra">${C.length}</span> clientes con rutina</p>
+    ${nudge}
+    ${asignadas.length ? `<div class="seccion-cabeza"><h3 class="h3">Asignadas</h3></div>${asignadas.map(tarjetaBiblio).join('')}` : ''}
+    ${libresR.length ? `<div class="seccion-cabeza"><h3 class="h3">Sin asignar</h3></div>
+      <div class="tarjeta lista-rut" style="padding-top:0;padding-bottom:0"><ul class="lista-filas">${libresR.map(filaLibre).join('')}</ul></div>` : ''}
+    ${arch}`;
+}
+
+// ── Hojas ────────────────────────────────────────────────────────────────────
+function filaMenu(texto, attrs, nota = '', deshabilitada = false) {
+  return `<li><button class="menu-fila" ${attrs} ${deshabilitada ? 'disabled' : ''} data-toque>${texto}${nota ? `<small>${nota}</small>` : ''}</button></li>`;
+}
+
+function hojaOpcionesAlumna(r, tema, estado) {
+  const mia = r.de === 'yo', sinRed = estado === 'sinred';
+  const filas = [filaMenu('Ver plan', abrir(r))];
+  if (mia && r.estado !== 'activa') filas.push(filaMenu('Activar', `data-accion="pedir-activar" data-id="${r.id}"`, activa() ? `${activa().n} queda archivada` : '', sinRed));
+  if (mia && r.estado !== 'archivada') filas.push(filaMenu('Editar', r.id === 'f4' && r.estado === 'activa' ? 'data-ir="nueva-rutina.html#estado=editar"'
+    : `data-accion="aviso" data-aviso="Aquí se edita ${r.n}. En la maqueta, prueba con Fuerza 4 días."`));
+  filas.push(filaMenu(mia ? 'Duplicar' : 'Duplicar como mía', `data-accion="duplicar" data-id="${r.id}"`, mia ? 'Crea una copia en borrador' : 'Crea una copia tuya que sí puedes editar', sinRed));
+  if (mia && r.estado !== 'archivada') filas.push(filaMenu('Archivar', `data-accion="archivar" data-id="${r.id}"`, 'El historial se guarda', sinRed));
+  const motivo = !mia ? `<p class="motivo">La armó ${CAMILA.corto}: la puedes ver y duplicar, pero no editarla, activarla ni archivarla. Si quieres un cambio, pídeselo a ella.</p>` : '';
+  const red = sinRed ? '<p class="motivo">Sin conexión: lo que está gris vuelve cuando haya señal.</p>' : '';
+  return `<h2 class="h2" id="t-hoja-${tema}">${r.n}</h2>
+    <p class="sec">${autor(r)} · ${r.estado === 'activa' ? 'activa' : r.estado === 'borrador' ? 'borrador' : 'archivada'}</p>
+    <ul class="menu">${filas.join('')}</ul>${motivo}${red}
+    <div class="acciones"><button class="btn btn-secundario" data-accion="cerrar" data-toque>Cerrar</button></div>`;
+}
+
+function hojaActivar(r, tema) {
+  const act = activa();
+  let txt = `Empieza en la semana 1. Hoy y el registro usan esta rutina desde ahora.`;
+  if (act) txt = `${act.n} queda archivada con su historial. ${act.de === 'camila' ? `Como la armó ${CAMILA.corto}, le avisamos del cambio.` : ''}`;
+  return `<h2 class="h2" id="t-hoja-${tema}">¿Activar ${r.n}?</h2>
+    <p class="sec">${txt}</p>
+    <div class="acciones"><button class="btn btn-secundario" data-accion="cerrar" data-toque>Cancelar</button>
+      <button class="btn btn-primario" data-accion="si-activar" data-id="${r.id}" data-toque>Activar</button></div>`;
+}
+
+function hojaOpcionesEnt(r, tema) {
+  const n = clientesDe(r.id).length;
+  const filas = [
+    filaMenu('Ver plan', abrirEnt(r)),
+    filaMenu('Asignar a clientes', `data-accion="pedir-asignar" data-id="${r.id}"`, n ? `La tienen ${n} ${n === 1 ? 'cliente' : 'clientes'}` : 'Todavía no la tiene nadie', !!r.archivada),
+    filaMenu('Editar', r.id === 'f4' ? 'data-ir="nueva-rutina.html#estado=editar&rol=entrenador"'
+      : `data-accion="aviso" data-aviso="Aquí se edita ${r.n}. En la maqueta, prueba con Fuerza 4 días."`, n ? 'Los cambios llegan a sus clientes desde la próxima sesión' : ''),
+    filaMenu('Duplicar', `data-accion="duplicar-ent" data-id="${r.id}"`, 'Crea una copia para variarla'),
+    r.archivada ? filaMenu('Sacar de archivadas', `data-accion="desarchivar-ent" data-id="${r.id}"`)
+      : filaMenu('Archivar', `data-accion="archivar-ent" data-id="${r.id}"`, n ? 'Sale de tu biblioteca; sus clientes la siguen usando' : 'Sale de tu biblioteca'),
+  ];
+  return `<h2 class="h2" id="t-hoja-${tema}">${r.n}</h2>
+    <p class="sec">${r.metodo} · ${r.ndias} días · ${r.semanas} semanas</p>
+    <ul class="menu">${filas.join('')}</ul>
+    <div class="acciones"><button class="btn btn-secundario" data-accion="cerrar" data-toque>Cerrar</button></div>`;
+}
+
+function hojaAsignar(r, tema) {
+  const sel = U.hoja.sel;
+  const fila = (c) => {
+    const ya = c.r === r.id;
+    const otra = c.r && !ya ? B.find((b) => b.id === c.r) : null;
+    const marcado = ya || sel.includes(c.i);
+    const sub = ya ? `Ya la tiene · semana ${c.sem}` : otra ? `Tiene ${otra.n}` : c.desde || 'Sin rutina';
+    return `<button class="cliente" role="checkbox" aria-checked="${marcado}" ${ya ? 'disabled' : `data-accion="marcar" data-i="${c.i}"`} data-toque>
+      <span class="avatar chico">${c.i}</span><span class="quien"><span>${c.n}</span><small>${sub}</small></span>
+      <span class="check">${marcado ? visto() : ''}</span></button>`;
+  };
+  const libres = C.filter((c) => !c.r), otras = C.filter((c) => c.r && c.r !== r.id), ya = C.filter((c) => c.r === r.id);
+  const grupo = (t, l) => (l.length ? `<p class="grupo-rot">${t}</p>${l.map(fila).join('')}` : '');
+  const reemplaza = sel.some((i) => C.find((c) => c.i === i).r);
+  return `<h2 class="h2" id="t-hoja-${tema}">Asignar ${r.n}</h2>
+    <p class="sec">Se activa de inmediato y empieza en la semana 1.${reemplaza ? ' La rutina que tenían queda archivada con su historial.' : ''}</p>
+    <div class="hoja-cuerpo" style="margin-top:8px">
+      ${grupo('Sin rutina', libres)}${grupo('Con otra rutina', otras)}${grupo('Ya la tienen', ya)}
+    </div>
+    <div class="acciones"><button class="btn btn-secundario" data-accion="cerrar" data-toque>Cancelar</button>
+      <button class="btn btn-primario" data-accion="si-asignar" data-id="${r.id}" ${sel.length ? '' : 'disabled'} data-toque><span>${sel.length ? `Asignar a <span class="cifra">${sel.length}</span>` : 'Elige clientes'}</span></button></div>`;
+}
+
+function hoja(tema, ent, estado) {
+  if (!U.hoja) return '<div class="velo"></div>';
+  const h = U.hoja;
+  let html, alta = false;
+  if (ent) {
+    const r = B.find((b) => b.id === h.id);
+    if (h.tipo === 'opciones') html = hojaOpcionesEnt(r, tema);
+    if (h.tipo === 'asignar') { html = hojaAsignar(r, tema); alta = true; }
+  } else {
+    const r = porId(h.id);
+    if (h.tipo === 'opciones') html = hojaOpcionesAlumna(r, tema, estado);
+    if (h.tipo === 'activar') html = hojaActivar(r, tema);
+  }
+  return `<div class="velo ver" data-velo><div class="hoja${alta ? ' alta' : ''}" role="dialog" aria-modal="true" aria-labelledby="t-hoja-${tema}">${html}</div></div>`;
+}
+
+// ── Teléfono ─────────────────────────────────────────────────────────────────
+let M = null;
+
+function telefono(tema, ctl) {
+  const estado = ctl.estado;
+  const ent = estado.startsWith('ent-');
+  if (ent) ctl.rol = 'entrenador'; else delete ctl.rol;
+  const cuerpo = ent ? cuerpoEntrenadora(estado) : cuerpoAlumna(estado);
+  let accion = '';
+  if (ent) accion = `<button class="btn btn-primario ancho alto" data-ir="nueva-rutina.html#rol=entrenador" data-toque>Crear rutina</button>`;
+  else if (estado !== 'cargando') {
+    const principal = !L.vinculada || !activa();
+    accion = `<button class="btn ${principal && estado !== 'espera' ? 'btn-primario' : 'btn-secundario'} ancho alto" data-ir="nueva-rutina.html" data-toque>Crear rutina</button>`;
+  }
+  return `<div class="tel" data-tema="${tema}">
+    <div class="tel-estado"><span class="cifra" style="font-weight:600">9:41</span><span>5G · 82 %</span></div>
+    <div class="tel-contenido">${cuerpo}</div>
+    ${accion ? `<div class="tel-accion">${accion}</div>` : ''}
+    ${ent ? pestanas(PESTANAS_ENTRENADOR, 'Rutinas').replace('>Alertas</button>', '>Alertas<span class="insignia" aria-label="3 nuevas">3</span></button>')
+      : pestanas(PESTANAS_ALUMNO, 'Rutinas')}
+    <div class="tel-gesto"></div>
+    <div class="aviso" role="status"></div>
+    ${hoja(tema, ent, estado)}
+  </div>`;
+}
+
+// ── Maqueta ──────────────────────────────────────────────────────────────────
+const rolInicial = new URLSearchParams(location.hash.slice(1)).get('rol');
+M = iniciarMaqueta({
+  telefono,
+  porDefecto: { estado: rolInicial === 'entrenador' ? 'ent-biblioteca' : 'vinculada' },
+  alCambiarEstado: reiniciar,
+});
+const { escenario } = M;
+
+function repintar() {
+  const scroll = [...escenario.querySelectorAll('.tel-contenido, .hoja-cuerpo')].map((c) => c.scrollTop);
+  M.pintar();
+  escenario.querySelectorAll('.tel-contenido, .hoja-cuerpo').forEach((c, k) => { c.scrollTop = scroll[k] || 0; });
+}
+const avisarTodos = (t) => escenario.querySelectorAll('.tel').forEach((tel) => avisar(tel, t));
+function cerrar() { U.hoja = null; repintar(); }
+document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && U.hoja) cerrar(); });
+
+escenario.addEventListener('click', (ev) => {
+  // Tocar el velo, fuera de la hoja, la cierra.
+  if (ev.target.matches('[data-velo]')) { cerrar(); return; }
+  const b = ev.target.closest('[data-accion]'); if (!b || b.disabled) return;
+  const id = b.dataset.id;
+  switch (b.dataset.accion) {
+    case 'opciones': U.hoja = { tipo: 'opciones', id }; repintar(); break;
+    case 'cerrar': cerrar(); break;
+    case 'aviso': U.hoja = null; repintar(); avisarTodos(b.dataset.aviso); break;
+    case 'pedir-activar': U.hoja = { tipo: 'activar', id }; repintar(); break;
+    case 'si-activar': {
+      const r = porId(id), antes = activa();
+      if (antes) { antes.estado = 'archivada'; }
+      r.estado = 'activa'; r.semana = 1;
+      // La activa va primero en la lista.
+      L.rutinas = [r, ...L.rutinas.filter((x) => x !== r)];
+      U.hoja = null; repintar();
+      avisarTodos(antes ? `${r.n} quedó activa. ${antes.n} pasó a archivadas.` : `${r.n} quedó activa.`);
+      break;
+    }
+    case 'duplicar': {
+      const r = porId(id); copias++;
+      L.rutinas.push({ ...r, id: `copia${copias}`, origen: r.origen || r.id, n: `${r.n} (copia)`, de: 'yo', estado: 'borrador' });
+      U.hoja = null; repintar();
+      avisarTodos('Copia guardada como borrador. Edítala y actívala cuando quieras.');
+      break;
+    }
+    case 'archivar': {
+      const r = porId(id); const eraActiva = r.estado === 'activa';
+      r.estado = 'archivada'; r.fechas = r.fechas || 'sin sesiones'; r.sesiones = r.sesiones || 0;
+      U.hoja = null; repintar();
+      avisarTodos(eraActiva ? `Archivaste ${r.n}. Quedas sin rutina activa.` : `Archivaste ${r.n}.`);
+      break;
+    }
+    case 'pedir-asignar': U.hoja = { tipo: 'asignar', id, sel: [] }; repintar(); break;
+    case 'marcar': {
+      const s = U.hoja.sel, i = b.dataset.i;
+      U.hoja.sel = s.includes(i) ? s.filter((x) => x !== i) : [...s, i];
+      repintar(); break;
+    }
+    case 'si-asignar': {
+      const r = B.find((x) => x.id === id), sel = U.hoja.sel;
+      C.forEach((c) => { if (sel.includes(c.i)) { c.r = id; c.sem = 1; } });
+      U.hoja = null; repintar();
+      const quienes = nombres(C.filter((c) => sel.includes(c.i)).map((c) => c.n.split(' ')[0]));
+      avisarTodos(`Asignaste ${r.n} a ${quienes}. Les llega un aviso.`);
+      break;
+    }
+    case 'duplicar-ent': {
+      const r = B.find((x) => x.id === id); copias++;
+      B.push({ ...r, id: `copia${copias}`, n: `${r.n} (copia)`, archivada: false });
+      U.hoja = null; repintar(); avisarTodos(`Duplicaste ${r.n}. La copia está en Sin asignar.`);
+      break;
+    }
+    case 'archivar-ent': { const r = B.find((x) => x.id === id); r.archivada = true; U.hoja = null; repintar(); avisarTodos(`Archivaste ${r.n}.`); break; }
+    case 'desarchivar-ent': { const r = B.find((x) => x.id === id); r.archivada = false; U.hoja = null; repintar(); avisarTodos(`${r.n} volvió a tu biblioteca.`); break; }
+    case 'ver-arch': U.archAbiertas = !U.archAbiertas; repintar(); break;
+  }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,185 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2104" height="920" viewBox="0 0 2104 920">
+<rect width="2104" height="920" fill="#FFFFFF"/>
+<text x="60" y="66" font-family="Helvetica, Arial, sans-serif" font-size="34" font-weight="bold" fill="#131A17">GymTrack · Ícono adaptativo de Android, ronda 2</text>
+<text x="60" y="106" font-family="Helvetica, Arial, sans-serif" font-size="20" fill="#5E6D67">Máscara circular de 72 dp sobre lienzo de 108 dp. Línea punteada: zona segura de 66 dp. Todos los símbolos a la misma escala; el que más ocupa (G) llega a 58 dp de diámetro.</text>
+<text x="60" y="244" font-family="Helvetica, Arial, sans-serif" font-size="22" font-weight="bold" fill="#131A17">menta</text>
+<text x="60" y="272" font-family="Helvetica, Arial, sans-serif" font-size="18" fill="#5E6D67">símbolo tinta</text>
+<circle cx="350" cy="250" r="90" fill="#45B392"/>
+<circle cx="350" cy="250" r="82.5" fill="none" stroke="#131A17" stroke-opacity="0.25" stroke-width="1.5" stroke-dasharray="4 5"/>
+<svg x="272.855" y="172.85500000000002" width="154.29" height="154.29" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#131A17"><path fill="currentColor" d="M14 11.25H46A2 2 0 0 1 48 13.25V17.75A2 2 0 0 1 46 19.75H14A2 2 0 0 1 12 17.75V13.25A2 2 0 0 1 14 11.25Z"/>
+  <path fill="currentColor" d="M14 22.25H22A2 2 0 0 1 24 24.25V28.75A2 2 0 0 1 22 30.75H14A2 2 0 0 1 12 28.75V24.25A2 2 0 0 1 14 22.25Z"/>
+  <path fill="currentColor" d="M14 33.25H22A2 2 0 0 1 24 35.25V39.75A2 2 0 0 1 22 41.75H14A2 2 0 0 1 12 39.75V35.25A2 2 0 0 1 14 33.25Z"/>
+  <path class="acento" fill="currentColor" d="M34 33.25H50A2 2 0 0 1 52 35.25V39.75A2 2 0 0 1 50 41.75H34A2 2 0 0 1 32 39.75V35.25A2 2 0 0 1 34 33.25Z"/>
+  <path fill="currentColor" d="M14 44.25H50A2 2 0 0 1 52 46.25V50.75A2 2 0 0 1 50 52.75H14A2 2 0 0 1 12 50.75V46.25A2 2 0 0 1 14 44.25Z"/></svg>
+<circle cx="578" cy="250" r="90" fill="#45B392"/>
+<circle cx="578" cy="250" r="82.5" fill="none" stroke="#131A17" stroke-opacity="0.25" stroke-width="1.5" stroke-dasharray="4 5"/>
+<svg x="500.855" y="172.85500000000002" width="154.29" height="154.29" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#131A17"><path fill="currentColor" d="M14 10H46A2 2 0 0 1 48 12V14A2 2 0 0 1 46 16H14A2 2 0 0 1 12 14V12A2 2 0 0 1 14 10Z"/>
+  <path fill="currentColor" d="M14 19.5H21A2 2 0 0 1 23 21.5V23.5A2 2 0 0 1 21 25.5H14A2 2 0 0 1 12 23.5V21.5A2 2 0 0 1 14 19.5Z"/>
+  <path fill="currentColor" d="M14 29H21A2 2 0 0 1 23 31V33A2 2 0 0 1 21 35H14A2 2 0 0 1 12 33V31A2 2 0 0 1 14 29Z"/>
+  <path class="acento" fill="currentColor" d="M33 29H50A2 2 0 0 1 52 31V33A2 2 0 0 1 50 35H33A2 2 0 0 1 31 33V31A2 2 0 0 1 33 29Z"/>
+  <path fill="currentColor" d="M14 38.5H21A2 2 0 0 1 23 40.5V42.5A2 2 0 0 1 21 44.5H14A2 2 0 0 1 12 42.5V40.5A2 2 0 0 1 14 38.5Z"/>
+  <path fill="currentColor" d="M43 38.5H50A2 2 0 0 1 52 40.5V42.5A2 2 0 0 1 50 44.5H43A2 2 0 0 1 41 42.5V40.5A2 2 0 0 1 43 38.5Z"/>
+  <path fill="currentColor" d="M14 48H50A2 2 0 0 1 52 50V52A2 2 0 0 1 50 54H14A2 2 0 0 1 12 52V50A2 2 0 0 1 14 48Z"/></svg>
+<circle cx="806" cy="250" r="90" fill="#45B392"/>
+<circle cx="806" cy="250" r="82.5" fill="none" stroke="#131A17" stroke-opacity="0.25" stroke-width="1.5" stroke-dasharray="4 5"/>
+<svg x="728.855" y="172.85500000000002" width="154.29" height="154.29" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#131A17"><path fill="currentColor" d="M18.7 12H41.3A2 2 0 0 1 43.3 14V17A2 2 0 0 1 41.3 19H18.7A2 2 0 0 1 16.7 17V14A2 2 0 0 1 18.7 12Z"/>
+  <path fill="currentColor" d="M12.18 23H22A2 2 0 0 1 24 25V28A2 2 0 0 1 22 30H12.18A2 2 0 0 1 10.18 28V25A2 2 0 0 1 12.18 23Z"/>
+  <path fill="currentColor" d="M12.18 34H22A2 2 0 0 1 24 36V39A2 2 0 0 1 22 41H12.18A2 2 0 0 1 10.18 39V36A2 2 0 0 1 12.18 34Z"/>
+  <path class="acento" fill="currentColor" d="M35 34H51.82A2 2 0 0 1 53.82 36V39A2 2 0 0 1 51.82 41H35A2 2 0 0 1 33 39V36A2 2 0 0 1 35 34Z"/>
+  <path fill="currentColor" d="M18.7 45H45.3A2 2 0 0 1 47.3 47V50A2 2 0 0 1 45.3 52H18.7A2 2 0 0 1 16.7 50V47A2 2 0 0 1 18.7 45Z"/></svg>
+<circle cx="1034" cy="250" r="90" fill="#45B392"/>
+<circle cx="1034" cy="250" r="82.5" fill="none" stroke="#131A17" stroke-opacity="0.25" stroke-width="1.5" stroke-dasharray="4 5"/>
+<svg x="956.855" y="172.85500000000002" width="154.29" height="154.29" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#131A17"><path fill="currentColor" d="M14 12H38A2 2 0 0 1 40 14V17A2 2 0 0 1 38 19H14A2 2 0 0 1 12 17V14A2 2 0 0 1 14 12Z"/>
+  <path fill="currentColor" d="M14 23H22A2 2 0 0 1 24 25V28A2 2 0 0 1 22 30H14A2 2 0 0 1 12 28V25A2 2 0 0 1 14 23Z"/>
+  <path fill="currentColor" d="M14 34H22A2 2 0 0 1 24 36V39A2 2 0 0 1 22 41H14A2 2 0 0 1 12 39V36A2 2 0 0 1 14 34Z"/>
+  <path class="acento" fill="currentColor" d="M31 34H50A2 2 0 0 1 52 36V39A2 2 0 0 1 50 41H31A2 2 0 0 1 29 39V36A2 2 0 0 1 31 34Z"/>
+  <path fill="currentColor" d="M14 45H50A2 2 0 0 1 52 47V50A2 2 0 0 1 50 52H14A2 2 0 0 1 12 50V47A2 2 0 0 1 14 45Z"/></svg>
+<circle cx="1262" cy="250" r="90" fill="#45B392"/>
+<circle cx="1262" cy="250" r="82.5" fill="none" stroke="#131A17" stroke-opacity="0.25" stroke-width="1.5" stroke-dasharray="4 5"/>
+<svg x="1184.855" y="172.85500000000002" width="154.29" height="154.29" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#131A17"><path fill="currentColor" d="M14 12H46A2 2 0 0 1 48 14V17A2 2 0 0 1 46 19H14A2 2 0 0 1 12 17V14A2 2 0 0 1 14 12Z"/>
+  <path fill="currentColor" d="M14 23H22A2 2 0 0 1 24 25V28A2 2 0 0 1 22 30H14A2 2 0 0 1 12 28V25A2 2 0 0 1 14 23Z"/>
+  <path fill="currentColor" d="M14 34H22A2 2 0 0 1 24 36V39A2 2 0 0 1 22 41H14A2 2 0 0 1 12 39V36A2 2 0 0 1 14 34Z"/>
+  <path fill="currentColor" d="M34 34H50A2 2 0 0 1 52 36V39A2 2 0 0 1 50 41H34A2 2 0 0 1 32 39V36A2 2 0 0 1 34 34Z"/>
+  <path class="acento" fill="currentColor" d="M14 45H50A2 2 0 0 1 52 47V50A2 2 0 0 1 50 52H14A2 2 0 0 1 12 50V47A2 2 0 0 1 14 45Z"/></svg>
+<circle cx="1490" cy="250" r="90" fill="#45B392"/>
+<circle cx="1490" cy="250" r="82.5" fill="none" stroke="#131A17" stroke-opacity="0.25" stroke-width="1.5" stroke-dasharray="4 5"/>
+<svg x="1412.855" y="172.85500000000002" width="154.29" height="154.29" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#131A17"><path fill="currentColor" d="M12 12H48V19H12Z"/>
+  <path fill="currentColor" d="M12 23H24V30H12Z"/>
+  <path fill="currentColor" d="M12 34H24V41H12Z"/>
+  <path class="acento" fill="currentColor" d="M32 34H52V41H32Z"/>
+  <path fill="currentColor" d="M12 45H52V52H12Z"/></svg>
+<circle cx="1718" cy="250" r="90" fill="#45B392"/>
+<circle cx="1718" cy="250" r="82.5" fill="none" stroke="#131A17" stroke-opacity="0.25" stroke-width="1.5" stroke-dasharray="4 5"/>
+<svg x="1640.855" y="172.85500000000002" width="154.29" height="154.29" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#131A17"><path fill="currentColor" fill-rule="evenodd" d="M15 9H49A6 6 0 0 1 55 15V49A6 6 0 0 1 49 55H15A6 6 0 0 1 9 49V15A6 6 0 0 1 15 9ZM17.5 16H42.5A1.5 1.5 0 0 1 44 17.5V21A1.5 1.5 0 0 1 42.5 22.5H17.5A1.5 1.5 0 0 1 16 21V17.5A1.5 1.5 0 0 1 17.5 16ZM17.5 26H24.5A1.5 1.5 0 0 1 26 27.5V31A1.5 1.5 0 0 1 24.5 32.5H17.5A1.5 1.5 0 0 1 16 31V27.5A1.5 1.5 0 0 1 17.5 26ZM17.5 36H24.5A1.5 1.5 0 0 1 26 37.5V41A1.5 1.5 0 0 1 24.5 42.5H17.5A1.5 1.5 0 0 1 16 41V37.5A1.5 1.5 0 0 1 17.5 36ZM33.5 36H46.5A1.5 1.5 0 0 1 48 37.5V41A1.5 1.5 0 0 1 46.5 42.5H33.5A1.5 1.5 0 0 1 32 41V37.5A1.5 1.5 0 0 1 33.5 36ZM17.5 46H46.5A1.5 1.5 0 0 1 48 47.5V51A1.5 1.5 0 0 1 46.5 52.5H17.5A1.5 1.5 0 0 1 16 51V47.5A1.5 1.5 0 0 1 17.5 46Z"/></svg>
+<circle cx="1946" cy="250" r="90" fill="#45B392"/>
+<circle cx="1946" cy="250" r="82.5" fill="none" stroke="#131A17" stroke-opacity="0.25" stroke-width="1.5" stroke-dasharray="4 5"/>
+<svg x="1868.855" y="172.85500000000002" width="154.29" height="154.29" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#131A17"><path fill="currentColor" d="M14 12H46A2 2 0 0 1 48 14V17A2 2 0 0 1 46 19H14A2 2 0 0 1 12 17V14A2 2 0 0 1 14 12Z"/>
+  <path fill="currentColor" d="M14 23H22A2 2 0 0 1 24 25V28A2 2 0 0 1 22 30H14A2 2 0 0 1 12 28V25A2 2 0 0 1 14 23Z"/>
+  <path fill="currentColor" d="M14 34H22A2 2 0 0 1 24 36V39A2 2 0 0 1 22 41H14A2 2 0 0 1 12 39V36A2 2 0 0 1 14 34Z"/>
+  <path fill="currentColor" d="M47 37H50A2 2 0 0 1 52 39V50A2 2 0 0 1 50 52H47A2 2 0 0 1 45 50V39A2 2 0 0 1 47 37Z"/>
+  <path class="acento" fill="currentColor" d="M34 34H50A2 2 0 0 1 52 36V39A2 2 0 0 1 50 41H34A2 2 0 0 1 32 39V36A2 2 0 0 1 34 34Z"/>
+  <path fill="currentColor" d="M14 45H50A2 2 0 0 1 52 47V50A2 2 0 0 1 50 52H14A2 2 0 0 1 12 50V47A2 2 0 0 1 14 45Z"/></svg>
+<text x="60" y="494" font-family="Helvetica, Arial, sans-serif" font-size="22" font-weight="bold" fill="#131A17">tinta</text>
+<text x="60" y="522" font-family="Helvetica, Arial, sans-serif" font-size="18" fill="#5E6D67">símbolo papel</text>
+<circle cx="350" cy="500" r="90" fill="#131A17"/>
+<circle cx="350" cy="500" r="82.5" fill="none" stroke="#F5F7F5" stroke-opacity="0.25" stroke-width="1.5" stroke-dasharray="4 5"/>
+<svg x="272.855" y="422.855" width="154.29" height="154.29" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#F5F7F5"><path fill="currentColor" d="M14 11.25H46A2 2 0 0 1 48 13.25V17.75A2 2 0 0 1 46 19.75H14A2 2 0 0 1 12 17.75V13.25A2 2 0 0 1 14 11.25Z"/>
+  <path fill="currentColor" d="M14 22.25H22A2 2 0 0 1 24 24.25V28.75A2 2 0 0 1 22 30.75H14A2 2 0 0 1 12 28.75V24.25A2 2 0 0 1 14 22.25Z"/>
+  <path fill="currentColor" d="M14 33.25H22A2 2 0 0 1 24 35.25V39.75A2 2 0 0 1 22 41.75H14A2 2 0 0 1 12 39.75V35.25A2 2 0 0 1 14 33.25Z"/>
+  <path class="acento" fill="currentColor" d="M34 33.25H50A2 2 0 0 1 52 35.25V39.75A2 2 0 0 1 50 41.75H34A2 2 0 0 1 32 39.75V35.25A2 2 0 0 1 34 33.25Z"/>
+  <path fill="currentColor" d="M14 44.25H50A2 2 0 0 1 52 46.25V50.75A2 2 0 0 1 50 52.75H14A2 2 0 0 1 12 50.75V46.25A2 2 0 0 1 14 44.25Z"/></svg>
+<circle cx="578" cy="500" r="90" fill="#131A17"/>
+<circle cx="578" cy="500" r="82.5" fill="none" stroke="#F5F7F5" stroke-opacity="0.25" stroke-width="1.5" stroke-dasharray="4 5"/>
+<svg x="500.855" y="422.855" width="154.29" height="154.29" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#F5F7F5"><path fill="currentColor" d="M14 10H46A2 2 0 0 1 48 12V14A2 2 0 0 1 46 16H14A2 2 0 0 1 12 14V12A2 2 0 0 1 14 10Z"/>
+  <path fill="currentColor" d="M14 19.5H21A2 2 0 0 1 23 21.5V23.5A2 2 0 0 1 21 25.5H14A2 2 0 0 1 12 23.5V21.5A2 2 0 0 1 14 19.5Z"/>
+  <path fill="currentColor" d="M14 29H21A2 2 0 0 1 23 31V33A2 2 0 0 1 21 35H14A2 2 0 0 1 12 33V31A2 2 0 0 1 14 29Z"/>
+  <path class="acento" fill="currentColor" d="M33 29H50A2 2 0 0 1 52 31V33A2 2 0 0 1 50 35H33A2 2 0 0 1 31 33V31A2 2 0 0 1 33 29Z"/>
+  <path fill="currentColor" d="M14 38.5H21A2 2 0 0 1 23 40.5V42.5A2 2 0 0 1 21 44.5H14A2 2 0 0 1 12 42.5V40.5A2 2 0 0 1 14 38.5Z"/>
+  <path fill="currentColor" d="M43 38.5H50A2 2 0 0 1 52 40.5V42.5A2 2 0 0 1 50 44.5H43A2 2 0 0 1 41 42.5V40.5A2 2 0 0 1 43 38.5Z"/>
+  <path fill="currentColor" d="M14 48H50A2 2 0 0 1 52 50V52A2 2 0 0 1 50 54H14A2 2 0 0 1 12 52V50A2 2 0 0 1 14 48Z"/></svg>
+<circle cx="806" cy="500" r="90" fill="#131A17"/>
+<circle cx="806" cy="500" r="82.5" fill="none" stroke="#F5F7F5" stroke-opacity="0.25" stroke-width="1.5" stroke-dasharray="4 5"/>
+<svg x="728.855" y="422.855" width="154.29" height="154.29" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#F5F7F5"><path fill="currentColor" d="M18.7 12H41.3A2 2 0 0 1 43.3 14V17A2 2 0 0 1 41.3 19H18.7A2 2 0 0 1 16.7 17V14A2 2 0 0 1 18.7 12Z"/>
+  <path fill="currentColor" d="M12.18 23H22A2 2 0 0 1 24 25V28A2 2 0 0 1 22 30H12.18A2 2 0 0 1 10.18 28V25A2 2 0 0 1 12.18 23Z"/>
+  <path fill="currentColor" d="M12.18 34H22A2 2 0 0 1 24 36V39A2 2 0 0 1 22 41H12.18A2 2 0 0 1 10.18 39V36A2 2 0 0 1 12.18 34Z"/>
+  <path class="acento" fill="currentColor" d="M35 34H51.82A2 2 0 0 1 53.82 36V39A2 2 0 0 1 51.82 41H35A2 2 0 0 1 33 39V36A2 2 0 0 1 35 34Z"/>
+  <path fill="currentColor" d="M18.7 45H45.3A2 2 0 0 1 47.3 47V50A2 2 0 0 1 45.3 52H18.7A2 2 0 0 1 16.7 50V47A2 2 0 0 1 18.7 45Z"/></svg>
+<circle cx="1034" cy="500" r="90" fill="#131A17"/>
+<circle cx="1034" cy="500" r="82.5" fill="none" stroke="#F5F7F5" stroke-opacity="0.25" stroke-width="1.5" stroke-dasharray="4 5"/>
+<svg x="956.855" y="422.855" width="154.29" height="154.29" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#F5F7F5"><path fill="currentColor" d="M14 12H38A2 2 0 0 1 40 14V17A2 2 0 0 1 38 19H14A2 2 0 0 1 12 17V14A2 2 0 0 1 14 12Z"/>
+  <path fill="currentColor" d="M14 23H22A2 2 0 0 1 24 25V28A2 2 0 0 1 22 30H14A2 2 0 0 1 12 28V25A2 2 0 0 1 14 23Z"/>
+  <path fill="currentColor" d="M14 34H22A2 2 0 0 1 24 36V39A2 2 0 0 1 22 41H14A2 2 0 0 1 12 39V36A2 2 0 0 1 14 34Z"/>
+  <path class="acento" fill="currentColor" d="M31 34H50A2 2 0 0 1 52 36V39A2 2 0 0 1 50 41H31A2 2 0 0 1 29 39V36A2 2 0 0 1 31 34Z"/>
+  <path fill="currentColor" d="M14 45H50A2 2 0 0 1 52 47V50A2 2 0 0 1 50 52H14A2 2 0 0 1 12 50V47A2 2 0 0 1 14 45Z"/></svg>
+<circle cx="1262" cy="500" r="90" fill="#131A17"/>
+<circle cx="1262" cy="500" r="82.5" fill="none" stroke="#F5F7F5" stroke-opacity="0.25" stroke-width="1.5" stroke-dasharray="4 5"/>
+<svg x="1184.855" y="422.855" width="154.29" height="154.29" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#F5F7F5"><path fill="currentColor" d="M14 12H46A2 2 0 0 1 48 14V17A2 2 0 0 1 46 19H14A2 2 0 0 1 12 17V14A2 2 0 0 1 14 12Z"/>
+  <path fill="currentColor" d="M14 23H22A2 2 0 0 1 24 25V28A2 2 0 0 1 22 30H14A2 2 0 0 1 12 28V25A2 2 0 0 1 14 23Z"/>
+  <path fill="currentColor" d="M14 34H22A2 2 0 0 1 24 36V39A2 2 0 0 1 22 41H14A2 2 0 0 1 12 39V36A2 2 0 0 1 14 34Z"/>
+  <path fill="currentColor" d="M34 34H50A2 2 0 0 1 52 36V39A2 2 0 0 1 50 41H34A2 2 0 0 1 32 39V36A2 2 0 0 1 34 34Z"/>
+  <path class="acento" fill="currentColor" d="M14 45H50A2 2 0 0 1 52 47V50A2 2 0 0 1 50 52H14A2 2 0 0 1 12 50V47A2 2 0 0 1 14 45Z"/></svg>
+<circle cx="1490" cy="500" r="90" fill="#131A17"/>
+<circle cx="1490" cy="500" r="82.5" fill="none" stroke="#F5F7F5" stroke-opacity="0.25" stroke-width="1.5" stroke-dasharray="4 5"/>
+<svg x="1412.855" y="422.855" width="154.29" height="154.29" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#F5F7F5"><path fill="currentColor" d="M12 12H48V19H12Z"/>
+  <path fill="currentColor" d="M12 23H24V30H12Z"/>
+  <path fill="currentColor" d="M12 34H24V41H12Z"/>
+  <path class="acento" fill="currentColor" d="M32 34H52V41H32Z"/>
+  <path fill="currentColor" d="M12 45H52V52H12Z"/></svg>
+<circle cx="1718" cy="500" r="90" fill="#131A17"/>
+<circle cx="1718" cy="500" r="82.5" fill="none" stroke="#F5F7F5" stroke-opacity="0.25" stroke-width="1.5" stroke-dasharray="4 5"/>
+<svg x="1640.855" y="422.855" width="154.29" height="154.29" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#F5F7F5"><path fill="currentColor" fill-rule="evenodd" d="M15 9H49A6 6 0 0 1 55 15V49A6 6 0 0 1 49 55H15A6 6 0 0 1 9 49V15A6 6 0 0 1 15 9ZM17.5 16H42.5A1.5 1.5 0 0 1 44 17.5V21A1.5 1.5 0 0 1 42.5 22.5H17.5A1.5 1.5 0 0 1 16 21V17.5A1.5 1.5 0 0 1 17.5 16ZM17.5 26H24.5A1.5 1.5 0 0 1 26 27.5V31A1.5 1.5 0 0 1 24.5 32.5H17.5A1.5 1.5 0 0 1 16 31V27.5A1.5 1.5 0 0 1 17.5 26ZM17.5 36H24.5A1.5 1.5 0 0 1 26 37.5V41A1.5 1.5 0 0 1 24.5 42.5H17.5A1.5 1.5 0 0 1 16 41V37.5A1.5 1.5 0 0 1 17.5 36ZM33.5 36H46.5A1.5 1.5 0 0 1 48 37.5V41A1.5 1.5 0 0 1 46.5 42.5H33.5A1.5 1.5 0 0 1 32 41V37.5A1.5 1.5 0 0 1 33.5 36ZM17.5 46H46.5A1.5 1.5 0 0 1 48 47.5V51A1.5 1.5 0 0 1 46.5 52.5H17.5A1.5 1.5 0 0 1 16 51V47.5A1.5 1.5 0 0 1 17.5 46Z"/></svg>
+<circle cx="1946" cy="500" r="90" fill="#131A17"/>
+<circle cx="1946" cy="500" r="82.5" fill="none" stroke="#F5F7F5" stroke-opacity="0.25" stroke-width="1.5" stroke-dasharray="4 5"/>
+<svg x="1868.855" y="422.855" width="154.29" height="154.29" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#F5F7F5"><path fill="currentColor" d="M14 12H46A2 2 0 0 1 48 14V17A2 2 0 0 1 46 19H14A2 2 0 0 1 12 17V14A2 2 0 0 1 14 12Z"/>
+  <path fill="currentColor" d="M14 23H22A2 2 0 0 1 24 25V28A2 2 0 0 1 22 30H14A2 2 0 0 1 12 28V25A2 2 0 0 1 14 23Z"/>
+  <path fill="currentColor" d="M14 34H22A2 2 0 0 1 24 36V39A2 2 0 0 1 22 41H14A2 2 0 0 1 12 39V36A2 2 0 0 1 14 34Z"/>
+  <path fill="currentColor" d="M47 37H50A2 2 0 0 1 52 39V50A2 2 0 0 1 50 52H47A2 2 0 0 1 45 50V39A2 2 0 0 1 47 37Z"/>
+  <path class="acento" fill="currentColor" d="M34 34H50A2 2 0 0 1 52 36V39A2 2 0 0 1 50 41H34A2 2 0 0 1 32 39V36A2 2 0 0 1 34 34Z"/>
+  <path fill="currentColor" d="M14 45H50A2 2 0 0 1 52 47V50A2 2 0 0 1 50 52H14A2 2 0 0 1 12 50V47A2 2 0 0 1 14 45Z"/></svg>
+<text x="60" y="744" font-family="Helvetica, Arial, sans-serif" font-size="22" font-weight="bold" fill="#131A17">papel</text>
+<text x="60" y="772" font-family="Helvetica, Arial, sans-serif" font-size="18" fill="#5E6D67">tinta y acento</text>
+<circle cx="350" cy="750" r="90" fill="#F5F7F5" stroke="#C9D1CC" stroke-width="1.5"/>
+<circle cx="350" cy="750" r="82.5" fill="none" stroke="#131A17" stroke-opacity="0.25" stroke-width="1.5" stroke-dasharray="4 5"/>
+<svg x="272.855" y="672.855" width="154.29" height="154.29" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#131A17"><path fill="currentColor" d="M14 11.25H46A2 2 0 0 1 48 13.25V17.75A2 2 0 0 1 46 19.75H14A2 2 0 0 1 12 17.75V13.25A2 2 0 0 1 14 11.25Z"/>
+  <path fill="currentColor" d="M14 22.25H22A2 2 0 0 1 24 24.25V28.75A2 2 0 0 1 22 30.75H14A2 2 0 0 1 12 28.75V24.25A2 2 0 0 1 14 22.25Z"/>
+  <path fill="currentColor" d="M14 33.25H22A2 2 0 0 1 24 35.25V39.75A2 2 0 0 1 22 41.75H14A2 2 0 0 1 12 39.75V35.25A2 2 0 0 1 14 33.25Z"/>
+  <path class="acento" fill="#45B392" d="M34 33.25H50A2 2 0 0 1 52 35.25V39.75A2 2 0 0 1 50 41.75H34A2 2 0 0 1 32 39.75V35.25A2 2 0 0 1 34 33.25Z"/>
+  <path fill="currentColor" d="M14 44.25H50A2 2 0 0 1 52 46.25V50.75A2 2 0 0 1 50 52.75H14A2 2 0 0 1 12 50.75V46.25A2 2 0 0 1 14 44.25Z"/></svg>
+<text x="350" y="874" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="22" font-weight="bold" fill="#131A17">A</text>
+<circle cx="578" cy="750" r="90" fill="#F5F7F5" stroke="#C9D1CC" stroke-width="1.5"/>
+<circle cx="578" cy="750" r="82.5" fill="none" stroke="#131A17" stroke-opacity="0.25" stroke-width="1.5" stroke-dasharray="4 5"/>
+<svg x="500.855" y="672.855" width="154.29" height="154.29" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#131A17"><path fill="currentColor" d="M14 10H46A2 2 0 0 1 48 12V14A2 2 0 0 1 46 16H14A2 2 0 0 1 12 14V12A2 2 0 0 1 14 10Z"/>
+  <path fill="currentColor" d="M14 19.5H21A2 2 0 0 1 23 21.5V23.5A2 2 0 0 1 21 25.5H14A2 2 0 0 1 12 23.5V21.5A2 2 0 0 1 14 19.5Z"/>
+  <path fill="currentColor" d="M14 29H21A2 2 0 0 1 23 31V33A2 2 0 0 1 21 35H14A2 2 0 0 1 12 33V31A2 2 0 0 1 14 29Z"/>
+  <path class="acento" fill="#45B392" d="M33 29H50A2 2 0 0 1 52 31V33A2 2 0 0 1 50 35H33A2 2 0 0 1 31 33V31A2 2 0 0 1 33 29Z"/>
+  <path fill="currentColor" d="M14 38.5H21A2 2 0 0 1 23 40.5V42.5A2 2 0 0 1 21 44.5H14A2 2 0 0 1 12 42.5V40.5A2 2 0 0 1 14 38.5Z"/>
+  <path fill="currentColor" d="M43 38.5H50A2 2 0 0 1 52 40.5V42.5A2 2 0 0 1 50 44.5H43A2 2 0 0 1 41 42.5V40.5A2 2 0 0 1 43 38.5Z"/>
+  <path fill="currentColor" d="M14 48H50A2 2 0 0 1 52 50V52A2 2 0 0 1 50 54H14A2 2 0 0 1 12 52V50A2 2 0 0 1 14 48Z"/></svg>
+<text x="578" y="874" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="22" font-weight="bold" fill="#131A17">B</text>
+<circle cx="806" cy="750" r="90" fill="#F5F7F5" stroke="#C9D1CC" stroke-width="1.5"/>
+<circle cx="806" cy="750" r="82.5" fill="none" stroke="#131A17" stroke-opacity="0.25" stroke-width="1.5" stroke-dasharray="4 5"/>
+<svg x="728.855" y="672.855" width="154.29" height="154.29" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#131A17"><path fill="currentColor" d="M18.7 12H41.3A2 2 0 0 1 43.3 14V17A2 2 0 0 1 41.3 19H18.7A2 2 0 0 1 16.7 17V14A2 2 0 0 1 18.7 12Z"/>
+  <path fill="currentColor" d="M12.18 23H22A2 2 0 0 1 24 25V28A2 2 0 0 1 22 30H12.18A2 2 0 0 1 10.18 28V25A2 2 0 0 1 12.18 23Z"/>
+  <path fill="currentColor" d="M12.18 34H22A2 2 0 0 1 24 36V39A2 2 0 0 1 22 41H12.18A2 2 0 0 1 10.18 39V36A2 2 0 0 1 12.18 34Z"/>
+  <path class="acento" fill="#45B392" d="M35 34H51.82A2 2 0 0 1 53.82 36V39A2 2 0 0 1 51.82 41H35A2 2 0 0 1 33 39V36A2 2 0 0 1 35 34Z"/>
+  <path fill="currentColor" d="M18.7 45H45.3A2 2 0 0 1 47.3 47V50A2 2 0 0 1 45.3 52H18.7A2 2 0 0 1 16.7 50V47A2 2 0 0 1 18.7 45Z"/></svg>
+<text x="806" y="874" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="22" font-weight="bold" fill="#131A17">C</text>
+<circle cx="1034" cy="750" r="90" fill="#F5F7F5" stroke="#C9D1CC" stroke-width="1.5"/>
+<circle cx="1034" cy="750" r="82.5" fill="none" stroke="#131A17" stroke-opacity="0.25" stroke-width="1.5" stroke-dasharray="4 5"/>
+<svg x="956.855" y="672.855" width="154.29" height="154.29" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#131A17"><path fill="currentColor" d="M14 12H38A2 2 0 0 1 40 14V17A2 2 0 0 1 38 19H14A2 2 0 0 1 12 17V14A2 2 0 0 1 14 12Z"/>
+  <path fill="currentColor" d="M14 23H22A2 2 0 0 1 24 25V28A2 2 0 0 1 22 30H14A2 2 0 0 1 12 28V25A2 2 0 0 1 14 23Z"/>
+  <path fill="currentColor" d="M14 34H22A2 2 0 0 1 24 36V39A2 2 0 0 1 22 41H14A2 2 0 0 1 12 39V36A2 2 0 0 1 14 34Z"/>
+  <path class="acento" fill="#45B392" d="M31 34H50A2 2 0 0 1 52 36V39A2 2 0 0 1 50 41H31A2 2 0 0 1 29 39V36A2 2 0 0 1 31 34Z"/>
+  <path fill="currentColor" d="M14 45H50A2 2 0 0 1 52 47V50A2 2 0 0 1 50 52H14A2 2 0 0 1 12 50V47A2 2 0 0 1 14 45Z"/></svg>
+<text x="1034" y="874" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="22" font-weight="bold" fill="#131A17">D</text>
+<circle cx="1262" cy="750" r="90" fill="#F5F7F5" stroke="#C9D1CC" stroke-width="1.5"/>
+<circle cx="1262" cy="750" r="82.5" fill="none" stroke="#131A17" stroke-opacity="0.25" stroke-width="1.5" stroke-dasharray="4 5"/>
+<svg x="1184.855" y="672.855" width="154.29" height="154.29" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#131A17"><path fill="currentColor" d="M14 12H46A2 2 0 0 1 48 14V17A2 2 0 0 1 46 19H14A2 2 0 0 1 12 17V14A2 2 0 0 1 14 12Z"/>
+  <path fill="currentColor" d="M14 23H22A2 2 0 0 1 24 25V28A2 2 0 0 1 22 30H14A2 2 0 0 1 12 28V25A2 2 0 0 1 14 23Z"/>
+  <path fill="currentColor" d="M14 34H22A2 2 0 0 1 24 36V39A2 2 0 0 1 22 41H14A2 2 0 0 1 12 39V36A2 2 0 0 1 14 34Z"/>
+  <path fill="currentColor" d="M34 34H50A2 2 0 0 1 52 36V39A2 2 0 0 1 50 41H34A2 2 0 0 1 32 39V36A2 2 0 0 1 34 34Z"/>
+  <path class="acento" fill="#45B392" d="M14 45H50A2 2 0 0 1 52 47V50A2 2 0 0 1 50 52H14A2 2 0 0 1 12 50V47A2 2 0 0 1 14 45Z"/></svg>
+<text x="1262" y="874" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="22" font-weight="bold" fill="#131A17">E</text>
+<circle cx="1490" cy="750" r="90" fill="#F5F7F5" stroke="#C9D1CC" stroke-width="1.5"/>
+<circle cx="1490" cy="750" r="82.5" fill="none" stroke="#131A17" stroke-opacity="0.25" stroke-width="1.5" stroke-dasharray="4 5"/>
+<svg x="1412.855" y="672.855" width="154.29" height="154.29" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#131A17"><path fill="currentColor" d="M12 12H48V19H12Z"/>
+  <path fill="currentColor" d="M12 23H24V30H12Z"/>
+  <path fill="currentColor" d="M12 34H24V41H12Z"/>
+  <path class="acento" fill="#45B392" d="M32 34H52V41H32Z"/>
+  <path fill="currentColor" d="M12 45H52V52H12Z"/></svg>
+<text x="1490" y="874" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="22" font-weight="bold" fill="#131A17">F</text>
+<circle cx="1718" cy="750" r="90" fill="#F5F7F5" stroke="#C9D1CC" stroke-width="1.5"/>
+<circle cx="1718" cy="750" r="82.5" fill="none" stroke="#131A17" stroke-opacity="0.25" stroke-width="1.5" stroke-dasharray="4 5"/>
+<svg x="1640.855" y="672.855" width="154.29" height="154.29" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#131A17"><path fill="currentColor" fill-rule="evenodd" d="M15 9H49A6 6 0 0 1 55 15V49A6 6 0 0 1 49 55H15A6 6 0 0 1 9 49V15A6 6 0 0 1 15 9ZM17.5 16H42.5A1.5 1.5 0 0 1 44 17.5V21A1.5 1.5 0 0 1 42.5 22.5H17.5A1.5 1.5 0 0 1 16 21V17.5A1.5 1.5 0 0 1 17.5 16ZM17.5 26H24.5A1.5 1.5 0 0 1 26 27.5V31A1.5 1.5 0 0 1 24.5 32.5H17.5A1.5 1.5 0 0 1 16 31V27.5A1.5 1.5 0 0 1 17.5 26ZM17.5 36H24.5A1.5 1.5 0 0 1 26 37.5V41A1.5 1.5 0 0 1 24.5 42.5H17.5A1.5 1.5 0 0 1 16 41V37.5A1.5 1.5 0 0 1 17.5 36ZM33.5 36H46.5A1.5 1.5 0 0 1 48 37.5V41A1.5 1.5 0 0 1 46.5 42.5H33.5A1.5 1.5 0 0 1 32 41V37.5A1.5 1.5 0 0 1 33.5 36ZM17.5 46H46.5A1.5 1.5 0 0 1 48 47.5V51A1.5 1.5 0 0 1 46.5 52.5H17.5A1.5 1.5 0 0 1 16 51V47.5A1.5 1.5 0 0 1 17.5 46Z"/>
+  <path class="acento" fill="#45B392" d="M33.5 36H46.5A1.5 1.5 0 0 1 48 37.5V41A1.5 1.5 0 0 1 46.5 42.5H33.5A1.5 1.5 0 0 1 32 41V37.5A1.5 1.5 0 0 1 33.5 36Z"/></svg>
+<text x="1718" y="874" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="22" font-weight="bold" fill="#131A17">G</text>
+<circle cx="1946" cy="750" r="90" fill="#F5F7F5" stroke="#C9D1CC" stroke-width="1.5"/>
+<circle cx="1946" cy="750" r="82.5" fill="none" stroke="#131A17" stroke-opacity="0.25" stroke-width="1.5" stroke-dasharray="4 5"/>
+<svg x="1868.855" y="672.855" width="154.29" height="154.29" viewBox="0 0 64 64" overflow="visible" fill="none" style="color:#131A17"><path fill="currentColor" d="M14 12H46A2 2 0 0 1 48 14V17A2 2 0 0 1 46 19H14A2 2 0 0 1 12 17V14A2 2 0 0 1 14 12Z"/>
+  <path fill="currentColor" d="M14 23H22A2 2 0 0 1 24 25V28A2 2 0 0 1 22 30H14A2 2 0 0 1 12 28V25A2 2 0 0 1 14 23Z"/>
+  <path fill="currentColor" d="M14 34H22A2 2 0 0 1 24 36V39A2 2 0 0 1 22 41H14A2 2 0 0 1 12 39V36A2 2 0 0 1 14 34Z"/>
+  <path fill="currentColor" d="M47 37H50A2 2 0 0 1 52 39V50A2 2 0 0 1 50 52H47A2 2 0 0 1 45 50V39A2 2 0 0 1 47 37Z"/>
+  <path class="acento" fill="#45B392" d="M34 34H50A2 2 0 0 1 52 36V39A2 2 0 0 1 50 41H34A2 2 0 0 1 32 39V36A2 2 0 0 1 34 34Z"/>
+  <path fill="currentColor" d="M14 45H50A2 2 0 0 1 52 47V50A2 2 0 0 1 50 52H14A2 2 0 0 1 12 50V47A2 2 0 0 1 14 45Z"/></svg>
+<text x="1946" y="874" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="22" font-weight="bold" fill="#131A17">H</text>
+</svg>

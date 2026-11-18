@@ -1,0 +1,83 @@
+{
+  "page": {
+    "id": "composicion",
+    "name": "3 · Composición"
+  },
+  "boards": {
+    "CompAHoy.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 412,
+      "h": 892,
+      "title": "A · La pauta · Hoy",
+      "page": "composicion"
+    },
+    "CompARegistro.dc.html": {
+      "x": 492,
+      "y": 0,
+      "w": 412,
+      "h": 892,
+      "title": "A · La pauta · Registro de sesión",
+      "page": "composicion"
+    },
+    "CompBHoy.dc.html": {
+      "x": 1100,
+      "y": 0,
+      "w": 412,
+      "h": 892,
+      "title": "B · El margen · Hoy",
+      "page": "composicion"
+    },
+    "CompBRegistro.dc.html": {
+      "x": 1592,
+      "y": 0,
+      "w": 412,
+      "h": 892,
+      "title": "B · El margen · Registro de sesión",
+      "page": "composicion"
+    },
+    "CompCHoy.dc.html": {
+      "x": 2200,
+      "y": 0,
+      "w": 412,
+      "h": 892,
+      "title": "C · La balanza · Hoy",
+      "page": "composicion"
+    },
+    "CompCRegistro.dc.html": {
+      "x": 2692,
+      "y": 0,
+      "w": 412,
+      "h": 892,
+      "title": "C · La balanza · Registro de sesión",
+      "page": "composicion"
+    },
+    "CompAntirreferentes.dc.html": {
+      "x": 3300,
+      "y": 0,
+      "w": 1200,
+      "h": 892,
+      "title": "Antirreferentes y las tres composiciones",
+      "page": "composicion"
+    }
+  },
+  "order": [
+    "CompAHoy.dc.html",
+    "CompARegistro.dc.html",
+    "CompBHoy.dc.html",
+    "CompBRegistro.dc.html",
+    "CompCHoy.dc.html",
+    "CompCRegistro.dc.html",
+    "CompAntirreferentes.dc.html"
+  ],
+  "notes": {
+    "mc0": {
+      "x": 0,
+      "y": -300,
+      "text": "Composición: elige cómo se arma una pantalla",
+      "kind": "title1",
+      "maxW": 4200,
+      "page": "composicion"
+    }
+  }
+}

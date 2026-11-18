@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none" style="color:#131A17">
+  <!-- 01 Renglones y margen: el margen (entrenador) y los renglones (alumno); el ultimo renglon se esta escribiendo -->
+  <rect class="acento" x="13" y="10" width="7" height="44" rx="2" fill="#45B392"/>
+  <rect x="26" y="14" width="25" height="7" rx="2" fill="currentColor"/>
+  <rect x="26" y="28.5" width="25" height="7" rx="2" fill="currentColor"/>
+  <rect x="26" y="43" width="14" height="7" rx="2" fill="currentColor"/>
+</svg>

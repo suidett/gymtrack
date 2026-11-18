@@ -1,0 +1,703 @@
+<!doctype html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GymTrack · Progreso</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="sistema.css">
+<style>
+  /* ── Cabeza y selector de vistas ───────────────────────────────────────── */
+  /* Cabecera de las pestañas que no son el inicio: una fila de 56 dp con el título. */
+  .cabeza { display: flex; align-items: center; justify-content: space-between; height: 56px; }
+  .vistas { margin: 0 0 8px; }
+  .vistas .chip > span { font-size: 15px; }
+
+  .sin-red { display: flex; gap: 12px; align-items: flex-start; margin: 8px 0 0; padding: 12px 14px;
+    border-radius: var(--radio); background: var(--sup); border: 1px solid var(--borde); font-size: 14px; line-height: 1.4; }
+  .sin-red svg { flex: 0 0 20px; width: 20px; height: 20px; margin-top: 1px; }
+  .sin-red path { stroke: var(--texto); fill: none; stroke-width: 2; stroke-linecap: square; }
+
+  /* ── Cifra principal de cada vista ─────────────────────────────────────── */
+  .resumen { margin-top: 16px; }
+  .resumen .grande { display: block; margin-top: 4px; font-size: 40px; line-height: 1.05; }
+  .resumen .grande small { font: 600 18px/1 var(--letra); color: var(--texto-2); margin-left: 6px; }
+  .resumen .linea { margin: 6px 0 0; font-size: 14px; color: var(--texto-2); }
+  .resumen .linea .cifra { color: var(--texto); }
+  .sube { color: var(--acento-texto) !important; }
+
+  /* ── Gráficos: el dato en ámbar, la grilla en gris ─────────────────────── */
+  .graf { display: block; width: 100%; height: auto; margin-top: 16px; overflow: visible; }
+  .graf text { font: 500 11px var(--mono); fill: var(--texto-2); }
+  .graf .v.sel { fill: var(--texto); font-weight: 700; }
+  .graf .g { stroke: var(--sup-alta); stroke-width: 1; }
+  .graf .base { stroke: var(--borde); stroke-width: 1; }
+  .graf .b { fill: var(--hecho-fondo); stroke: var(--hecho-borde); stroke-width: 1.5; }
+  .graf .b.curso { fill: var(--fila-hecha); stroke-dasharray: 4 3; }
+  .graf .linea-dato { fill: none; stroke: var(--acento-texto); stroke-width: 2.5; stroke-linejoin: round; }
+  .graf .pt { fill: var(--fondo); stroke: var(--acento-texto); stroke-width: 2; }
+  .graf .pt.ult { fill: var(--acento-texto); }
+  .leyenda { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 8px 0 0; font-size: 13px; color: var(--texto-2); }
+  .leyenda span { display: inline-flex; align-items: center; gap: 6px; }
+  .leyenda i { width: 12px; height: 12px; border-radius: 2px; background: var(--hecho-fondo); border: 1.5px solid var(--hecho-borde); }
+  .leyenda i.curso { background: var(--fila-hecha); border-style: dashed; }
+
+  /* ── Listas ────────────────────────────────────────────────────────────── */
+  .tarjeta.lista { padding: 0 16px; }
+  .fila-ir { width: 100%; min-height: 64px; display: flex; align-items: center; gap: 12px; padding: 10px 0; text-align: left;
+    border: 0; background: transparent; color: var(--texto); font: inherit; cursor: pointer; }
+  .fila-ir:active { background: var(--fantasma-pres); }
+  .fila-ir:focus-visible { outline: 2px solid var(--foco); outline-offset: -2px; }
+  .lista-filas > li.sin-borde-pad { padding: 0; }
+  .prs .simbolo { flex: 0 0 24px; }
+  .prs .txt { flex: 1; min-width: 0; }
+  .nom { margin: 0; font-size: 16px; line-height: 1.3; }
+  .prs .sec { font-size: 13px; margin-top: 2px; }
+  .prs .dif { font-size: 16px; white-space: nowrap; }
+  .chevron { flex: 0 0 20px; width: 20px; height: 20px; margin-right: -4px; }
+  .chevron path { stroke: var(--texto-2); fill: none; stroke-width: 2.5; stroke-linecap: square; }
+  .ver-mas { width: 100%; margin-top: 4px; }
+
+  .hist > li { padding: 0; }
+  .hist .f { flex: 1; font-size: 15px; }
+  .hist .kg { font-size: 16px; }
+  .hist .dif { flex: 0 0 56px; text-align: right; font-size: 13px; color: var(--texto-2); }
+
+  .med > li { gap: 10px; }
+  .med .nom { flex: 1; }
+  .med .spark { flex: 0 0 56px; width: 56px; height: 24px; }
+  .med .spark path { fill: none; stroke: var(--acento-texto); stroke-width: 2; stroke-linejoin: round; }
+  .med .spark circle { fill: var(--acento-texto); }
+  .med .val { flex: 0 0 76px; text-align: right; font-size: 16px; white-space: nowrap; }
+  .med .val small { font: 500 13px/1 var(--letra); color: var(--texto-2); margin-left: 3px; }
+  .med .dif { flex: 0 0 44px; text-align: right; font-size: 13px; color: var(--texto-2); }
+  .nota-chica { margin: 8px 0 0; font-size: 13px; color: var(--texto-2); }
+
+  /* ── Fotos: marcos con silueta, privadas ───────────────────────────────── */
+  .privadas { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--texto-2); }
+  .privadas svg { width: 16px; height: 16px; }
+  .privadas path { fill: none; stroke: var(--texto-2); stroke-width: 2; }
+  .fechas { justify-content: flex-start; margin: 0 0 8px; }
+  .fechas .chip { flex: 0 0 auto; }
+  .fechas .chip > span { padding: 0 14px; font: 700 15px/1 var(--mono); }
+  .fotos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .foto { display: flex; flex-direction: column; gap: 6px; padding: 0; border: 0; background: transparent; color: var(--texto); font: inherit; cursor: pointer; text-align: left; }
+  .foto:focus-visible { outline: 2px solid var(--foco); outline-offset: 2px; }
+  .marco { position: relative; width: 100%; aspect-ratio: 3 / 4; border-radius: var(--radio); background: var(--sup-alta);
+    display: flex; align-items: flex-end; justify-content: center; overflow: hidden; }
+  .marco svg.silueta { width: 72%; height: 88%; }
+  .silueta .cuerpo { fill: var(--borde); }
+  .marco.vacio { background: transparent; border: 2px dashed var(--borde); align-items: center; flex-direction: column; justify-content: center; gap: 6px; }
+  .marco.vacio .simbolo .v { fill: var(--simb-v); }
+  .marco.vacio span { font-size: 13px; color: var(--texto-2); }
+  .foto .rot { font-size: 13px; color: var(--texto-2); }
+  .dos-btn { display: flex; gap: 8px; margin-top: 12px; }
+  .dos-btn .btn { flex: 1; padding: 0 10px; }
+  .marco.vacio.sin { border-style: solid; border-color: var(--sup-alta); }
+
+  /* ── Vacío y cargando ──────────────────────────────────────────────────── */
+  .vacio-tarj .h3 { margin-top: 2px; }
+  .vacio-tarj .sec { margin-top: 6px; }
+  .vacio-tarj .avance { margin-top: 14px; }
+  .vacio-tarj .avance i { height: 8px; }
+  .vacio-tarj .cuenta { margin: 8px 0 0; font-size: 13px; color: var(--texto-2); }
+  .vacio-tarj .cuenta .cifra { color: var(--texto); }
+  .graf.fantasma .g, .graf.fantasma .base { stroke: var(--borde); stroke-dasharray: 2 5; }
+  .hueso { border-radius: var(--radio); background: var(--sup-alta); }
+
+  /* ── Hojas ─────────────────────────────────────────────────────────────── */
+  .hoja .sec.sub { margin-top: 4px; }
+  .hoja .consejo { margin-top: 12px; font-size: 13px; }
+  .hoja .paso.solo { margin-top: 20px; }
+  .fila-med { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
+  .fila-med .rot { flex: 0 0 72px; font-size: 15px; }
+  .fila-med .paso { flex: 1; }
+  .fila-med .campo .valor { font-size: 24px; }
+  .comp { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .comp .btn { width: 100%; padding: 0 8px; justify-content: space-between; font-family: var(--mono); font-weight: 700; }
+  .comp .btn svg { width: 18px; height: 18px; }
+  .comp .btn path { stroke: currentColor; fill: none; stroke-width: 2.5; stroke-linecap: square; }
+  .comp .marco { margin-top: 8px; }
+  .comp .dato { margin: 6px 0 0; font-size: 13px; color: var(--texto-2); }
+  .comp .dato .cifra { color: var(--texto); }
+  .hoja .rot-campo { margin: 16px 0 8px; font: 600 14px/1.3 var(--letra); }
+  .tomas { justify-content: flex-start; }
+  .tomas .chip { flex: 0 0 auto; }
+  .opciones { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+
+  /* El aviso flota sobre el botón de abajo, no encima de él. Con una hoja abierta, sale arriba y por encima del velo. */
+  .tel:has(.tel-accion) .aviso { bottom: 177px; }
+  .tel:has(.velo.ver) .aviso { z-index: 7; top: 40px; bottom: auto; }
+
+  .notas-maqueta { max-width: 860px; margin: 32px auto 0; color: var(--p-texto-2); font-size: 14px; }
+  .notas-maqueta h2 { color: var(--p-texto); font-size: 16px; margin: 0 0 8px; }
+  .notas-maqueta ul { margin: 0; padding-left: 18px; }
+  .notas-maqueta li { margin: 4px 0; }
+</style>
+</head>
+<body>
+<main class="maqueta">
+  <header class="maqueta-cabeza">
+    <h1>Pantalla 14 · Progreso</h1>
+    <p>Dirección Más · 412 × 892 dp · <a href="completada.html">Rutina completada</a> · <a href="index.html">todas las pantallas</a></p>
+  </header>
+
+  <div class="controles" role="group" aria-label="Controles de la maqueta">
+    <label class="grupo"><span class="rot">Estado</span>
+      <select class="ctl" data-ctl="estado">
+        <option value="fuerza">Fuerza y PRs</option>
+        <option value="corporal">Peso corporal</option>
+        <option value="medidas">Medidas y fotos</option>
+        <option value="peso">Registrar peso (hoja abierta)</option>
+        <option value="medir">Registrar medidas (hoja abierta)</option>
+        <option value="comparar">Comparar fotos (hoja abierta)</option>
+        <option value="foto">Agregar foto (hoja abierta)</option>
+        <option value="vacio">Vacío: menos de 3 registros</option>
+        <option value="cargando">Cargando</option>
+        <option value="sinred">Sin conexión</option>
+      </select></label>
+    <label class="grupo"><span class="rot">Pierna A de hoy</span>
+      <select class="ctl" data-ctl="sesion">
+        <option value="pendiente">Por hacer</option>
+        <option value="hecha">Hecha (desde Completada)</option>
+      </select></label>
+    <label class="grupo"><span class="rot">Tema</span>
+      <select class="ctl" data-ctl="tema">
+        <option value="gimnasio">Modo gimnasio</option>
+        <option value="clara">Clara</option>
+        <option value="ambos">Las dos</option>
+      </select></label>
+    <label class="grupo"><span class="rot">Tamaño</span>
+      <select class="ctl" data-ctl="zoom">
+        <option value="ajustar">Ajustar al ancho</option>
+        <option value="100">Real (1 dp = 1 px)</option>
+        <option value="150">150 %</option>
+      </select></label>
+    <label class="grupo"><input type="checkbox" data-ctl="medidas"><span>Medidas de toque</span></label>
+  </div>
+
+  <div class="escenario" id="escenario"></div>
+
+  <section class="notas-maqueta">
+    <h2>Qué mirar</h2>
+    <ul>
+      <li>Las tres vistas se cambian arriba (Fuerza, Peso, Medidas). En «Vacío», «Cargando» y «Sin conexión» el selector también funciona.</li>
+      <li>Fuerza: volumen de las últimas 8 semanas, los mismos de Hoy y de la Ficha. La semana en curso va con borde punteado porque aún no termina.</li>
+      <li>Por defecto es la mañana del martes 17, antes de entrenar: la semana va en 2,6 t con 1 de 4 sesiones y hay 3 récords en noviembre. Con «Pierna A de hoy: Hecha» (así llega desde Rutina completada) se suman los récords de sentadilla y prensa de hoy y la semana pasa a 16,1 t con 2 de 4.</li>
+      <li>En la lista de récords solo Sentadilla abre su detalle, que es el maquetado; las demás filas avisan.</li>
+      <li>Peso: registra un peso con más y menos de 56 dp (de 0,1 en 0,1; mantén presionado para que avance solo). Al guardar se suma al gráfico y al historial, y se recalcula el cambio a 30 días.</li>
+      <li>Medidas: la línea chica de cada medida es su tendencia; aparece porque hay 3 registros (regla del PRD). Las fotos son marcos con silueta; elige otra fecha arriba de las fotos o compara dos.</li>
+      <li>«Agregar fotos» abre una hoja para elegir la toma (frente, lado o espalda) y luego tomar la foto o elegirla de la galería, igual que «Subir referencia» en Detalle de ejercicio. La foto queda con la fecha de hoy.</li>
+      <li>Los cambios de peso y medidas van en gris, sin ámbar: bajar o subir no es bueno ni malo sin el objetivo de cada persona. El ámbar queda para el dato del gráfico y lo que sube en fuerza.</li>
+    </ul>
+  </section>
+</main>
+
+<script src="maqueta.js"></script>
+<script>
+// ── Fechas (hoy: martes 17 de noviembre de 2026) ─────────────────────────────
+const HOY = '2026-11-17';
+const MES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+const DIA = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+const fecha = (iso) => new Date(`${iso}T12:00:00`);
+const fCorta = (iso) => { const d = fecha(iso); return `${d.getDate()} ${MES[d.getMonth()]}`; };
+const entreDias = (a, b) => Math.round((fecha(b) - fecha(a)) / 86400000);
+const r1 = (n) => Math.round(n * 10) / 10;
+const kg1 = (n) => r1(n).toFixed(1).replace('.', ',');
+const firmado = (n) => { const v = r1(n); return (v > 0 ? '+' : v < 0 ? '−' : '±') + kg1(Math.abs(v)); };
+
+// ── Datos de prueba ──────────────────────────────────────────────────────────
+// Volumen por semana (lunes a domingo), en toneladas: los mismos de Hoy y de la Ficha. La última está en curso.
+// «Básica 3 días» hasta el 4 oct, «Adaptación» de Camila hasta el 1 nov y «Fuerza 4 días» desde el 2 nov.
+const VOLUMEN = [
+  { d: '2026-09-28', t: 13.8, ses: 3 }, { d: '2026-10-05', t: 14.6, ses: 3 }, { d: '2026-10-12', t: 15.1, ses: 3 },
+  { d: '2026-10-19', t: 14.2, ses: 2 }, { d: '2026-10-26', t: 15.9, ses: 3 }, { d: '2026-11-02', t: 18.6, ses: 4 },
+  { d: '2026-11-09', t: 20.1, ses: 4 }, { d: '2026-11-16', t: 2.6, ses: 1, curso: true },
+];
+// Con la Pierna A de hoy hecha (13,5 t), la semana en curso queda en 16,1 t con 2 de 4 sesiones.
+const SEMANA_HECHA = { t: 16.1, ses: 2 };
+// El récord vigente de cada ejercicio, el más nuevo primero. dif: lo que subió frente al récord anterior.
+const PRS = [
+  { n: 'Press de banca', kg: 47.5, reps: 8, f: '2026-11-16', dif: 2.5 },
+  { n: 'Sentadilla', kg: 80, reps: 8, f: '2026-11-10', dif: 2.5, detalle: true },
+  { n: 'Prensa', kg: 135, reps: 12, f: '2026-11-10', dif: 5 },
+  { n: 'Remo con barra', kg: 50, reps: 10, f: '2026-10-30', dif: 2.5 },
+  { n: 'Press militar con barra', kg: 40, reps: 8, f: '2026-10-29', dif: 2.5 },
+  { n: 'Peso muerto rumano', kg: 60, reps: 10, f: '2026-10-20', dif: 5 },
+];
+// Los récords de la Pierna A de hoy: reemplazan a los del 10 nov.
+const PRS_HOY = [
+  { n: 'Sentadilla', kg: 82.5, reps: 8, f: '2026-11-17', dif: 2.5, detalle: true },
+  { n: 'Prensa', kg: 140, reps: 12, f: '2026-11-17', dif: 5 },
+];
+// La sesión de hoy viene en la dirección (#sesion=hecha); telefono() deja a mano los controles.
+let CTL = {};
+const sesionHecha = () => CTL.sesion === 'hecha';
+function semanas() {
+  if (!sesionHecha()) return VOLUMEN;
+  return VOLUMEN.map((w) => (w.curso ? { ...w, ...SEMANA_HECHA } : w));
+}
+function records() {
+  if (!sesionHecha()) return PRS;
+  return [...PRS_HOY, ...PRS.filter((p) => !PRS_HOY.some((h) => h.n === p.n))];
+}
+// Récords de noviembre: 3 antes de hoy (sentadilla y prensa el 10, press de banca el 16) y 5 con los de hoy.
+const recordsNoviembre = () => (sesionHecha() ? 5 : 3);
+const PESOS_BASE = [
+  ['2026-09-01', 64.0], ['2026-09-08', 63.8], ['2026-09-15', 63.9], ['2026-09-22', 63.5], ['2026-09-29', 63.6],
+  ['2026-10-06', 63.4], ['2026-10-13', 63.1], ['2026-10-20', 63.3], ['2026-10-27', 62.9], ['2026-11-03', 62.7], ['2026-11-10', 62.4],
+];
+const MEDIDAS_BASE = [
+  { f: '2026-09-01', cintura: 73, cadera: 97, pecho: 88, brazo: 26.5, muslo: 54 },
+  { f: '2026-10-06', cintura: 72.5, cadera: 96.5, pecho: 88.5, brazo: 27, muslo: 54.5 },
+  { f: '2026-11-03', cintura: 71.5, cadera: 96, pecho: 88.5, brazo: 27.5, muslo: 55 },
+];
+const PARTES = [['cintura', 'Cintura'], ['cadera', 'Cadera'], ['pecho', 'Pecho'], ['brazo', 'Brazo'], ['muslo', 'Muslo']];
+const TOMAS = [['frente', 'Frente'], ['lado', 'Lado'], ['espalda', 'Espalda']];
+const FOTOS_BASE = { '2026-11-03': ['frente', 'lado', 'espalda'], '2026-10-06': ['frente', 'lado'], '2026-09-01': ['frente', 'lado', 'espalda'] };
+
+// Con menos de 3 registros: recién empieza. El peso vino de la encuesta.
+const VACIO = { sesiones: 2, pesos: [['2026-11-10', 62.4]], medidas: [], fotos: {} };
+
+let D; // los datos que se ven (se pueden sumar registros desde las hojas)
+function cargarDatos(estado) {
+  D = estado === 'vacio'
+    ? { vacio: true, sesiones: VACIO.sesiones, pesos: VACIO.pesos.map((p) => [...p]), medidas: [], fotos: {} }
+    : { vacio: false, pesos: PESOS_BASE.map((p) => [...p]), medidas: MEDIDAS_BASE.map((m) => ({ ...m })), fotos: { ...FOTOS_BASE } };
+}
+
+// ── Íconos ───────────────────────────────────────────────────────────────────
+const icoChevron = '<svg class="chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>';
+const icoCambiar = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+const icoCandado = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 7.5h9v6h-9zM5.5 7.5V5a2.5 2.5 0 0 1 5 0v2.5"/></svg>';
+const icoNube = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4l18 16M7 18h10.5a3.5 3.5 0 0 0 1.4-6.7M6.6 9.2A5 5 0 0 0 7 18M10 6.3A5.5 5.5 0 0 1 16.4 9"/></svg>';
+function silueta(toma) {
+  const cuerpo = toma === 'lado'
+    ? '<circle cx="31" cy="14" r="8"/><rect x="28" y="21" width="6" height="6" rx="2"/><rect x="23" y="26" width="16" height="32" rx="6"/><rect x="27" y="29" width="7" height="27" rx="3.5"/><rect x="24" y="55" width="13" height="45" rx="4"/>'
+    : '<circle cx="30" cy="14" r="8"/><rect x="27" y="21" width="6" height="6" rx="2"/><rect x="17" y="26" width="26" height="32" rx="6"/><rect x="9" y="28" width="7" height="29" rx="3.5"/><rect x="44" y="28" width="7" height="29" rx="3.5"/><rect x="18" y="55" width="11" height="45" rx="4"/><rect x="31" y="55" width="11" height="45" rx="4"/>';
+  return `<svg class="silueta" viewBox="0 0 60 100" preserveAspectRatio="xMidYMax meet" aria-hidden="true"><g class="cuerpo">${cuerpo}</g></svg>`;
+}
+
+// ── Gráficos ─────────────────────────────────────────────────────────────────
+function graficoVolumen(semanas, sel) {
+  const W = 380, H = 184, gx = 32, top = 20, bottom = 40, plotH = H - top - bottom, max = 22;
+  const slot = (W - gx) / semanas.length, bw = 26;
+  const y = (t) => top + plotH - (t / max) * plotH;
+  let s = '';
+  [0, 10, 20].forEach((v) => {
+    s += `<line class="${v ? 'g' : 'base'}" x1="${gx}" x2="${W}" y1="${y(v)}" y2="${y(v)}"/>`;
+    if (v) s += `<text x="0" y="${y(v) + 4}">${v} t</text>`;
+  });
+  semanas.forEach((w, i) => {
+    const x = gx + i * slot + (slot - bw) / 2, d = fecha(w.d);
+    s += `<rect class="b${w.curso ? ' curso' : ''}" x="${x}" y="${y(w.t)}" width="${bw}" height="${(w.t / max) * plotH}" rx="2"/>`;
+    s += `<text class="v${i === sel ? ' sel' : ''}" x="${x + bw / 2}" y="${y(w.t) - 6}" text-anchor="middle">${kg1(w.t)}</text>`;
+    s += `<text x="${x + bw / 2}" y="${H - 22}" text-anchor="middle">${d.getDate()}</text>`;
+    if (i === 0 || fecha(semanas[i - 1].d).getMonth() !== d.getMonth()) s += `<text x="${x + bw / 2}" y="${H - 6}" text-anchor="middle">${MES[d.getMonth()]}</text>`;
+  });
+  const desc = semanas.map((w) => `semana del ${fCorta(w.d)}: ${kg1(w.t)} toneladas`).join('; ');
+  return `<svg class="graf" viewBox="0 0 ${W} ${H}" role="img" aria-label="Volumen por semana. ${desc}">${s}</svg>`;
+}
+
+function graficoFantasma() {
+  const W = 348, H = 104, top = 8, plotH = H - top - 8;
+  let s = '';
+  [0, 1, 2, 3].forEach((k) => { const y = top + (plotH / 3) * k; s += `<line class="${k === 3 ? 'base' : 'g'}" x1="0" x2="${W}" y1="${y}" y2="${y}"/>`; });
+  return `<svg class="graf fantasma" viewBox="0 0 ${W} ${H}" aria-hidden="true">${s}</svg>`;
+}
+
+function graficoPeso(pesos) {
+  const W = 380, H = 184, gx = 28, top = 12, bottom = 28, plotH = H - top - bottom, pad = 10;
+  const vals = pesos.map((p) => p[1]);
+  const lo = Math.floor(Math.min(...vals) - 0.2), hi = Math.ceil(Math.max(...vals) + 0.2);
+  const t0 = fecha(pesos[0][0]), span = Math.max(1, fecha(pesos[pesos.length - 1][0]) - t0);
+  const x = (iso) => gx + pad + ((fecha(iso) - t0) / span) * (W - gx - 2 * pad);
+  const y = (v) => top + plotH - ((v - lo) / (hi - lo)) * plotH;
+  let s = '';
+  for (let v = lo; v <= hi; v++) {
+    s += `<line class="${v === lo ? 'base' : 'g'}" x1="${gx}" x2="${W}" y1="${y(v)}" y2="${y(v)}"/><text x="0" y="${y(v) + 4}">${v}</text>`;
+  }
+  let mes = -1;
+  pesos.forEach(([f]) => {
+    const d = fecha(f);
+    if (d.getMonth() !== mes) { mes = d.getMonth(); s += `<text x="${x(f)}" y="${H - 6}" text-anchor="middle">${MES[mes]}</text>`; }
+  });
+  s += `<path class="linea-dato" d="${pesos.map(([f, v], i) => `${i ? 'L' : 'M'}${x(f).toFixed(1)} ${y(v).toFixed(1)}`).join(' ')}"/>`;
+  s += pesos.map(([f, v], i) => `<circle class="pt${i === pesos.length - 1 ? ' ult' : ''}" cx="${x(f).toFixed(1)}" cy="${y(v).toFixed(1)}" r="${i === pesos.length - 1 ? 5 : 3.5}"/>`).join('');
+  const desc = pesos.map(([f, v]) => `${fCorta(f)}: ${kg1(v)} kilos`).join('; ');
+  return `<svg class="graf" viewBox="0 0 ${W} ${H}" role="img" aria-label="Peso corporal en el tiempo. ${desc}">${s}</svg>`;
+}
+
+function spark(serie) {
+  const W = 56, H = 24, p = 4;
+  const lo = Math.min(...serie), hi = Math.max(...serie);
+  const x = (i) => p + (i / (serie.length - 1)) * (W - 2 * p);
+  const y = (v) => (hi === lo ? H / 2 : H - p - ((v - lo) / (hi - lo)) * (H - 2 * p));
+  const d = serie.map((v, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join(' ');
+  return `<svg class="spark" viewBox="0 0 ${W} ${H}" aria-hidden="true"><path d="${d}"/><circle cx="${x(serie.length - 1)}" cy="${y(serie[serie.length - 1])}" r="3"/></svg>`;
+}
+
+// ── Cálculos del peso ────────────────────────────────────────────────────────
+function cambio30(pesos) {
+  const ult = pesos[pesos.length - 1];
+  const meta = new Date(fecha(HOY) - 30 * 86400000);
+  const base = pesos.reduce((a, p) => (Math.abs(fecha(p[0]) - meta) < Math.abs(fecha(a[0]) - meta) ? p : a));
+  return ult[1] - base[1];
+}
+function tendenciaSemanal(pesos) {
+  // Mínimos cuadrados sobre los últimos 8 registros, en kilos por semana.
+  const xs = pesos.slice(-8).map((p) => entreDias(pesos[0][0], p[0])), ys = pesos.slice(-8).map((p) => p[1]);
+  const n = xs.length, mx = xs.reduce((a, b) => a + b) / n, my = ys.reduce((a, b) => a + b) / n;
+  const num = xs.reduce((a, x, i) => a + (x - mx) * (ys[i] - my), 0), den = xs.reduce((a, x) => a + (x - mx) ** 2, 0);
+  return (num / den) * 7;
+}
+
+// ── Vistas ───────────────────────────────────────────────────────────────────
+function vistaFuerza() {
+  if (D.vacio) {
+    const seg = [0, 1, 2].map((i) => `<i class="${i < D.sesiones ? 'si' : ''}"></i>`).join('');
+    return `<div class="seccion-cabeza"><h3 class="h3">Volumen por semana</h3></div>
+      <div class="tarjeta vacio-tarj">
+        <p class="h3">Tu gráfico aparece con la tercera sesión</p>
+        <p class="sec">Ahí empiezas a ver cuánto levantas cada semana y si va subiendo.</p>
+        ${graficoFantasma()}
+        <div class="avance" aria-hidden="true">${seg}</div>
+        <p class="cuenta"><span class="cifra">${D.sesiones}</span> de <span class="cifra">3</span> sesiones</p>
+      </div>
+      <div class="seccion-cabeza"><h3 class="h3">Récords</h3></div>
+      <div class="tarjeta"><p class="sec">Todavía no hay récords. Aparecen cuando superas una marca tuya, desde la segunda vez que haces un ejercicio.</p></div>`;
+  }
+  const V = semanas(), sel = V.length - 2, w = V[sel], prev = V[sel - 1], dif = w.t - prev.t, curso = V[V.length - 1];
+  const fin = new Date(fecha(w.d).getTime() + 6 * 86400000);
+  // Solo la sentadilla tiene detalle maquetado; las demás filas avisan.
+  const filas = records().map((p) => `<li class="sin-borde-pad"><button class="fila-ir" ${p.detalle ? 'data-ir="ejercicio.html#estado=historial"' : `data-accion="aviso" data-aviso="Aquí se abre ${p.n}. En la maqueta, prueba con Sentadilla."`} data-toque>${simbolo('simbolo', '')}
+      <span class="txt"><span class="nom" style="display:block">${p.n}</span><span class="sec" style="display:block"><span class="cifra">${fmtKg(p.kg)} kg × ${p.reps}</span> · ${p.f === HOY ? 'hoy' : fCorta(p.f)}</span></span>
+      <span class="cifra dif sube">+${fmtKg(p.dif)} kg</span>${icoChevron}</button></li>`).join('');
+  return `<div class="resumen">
+      <p class="ceja">Semana del ${fecha(w.d).getDate()} al ${fin.getDate()} ${MES[fin.getMonth()]} · ${w.ses} sesiones</p>
+      <span class="cifra grande">${kg1(w.t)}<small>t</small></span>
+      <p class="linea"><span class="cifra${dif > 0 ? ' sube' : ''}">${firmado(dif)} t</span> frente a la semana anterior</p>
+    </div>
+    ${graficoVolumen(V, sel)}
+    <p class="leyenda"><span><i></i>Volumen por semana</span><span><i class="curso"></i>Esta semana: <span class="cifra">${curso.ses}</span> de <span class="cifra">4</span> sesiones</span></p>
+    <div class="seccion-cabeza"><h3 class="h3">Récords</h3><span class="sec"><span class="cifra">${recordsNoviembre()}</span> en noviembre</span></div>
+    <div class="tarjeta lista"><ul class="lista-filas prs">${filas}</ul></div>
+    <button class="btn btn-fantasma ver-mas" data-accion="aviso" data-aviso="Aquí se abre la lista de todos tus récords, ejercicio por ejercicio." data-toque>Ver todos los récords</button>`;
+}
+
+function vistaPeso() {
+  const p = D.pesos, ult = p[p.length - 1];
+  const d = fecha(ult[0]);
+  const cuando = ult[0] === HOY ? 'hoy' : `${DIA[d.getDay()]} ${d.getDate()} ${MES[d.getMonth()]}`;
+  if (p.length < 3) {
+    const seg = [0, 1, 2].map((i) => `<i class="${i < p.length ? 'si' : ''}"></i>`).join('');
+    const filas = [...p].reverse().map(([f, v], i) => `<li><span class="f">${fCorta(f)}${f === '2026-11-10' && D.vacio ? ' · encuesta' : ''}</span><span class="cifra kg">${kg1(v)} kg</span>
+        <span class="cifra dif">${i < p.length - 1 ? firmado(v - [...p].reverse()[i + 1][1]) : ''}</span></li>`).join('');
+    return `<div class="resumen"><p class="ceja">Actual · ${cuando}</p><span class="cifra grande">${kg1(ult[1])}<small>kg</small></span></div>
+      <div class="tarjeta vacio-tarj" style="margin-top:16px">
+        <p class="h3">Con 3 registros ves tu tendencia</p>
+        <p class="sec">${p.length === 1 ? 'Tu primer peso viene de la encuesta.' : 'Vas bien: falta uno.'} Pésate una vez por semana, el mismo día y a la misma hora.</p>
+        <div class="avance" aria-hidden="true">${seg}</div>
+        <p class="cuenta"><span class="cifra">${p.length}</span> de <span class="cifra">3</span> registros</p>
+      </div>
+      <div class="seccion-cabeza"><h3 class="h3">Historial</h3></div>
+      <div class="tarjeta lista"><ul class="lista-filas hist">${filas}</ul></div>`;
+  }
+  const c30 = cambio30(p), tend = tendenciaSemanal(p);
+  const rev = [...p].reverse();
+  const filas = rev.slice(0, 6).map(([f, v], i) => `<li><span class="f">${f === HOY ? 'Hoy' : fCorta(f)}</span><span class="cifra kg">${kg1(v)} kg</span>
+      <span class="cifra dif">${rev[i + 1] ? firmado(v - rev[i + 1][1]) : ''}</span></li>`).join('');
+  return `<div class="resumen">
+      <p class="ceja">Actual · ${cuando}</p>
+      <span class="cifra grande">${kg1(ult[1])}<small>kg</small></span>
+      <p class="linea"><span class="cifra">${firmado(c30)} kg</span> en 30 días · tendencia <span class="cifra">${firmado(tend)} kg</span> por semana</p>
+    </div>
+    ${graficoPeso(p)}
+    <div class="seccion-cabeza"><h3 class="h3">Historial</h3><span class="sec">${p.length} registros</span></div>
+    <div class="tarjeta lista"><ul class="lista-filas hist">${filas}</ul></div>
+    ${p.length > 6 ? `<button class="btn btn-fantasma ver-mas" data-accion="aviso" data-aviso="Aquí se abre el historial completo de tu peso." data-toque>Ver los ${p.length} registros</button>` : ''}`;
+}
+
+function bloqueFotos() {
+  const fechas = Object.keys(D.fotos).sort().reverse();
+  if (!fechas.length) {
+    const marcos = TOMAS.map(([t, r]) => `<button class="foto" data-accion="abrir" data-hoja="foto" data-toma="${t}" aria-label="Agregar foto de ${r.toLowerCase()}" data-toque>
+        <span class="marco vacio">${simbolo('simbolo', '')}<span>Agregar</span></span><span class="rot">${r}</span></button>`).join('');
+    return `<div class="seccion-cabeza"><h3 class="h3">Fotos</h3><span class="privadas">${icoCandado}Solo tú y Camila</span></div>
+      <p class="sec" style="margin-bottom:12px">Opcionales. Sirven para ver cambios que la balanza no muestra.</p>
+      <div class="fotos">${marcos}</div>`;
+  }
+  if (!fechas.includes(fotoFecha)) fotoFecha = fechas[0];
+  const chips = fechas.map((f) => `<button class="chip" data-accion="foto-fecha" data-v="${f}" aria-pressed="${f === fotoFecha}" data-toque><span>${fCorta(f)}</span></button>`).join('');
+  const tiene = D.fotos[fotoFecha];
+  // Una toma que falta se puede agregar solo hoy; en una fecha pasada queda el marco vacío.
+  const marcos = TOMAS.map(([t, r]) => (tiene.includes(t)
+    ? `<button class="foto" data-accion="aviso" data-aviso="Se abre la foto de ${r.toLowerCase()} del ${fCorta(fotoFecha)}." data-toque><span class="marco">${silueta(t)}</span><span class="rot">${r}</span></button>`
+    : fotoFecha === HOY
+      ? `<button class="foto" data-accion="abrir" data-hoja="foto" data-toma="${t}" aria-label="Agregar foto de ${r.toLowerCase()}" data-toque><span class="marco vacio">${simbolo('simbolo', '')}<span>Agregar</span></span><span class="rot">${r}</span></button>`
+      : `<div class="foto"><span class="marco vacio sin"><span>Sin foto</span></span><span class="rot">${r}</span></div>`)).join('');
+  return `<div class="seccion-cabeza"><h3 class="h3">Fotos</h3><span class="privadas">${icoCandado}Solo tú y Camila</span></div>
+    <div class="chips fechas" role="group" aria-label="Fecha de las fotos">${chips}</div>
+    <div class="fotos">${marcos}</div>
+    <div class="dos-btn">
+      <button class="btn btn-secundario" data-accion="abrir" data-hoja="comparar" ${fechas.length < 2 ? 'disabled' : ''} data-toque>Comparar fechas</button>
+      <button class="btn btn-secundario" data-accion="abrir" data-hoja="foto" data-toque>Agregar fotos</button>
+    </div>`;
+}
+
+function vistaMedidas() {
+  const md = D.medidas;
+  if (!md.length) {
+    return `<div class="seccion-cabeza"><h3 class="h3">Medidas</h3></div>
+      <div class="tarjeta vacio-tarj">
+        <p class="h3">Todavía no registras medidas</p>
+        <p class="sec">Cintura, cadera, pecho, brazo y muslo, con una huincha. Una vez al mes basta; con 3 registros ves la tendencia.</p>
+      </div>
+      ${bloqueFotos()}`;
+  }
+  const ult = md[md.length - 1], ant = md[md.length - 2];
+  const filas = PARTES.map(([k, r]) => `<li><span class="nom">${r}</span>${md.length >= 3 ? spark(md.map((x) => x[k])) : ''}
+      <span class="cifra val">${kg1(ult[k])}<small>cm</small></span><span class="cifra dif">${ant ? firmado(ult[k] - ant[k]) : ''}</span></li>`).join('');
+  const nota = ant ? `Diferencia con el ${fCorta(ant.f)}.${md.length >= 3 ? ' La línea es tu tendencia desde el ' + fCorta(md[0].f) + '.' : ' Con 3 registros ves la tendencia.'}` : 'Con 3 registros ves la tendencia.';
+  return `<div class="seccion-cabeza"><h3 class="h3">Medidas</h3><span class="sec">${ult.f === HOY ? 'hoy' : fCorta(ult.f)}</span></div>
+    <div class="tarjeta lista"><ul class="lista-filas med">${filas}</ul></div>
+    <p class="nota-chica">${nota}</p>
+    ${bloqueFotos()}`;
+}
+
+function cargando() {
+  return `<div aria-busy="true" aria-label="Cargando tu progreso">
+      <div class="hueso" style="width:180px;height:14px;margin-top:20px"></div>
+      <div class="hueso" style="width:132px;height:40px;margin-top:10px"></div>
+      <div class="hueso" style="width:240px;height:14px;margin-top:10px"></div>
+      <div class="hueso" style="height:176px;margin-top:20px"></div>
+      <div class="hueso" style="width:96px;height:18px;margin-top:28px"></div>
+      <div class="hueso" style="height:64px;margin-top:12px"></div>
+      <div class="hueso" style="height:64px;margin-top:8px"></div>
+      <div class="hueso" style="height:64px;margin-top:8px"></div>
+    </div>`;
+}
+
+// ── Hojas ────────────────────────────────────────────────────────────────────
+function hojaPeso(tema) {
+  return `<div class="velo${hoja === 'peso' ? ' ver' : ''}"><div class="hoja" role="dialog" aria-modal="true" aria-labelledby="t-peso-${tema}">
+      <h2 class="h2" id="t-peso-${tema}">Registrar peso</h2>
+      <p class="sec sub">Hoy, martes 17 de noviembre</p>
+      <div class="paso solo" data-campo="peso">
+        <button class="btn-paso" data-paso="-1" aria-label="Menos 0,1 kilos" data-toque><span class="barra-menos"></span></button>
+        <div class="campo"><span class="valor" data-valor="peso">${kg1(borrador.peso)}</span><span class="unidad">kg</span></div>
+        <button class="btn-paso" data-paso="1" aria-label="Más 0,1 kilos" data-toque>${simbolo('simbolo', '')}</button>
+      </div>
+      <p class="sec consejo">De 0,1 en 0,1; mantén presionado para avanzar rápido. Pésate en ayunas y a la misma hora para comparar parejo.</p>
+      <div class="acciones"><button class="btn btn-secundario" data-accion="cerrar" data-toque>Cancelar</button>
+        <button class="btn btn-primario" data-accion="guardar-peso" data-toque>Guardar</button></div>
+    </div></div>`;
+}
+
+function hojaMedidas(tema) {
+  const filas = PARTES.map(([k, r]) => `<div class="fila-med"><span class="rot">${r}</span>
+      <div class="paso" data-campo="${k}">
+        <button class="btn-paso" data-paso="-1" aria-label="${r}: menos 0,5 cm" data-toque><span class="barra-menos"></span></button>
+        <div class="campo"><span class="valor" data-valor="${k}">${kg1(borrador[k])}</span><span class="unidad">cm</span></div>
+        <button class="btn-paso" data-paso="1" aria-label="${r}: más 0,5 cm" data-toque>${simbolo('simbolo', '')}</button>
+      </div></div>`).join('');
+  return `<div class="velo${hoja === 'medir' ? ' ver' : ''}"><div class="hoja" role="dialog" aria-modal="true" aria-labelledby="t-med-${tema}">
+      <h2 class="h2" id="t-med-${tema}">Registrar medidas</h2>
+      <p class="sec sub">Hoy, martes 17 de noviembre · en centímetros</p>
+      <div style="margin-top:8px">${filas}</div>
+      <p class="sec consejo">Mide siempre en el mismo punto, sin apretar la huincha.</p>
+      <div class="acciones"><button class="btn btn-secundario" data-accion="cerrar" data-toque>Cancelar</button>
+        <button class="btn btn-primario" data-accion="guardar-medidas" data-toque>Guardar</button></div>
+    </div></div>`;
+}
+
+function hojaComparar(tema) {
+  const fechas = Object.keys(D.fotos).sort();
+  if (fechas.length < 2) return '';
+  const tomas = TOMAS.map(([t, r]) => `<button class="chip texto" data-accion="comp-toma" data-v="${t}" aria-pressed="${comp.toma === t}" style="flex:0 0 auto" data-toque><span>${r}</span></button>`).join('');
+  const lado = (k) => {
+    const f = comp.fechas[k], peso = D.pesos.find((p) => p[0] === f), med = D.medidas.find((x) => x.f === f);
+    const hay = (D.fotos[f] || []).includes(comp.toma);
+    return `<div><button class="btn btn-secundario" data-accion="comp-fecha" data-k="${k}" aria-label="Cambiar la fecha ${k ? 'de la derecha' : 'de la izquierda'}" data-toque>${fCorta(f)}${icoCambiar}</button>
+      <div class="marco${hay ? '' : ' vacio'}">${hay ? silueta(comp.toma) : '<span>Sin foto</span>'}</div>
+      <p class="dato">${peso ? `<span class="cifra">${kg1(peso[1])} kg</span>` : ''}${peso && med ? ' · ' : ''}${med ? `cintura <span class="cifra">${kg1(med.cintura)}</span>` : ''}</p></div>`;
+  };
+  return `<div class="velo${hoja === 'comparar' ? ' ver' : ''}"><div class="hoja" role="dialog" aria-modal="true" aria-labelledby="t-comp-${tema}">
+      <h2 class="h2" id="t-comp-${tema}">Comparar fotos</h2>
+      <div class="chips" role="group" aria-label="Toma" style="margin-top:12px;justify-content:flex-start">${tomas}</div>
+      <div class="comp">${lado(0)}${lado(1)}</div>
+      <div class="acciones"><button class="btn btn-secundario" data-accion="cerrar" data-toque>Cerrar</button></div>
+    </div></div>`;
+}
+
+// Mismo patrón que «Subir referencia» en Detalle de ejercicio: primero la toma, después de dónde sale la foto.
+function hojaFoto(tema) {
+  const tomas = TOMAS.map(([t, r]) => `<button class="chip texto" data-accion="foto-toma" data-v="${t}" aria-pressed="${fotoToma === t}" data-toque><span>${r}</span></button>`).join('');
+  const r = TOMAS.find(([t]) => t === fotoToma)[1].toLowerCase();
+  return `<div class="velo${hoja === 'foto' ? ' ver' : ''}"><div class="hoja" role="dialog" aria-modal="true" aria-labelledby="t-foto-${tema}">
+      <h2 class="h2" id="t-foto-${tema}">Agregar foto</h2>
+      <p class="sec sub">Hoy, martes 17 de noviembre · solo la ven tú y Camila</p>
+      <p class="rot-campo">Toma</p>
+      <div class="chips tomas" role="group" aria-label="Toma">${tomas}</div>
+      <p class="sec consejo">Con la misma luz y a la misma distancia que las anteriores, para comparar parejo.</p>
+      <div class="opciones">
+        <button class="btn btn-secundario ancho alto" data-accion="subir-foto" data-v="camara" aria-label="Tomar foto de ${r}" data-toque>Tomar foto</button>
+        <button class="btn btn-secundario ancho alto" data-accion="subir-foto" data-v="galeria" aria-label="Elegir de la galería la foto de ${r}" data-toque>Elegir de la galería</button>
+      </div>
+      <div class="acciones" style="margin-top:8px"><button class="btn btn-fantasma" data-accion="cerrar" data-toque>Cancelar</button></div>
+    </div></div>`;
+}
+
+// ── Teléfono ─────────────────────────────────────────────────────────────────
+const VISTAS = [['fuerza', 'Fuerza'], ['corporal', 'Peso'], ['medidas', 'Medidas']];
+const BASE = { fuerza: 'fuerza', corporal: 'corporal', medidas: 'medidas', peso: 'corporal', medir: 'medidas', comparar: 'medidas', foto: 'medidas' };
+const vistaActual = (ctl) => BASE[ctl.estado] || ctl.vista || 'fuerza';
+
+function telefono(tema, ctl) {
+  CTL = ctl;
+  // La vista elegida queda en la dirección para que vacío, cargando y sin conexión la conserven.
+  if (BASE[ctl.estado]) ctl.vista = BASE[ctl.estado];
+  const vista = vistaActual(ctl);
+  const selector = VISTAS.map(([v, r]) => `<button class="chip texto" role="tab" aria-selected="${v === vista}" aria-pressed="${v === vista}" data-accion="vista" data-v="${v}" data-toque><span>${r}</span></button>`).join('');
+  const red = ctl.estado === 'sinred'
+    ? `<div class="sin-red" role="status">${icoNube}<span>Sin conexión. Ves lo guardado en tu teléfono hasta hoy a las 8:52. Lo que registres se sube solo cuando vuelva la señal.</span></div>` : '';
+  let cuerpo;
+  if (ctl.estado === 'cargando') cuerpo = cargando();
+  else cuerpo = { fuerza: vistaFuerza, corporal: vistaPeso, medidas: vistaMedidas }[vista]();
+  const accion = ctl.estado === 'cargando' ? ''
+    : vista === 'corporal' ? '<div class="tel-accion"><button class="btn btn-primario ancho alto" data-accion="abrir" data-hoja="peso" data-toque>Registrar peso</button></div>'
+    : vista === 'medidas' ? '<div class="tel-accion"><button class="btn btn-primario ancho alto" data-accion="abrir" data-hoja="medir" data-toque>Registrar medidas</button></div>' : '';
+  return `<div class="tel" data-tema="${tema}">
+    <div class="tel-estado"><span class="cifra" style="font-weight:600">9:41</span><span>5G · 82 %</span></div>
+    <div class="tel-contenido">
+      <div class="cabeza"><h1 class="titulo">Progreso</h1></div>
+      <div class="chips vistas" role="tablist" aria-label="Vista">${selector}</div>
+      ${red}
+      ${cuerpo}
+    </div>
+    ${accion}
+    ${pestanas(PESTANAS_ALUMNO, 'Progreso')}
+    <div class="tel-gesto"></div>
+    <div class="aviso" role="status"></div>
+    ${hojaPeso(tema)}${hojaMedidas(tema)}${hojaComparar(tema)}${hojaFoto(tema)}
+  </div>`;
+}
+
+// ── Maqueta ──────────────────────────────────────────────────────────────────
+let hoja = null, fotoFecha = '2026-11-03', fotoToma = 'frente', borrador = {}, comp = { toma: 'frente', fechas: ['2026-09-01', '2026-11-03'] };
+function nuevoBorrador() {
+  const ultP = D.pesos[D.pesos.length - 1], ultM = D.medidas[D.medidas.length - 1] || { cintura: 72, cadera: 96, pecho: 88, brazo: 27, muslo: 55 };
+  borrador = { peso: ultP[1], ...Object.fromEntries(PARTES.map(([k]) => [k, ultM[k]])) };
+}
+function alCambiarEstado(estado) {
+  cargarDatos(estado);
+  hoja = { peso: 'peso', medir: 'medir', comparar: 'comparar', foto: 'foto' }[estado] || null;
+  fotoFecha = '2026-11-03'; fotoToma = 'frente'; comp = { toma: 'frente', fechas: ['2026-09-01', '2026-11-03'] };
+  nuevoBorrador();
+}
+const m = iniciarMaqueta({ telefono, porDefecto: { estado: 'fuerza', vista: 'fuerza', sesion: 'pendiente' }, alCambiarEstado });
+const { ctl, escenario } = m;
+
+function repintar() {
+  const scroll = [...escenario.querySelectorAll('.tel-contenido')].map((c) => c.scrollTop);
+  m.pintar();
+  escenario.querySelectorAll('.tel-contenido').forEach((c, k) => { c.scrollTop = scroll[k] || 0; });
+}
+const avisarTodos = (t) => escenario.querySelectorAll('.tel').forEach((tel) => avisar(tel, t));
+const ESTADO_HOJA = { peso: 'peso', medir: 'medir', comparar: 'comparar', foto: 'foto' };
+// Abrir y cerrar una hoja deja la dirección al día, salvo en vacío, cargando y sin conexión.
+const conDatosPropios = () => ['vacio', 'cargando', 'sinred'].includes(ctl.estado);
+function abrirHoja(nombre, toma) {
+  nuevoBorrador(); hoja = nombre;
+  // «Agregar fotos» parte en la primera toma que falte hoy; un marco vacío, en la suya.
+  if (nombre === 'foto') fotoToma = toma || (TOMAS.find(([t]) => !(D.fotos[HOY] || []).includes(t)) || TOMAS[0])[0];
+  if (!conDatosPropios()) ctl.estado = ESTADO_HOJA[nombre];
+  repintar();
+}
+function cerrarHoja() {
+  hoja = null;
+  if (!conDatosPropios() && BASE[ctl.estado]) ctl.estado = BASE[ctl.estado];
+  repintar();
+}
+
+// ── Más y menos: un toque suma un paso; mantener presionado repite ───────────
+const PASO = { peso: 0.1, cintura: 0.5, cadera: 0.5, pecho: 0.5, brazo: 0.5, muslo: 0.5 };
+const LIM = { peso: [30, 250] };
+function pasar(campo, dir) {
+  const [min, max] = LIM[campo] || [10, 200];
+  const nuevo = Math.min(max, Math.max(min, r1(borrador[campo] + dir * PASO[campo])));
+  if (nuevo === borrador[campo]) return false;
+  borrador[campo] = nuevo;
+  escenario.querySelectorAll(`[data-valor="${campo}"]`).forEach((v) => {
+    v.textContent = kg1(nuevo);
+    v.classList.remove('sube', 'baja'); void v.offsetWidth; v.classList.add(dir > 0 ? 'sube' : 'baja');
+  });
+  return true;
+}
+let repite = null, repitio = false;
+escenario.addEventListener('pointerdown', (ev) => {
+  const b = ev.target.closest('[data-paso]'); if (!b) return;
+  const campo = b.closest('.paso').dataset.campo, dir = +b.dataset.paso;
+  repitio = false;
+  repite = setTimeout(function tic() { repitio = true; if (pasar(campo, dir) !== false) repite = setTimeout(tic, 80); }, 400);
+});
+['pointerup', 'pointerleave', 'pointercancel'].forEach((t) => escenario.addEventListener(t, () => clearTimeout(repite), true));
+
+escenario.addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-accion], [data-paso]'); if (!b || b.disabled) return;
+  const tel = b.closest('.tel');
+  if (b.dataset.paso) {
+    if (!repitio) pasar(b.closest('.paso').dataset.campo, +b.dataset.paso);
+    repitio = false; return;
+  }
+  switch (b.dataset.accion) {
+    case 'vista':
+      if (['fuerza', 'corporal', 'medidas'].includes(ctl.estado)) ctl.estado = b.dataset.v;
+      ctl.vista = b.dataset.v;
+      escenario.querySelectorAll('.tel-contenido').forEach((c) => { c.scrollTop = 0; });
+      m.pintar(); break;
+    case 'aviso': avisar(tel, b.dataset.aviso); break;
+    case 'abrir': abrirHoja(b.dataset.hoja, b.dataset.toma); break;
+    case 'foto-toma': fotoToma = b.dataset.v; repintar(); break;
+    case 'subir-foto': {
+      const r = TOMAS.find(([t]) => t === fotoToma)[1].toLowerCase();
+      D.fotos = { ...D.fotos, [HOY]: [...new Set([...(D.fotos[HOY] || []), fotoToma])] };
+      fotoFecha = HOY;
+      cerrarHoja();
+      avisarTodos(`${b.dataset.v === 'camara' ? 'Se abre la cámara' : 'Se abre tu galería'}. En la maqueta, la foto de ${r} queda guardada hoy.`);
+      break;
+    }
+    case 'cerrar': cerrarHoja(); break;
+    case 'guardar-peso': {
+      const i = D.pesos.findIndex((p) => p[0] === HOY);
+      // Una fila por día: la segunda del mismo día reemplaza a la primera.
+      if (i === -1) D.pesos.push([HOY, borrador.peso]); else D.pesos[i][1] = borrador.peso;
+      cerrarHoja();
+      avisarTodos(`Guardado: ${kg1(borrador.peso)} kg, hoy.`);
+      break;
+    }
+    case 'guardar-medidas': {
+      const nueva = { f: HOY, ...Object.fromEntries(PARTES.map(([k]) => [k, borrador[k]])) };
+      const i = D.medidas.findIndex((x) => x.f === HOY);
+      if (i === -1) D.medidas.push(nueva); else D.medidas[i] = nueva;
+      cerrarHoja();
+      avisarTodos('Medidas guardadas, hoy.');
+      break;
+    }
+    case 'foto-fecha': fotoFecha = b.dataset.v; repintar(); break;
+    case 'comp-toma': comp.toma = b.dataset.v; repintar(); break;
+    case 'comp-fecha': {
+      // Cada toque pasa a la fecha siguiente que no esté ya en el otro lado.
+      const fechas = Object.keys(D.fotos).sort(), k = +b.dataset.k, otra = comp.fechas[1 - k];
+      let j = fechas.indexOf(comp.fechas[k]);
+      do { j = (j + 1) % fechas.length; } while (fechas[j] === otra);
+      comp.fechas[k] = fechas[j];
+      repintar(); break;
+    }
+  }
+});
+</script>
+</body>
+</html>

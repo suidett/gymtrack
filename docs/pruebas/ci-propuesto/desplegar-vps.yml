@@ -1,0 +1,244 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Desplegar en el VPS (Vultr) · borrador
+#
+# Reemplaza el despliegue a Railway de staging.yml y version.yml. Es reutilizable:
+#   staging.yml        en cada push a main lo llama con entorno «staging» y versión
+#                      sha-<commit>: construye la imagen, la publica en GHCR y despliega
+#   version.yml        al empujar una etiqueta v1.2.3 lo llama con entorno «produccion»,
+#                      después de «comprobar», «suite-completa» y «fotos-staging».
+#                      La aprobación la pide el entorno «produccion» de GitHub.
+#   workflow_dispatch  a mano: volver atrás o redesplegar una versión en un entorno
+#
+# Cómo entra: SSH con el usuario «despliegue» y una llave por entorno, atada en el
+# servidor a puerta-ssh.sh (docs/pruebas/infra-propuesta/). La llave de staging no
+# sirve para producción. No usa la API de Vultr: solo SSH, así que cambiar de
+# proveedor es cambiar VULTR_HOST y la llave del host.
+#
+# En el servidor, desplegar.sh baja la imagen, respalda (producción), migra con
+# Prisma, levanta, revisa /health con la versión y vuelve solo a la anterior si
+# falla. Aquí, después, corre el humo; si el humo falla, pide «volver».
+# ─────────────────────────────────────────────────────────────────────────────
+name: Desplegar en el VPS
+
+on:
+  workflow_call:
+    inputs:
+      entorno:
+        type: string
+        required: true
+      version:
+        type: string
+        required: true
+  workflow_dispatch:
+    inputs:
+      accion:
+        type: choice
+        options: [volver, desplegar]
+        default: volver
+      entorno:
+        type: choice
+        options: [staging, produccion]
+        default: staging
+      version:
+        description: "Solo para desplegar: sha-<commit> en staging, v1.2.3 en producción"
+        type: string
+        required: false
+  # No tiene «push» propio a propósito: staging.yml y version.yml ya lo llaman, y un
+  # segundo disparador desplegaría dos veces.
+
+permissions:
+  contents: read
+
+# Un despliegue por entorno a la vez, y nunca se cancela uno a medias.
+concurrency:
+  group: vps-${{ inputs.entorno || 'staging' }}
+  cancel-in-progress: false
+
+env:
+  IMAGEN: ${{ vars.IMAGEN_API }}   # ghcr.io/<dueño-en-minúsculas>/gymtrack-api
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      accion: ${{ steps.p.outputs.accion }}
+      entorno: ${{ steps.p.outputs.entorno }}
+      version: ${{ steps.p.outputs.version }}
+    steps:
+      - id: p
+        env:
+          EVENTO: ${{ github.event_name }}
+          IN_ACCION: ${{ inputs.accion }}
+          IN_ENTORNO: ${{ inputs.entorno }}
+          IN_VERSION: ${{ inputs.version }}
+        run: |
+          if [ "$EVENTO" = workflow_dispatch ]; then
+            accion=$IN_ACCION; entorno=$IN_ENTORNO; version=$IN_VERSION
+          else
+            accion=desplegar; entorno=$IN_ENTORNO; version=$IN_VERSION   # llamado por staging.yml o version.yml
+          fi
+          if [ "$accion" = desplegar ] && [ -z "$version" ]; then
+            echo "::error::falta la versión"; exit 1
+          fi
+          { echo "accion=$accion"; echo "entorno=$entorno"; echo "version=$version"; } >> "$GITHUB_OUTPUT"
+
+  # Solo cuando staging pide el commit de esta corrida: la imagen que después se
+  # promueve a producción sin recompilar.
+  imagen:
+    needs: plan
+    if: >-
+      needs.plan.outputs.accion == 'desplegar' && needs.plan.outputs.entorno == 'staging' &&
+      needs.plan.outputs.version == format('sha-{0}', github.sha)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      # PENDIENTE: apps/api/Dockerfile (el mismo que usa «api-build» en api.yml).
+      # La etapa final tiene que traer el CLI de prisma, schema.prisma y las migraciones.
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          push: true
+          tags: ${{ env.IMAGEN }}:sha-${{ github.sha }}
+          labels: org.opencontainers.image.revision=${{ github.sha }}
+          # El Dockerfile lo pasa a ENV COMMIT; /health lo devuelve y version.yml
+          # («comprobar») lo usa para saber qué commit corre staging.
+          build-args: COMMIT=${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # Producción no recompila: le pone la etiqueta v1.2.3 a la misma imagen que ya
+  # corrió en staging (mismo digest). version.yml ya revisó en «comprobar» que la
+  # etiqueta está en main y que staging corre ese commit.
+  promover:
+    needs: plan
+    if: needs.plan.outputs.accion == 'desplegar' && needs.plan.outputs.entorno == 'produccion'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - name: Etiquetar la imagen probada en staging
+        env:
+          VERSION: ${{ needs.plan.outputs.version }}
+        run: |
+          docker buildx imagetools inspect "$IMAGEN:sha-$GITHUB_SHA" >/dev/null \
+            || { echo "::error::no existe $IMAGEN:sha-$GITHUB_SHA; ¿la etiqueta apunta a un commit que pasó por main?"; exit 1; }
+          docker buildx imagetools create -t "$IMAGEN:$VERSION" "$IMAGEN:sha-$GITHUB_SHA"
+
+  desplegar:
+    needs: [plan, imagen, promover]
+    # imagen y promover se saltan según el caso; basta con que ninguno haya fallado.
+    if: >-
+      always() && needs.plan.result == 'success' &&
+      needs.imagen.result != 'failure' && needs.promover.result != 'failure'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    # «produccion» pide aprobación: en GitHub basta UNA persona de la lista, así que
+    # se configura con «Prevent self-review» para que quien etiquetó no se apruebe solo.
+    environment: ${{ needs.plan.outputs.entorno }}
+    permissions:
+      contents: read
+      packages: read      # el token que viaja al servidor solo puede leer la imagen
+      issues: write
+    env:
+      ACCION: ${{ needs.plan.outputs.accion }}
+      ENTORNO: ${{ needs.plan.outputs.entorno }}
+      VERSION: ${{ needs.plan.outputs.version }}
+      API_URL: ${{ needs.plan.outputs.entorno == 'produccion' && vars.PRODUCCION_API_URL || vars.STAGING_API_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # La llave del host va fija: nunca StrictHostKeyChecking=no.
+      - name: Preparar SSH
+        env:
+          VULTR_SSH_KEY: ${{ secrets.VULTR_SSH_KEY }}
+          VULTR_HOST: ${{ vars.VULTR_HOST }}
+          VULTR_SSH_HOST_KEY: ${{ vars.VULTR_SSH_HOST_KEY }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$VULTR_SSH_KEY" > ~/.ssh/despliegue && chmod 600 ~/.ssh/despliegue
+          printf '%s %s\n' "$VULTR_HOST" "$VULTR_SSH_HOST_KEY" > ~/.ssh/known_hosts
+          printf 'Host vps\n  HostName %s\n  User %s\n  IdentityFile ~/.ssh/despliegue\n  BatchMode yes\n  ServerAliveInterval 30\n' \
+            "$VULTR_HOST" "${{ vars.VULTR_SSH_USER }}" > ~/.ssh/config
+
+      # El token de GitHub viaja por stdin, sirve solo para leer la imagen y vence con el job.
+      - name: Desplegar en el servidor
+        id: despliegue
+        if: env.ACCION == 'desplegar'
+        env:
+          GH_TOKEN_IMAGEN: ${{ github.token }}
+        run: printf '%s' "$GH_TOKEN_IMAGEN" | ssh vps "desplegar $ENTORNO $VERSION"
+
+      - name: Volver a la versión anterior
+        if: env.ACCION == 'volver'
+        run: ssh vps "volver $ENTORNO" </dev/null
+
+      # Lo mínimo desde afuera: https con la versión nueva, http redirige (SEG-022),
+      # las rutas de prueba no existen (SEG-025).
+      - name: Revisión desde afuera
+        id: afuera
+        run: |
+          curl -fsS "$API_URL/health" | tee health.json
+          if [ "$ACCION" = desplegar ]; then grep -q "\"version\":\"$VERSION\"" health.json; fi
+          test "$(curl -s -o /dev/null -w '%{http_code}' "${API_URL/https:/http:}/health")" = 308
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST "$API_URL/test/reset")" = 404
+
+      - uses: ./.github/actions/preparar
+        if: env.ACCION == 'desplegar'
+
+      # Staging: ingresar, GET /me/today, crear y cerrar una sesión, sincronizar un lote de 2,
+      # pedir la exportación; con las cuentas humo.* y borrando lo que crea.
+      # Producción: solo lectura con una cuenta interna, sin datos de salud.
+      # PENDIENTE: scripts «humo:staging» y «humo:produccion» (los mismos de staging.yml y version.yml).
+      - name: Humo
+        id: humo
+        if: env.ACCION == 'desplegar'
+        env:
+          HUMO_CLAVE: ${{ needs.plan.outputs.entorno == 'produccion' && secrets.HUMO_CLAVE_PRODUCCION || secrets.HUMO_CLAVE }}
+          STAGING_API_URL: ${{ vars.STAGING_API_URL }}
+          PRODUCCION_API_URL: ${{ vars.PRODUCCION_API_URL }}
+        run: pnpm --filter api run "humo:$ENTORNO"
+
+      # Si desplegar.sh ya volvió solo (falló /health), no se vuelve otra vez: eso
+      # llevaría a la versión de antes de la anterior. Solo si el humo falló.
+      - name: Volver atrás si el humo falló
+        if: failure() && steps.despliegue.outcome == 'success'
+        run: ssh vps "volver $ENTORNO" </dev/null
+
+      - name: Avisar
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          ETIQUETA=$([ "$ENTORNO" = produccion ] && echo produccion-rota || echo staging-roto)
+          gh issue create --label "$ETIQUETA" \
+            --title "$ENTORNO roto al $ACCION ${VERSION:-}" \
+            --body "Falló: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}. El workflow ya intentó volver a la versión anterior; revisa con «estado» por SSH o con workflow_dispatch."
+
+      - name: Resumen
+        if: always()
+        run: |
+          {
+            echo "### $ACCION en $ENTORNO"
+            echo "- Versión pedida: \`${VERSION:-anterior}\`"
+            echo "- /health: \`$(cat health.json 2>/dev/null || echo 'sin respuesta')\`"
+          } >> "$GITHUB_STEP_SUMMARY"

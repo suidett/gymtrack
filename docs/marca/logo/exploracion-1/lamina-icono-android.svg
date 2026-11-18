@@ -1,0 +1,133 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2280" height="690" viewBox="0 0 2280 690">
+<rect width="2280" height="690" fill="#FFFFFF"/>
+<text x="60" y="66" font-family="Helvetica, Arial, sans-serif" font-size="34" font-weight="bold" fill="#131A17">GymTrack · Ícono adaptativo de Android, ronda 1</text>
+<text x="60" y="106" font-family="Helvetica, Arial, sans-serif" font-size="20" fill="#5E6D67">Máscara circular de 72 dp sobre lienzo de 108 dp. El dibujo ocupa un círculo de 54 dp, dentro de la zona segura de 66 dp (línea punteada). Fila 1: menta con símbolo tinta. Fila 2: tinta con símbolo papel.</text>
+<circle cx="150.0" cy="240.0" r="90.0" fill="#45B392"/>
+<circle cx="150.0" cy="240.0" r="82.5" fill="none" stroke="#131A17" stroke-opacity="0.25" stroke-width="1.5" stroke-dasharray="4 5"/>
+<svg x="72.86" y="162.86" width="154.29" height="154.29" viewBox="0 0 64 64" overflow="visible" style="color:#131A17" fill="none"><rect class="acento" x="13" y="10" width="7" height="44" rx="2" fill="currentColor"/>
+  <rect x="26" y="14" width="25" height="7" rx="2" fill="currentColor"/>
+  <rect x="26" y="28.5" width="25" height="7" rx="2" fill="currentColor"/>
+  <rect x="26" y="43" width="14" height="7" rx="2" fill="currentColor"/></svg>
+<text x="150.0" y="364.0" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="20" font-weight="bold" fill="#131A17">01</text>
+<circle cx="370.0" cy="240.0" r="90.0" fill="#45B392"/>
+<circle cx="370.0" cy="240.0" r="82.5" fill="none" stroke="#131A17" stroke-opacity="0.25" stroke-width="1.5" stroke-dasharray="4 5"/>
+<svg x="292.86" y="162.86" width="154.29" height="154.29" viewBox="0 0 64 64" overflow="visible" style="color:#131A17" fill="none"><path fill="currentColor" fill-rule="evenodd" d="M12 16h14a3 3 0 0 1 3 3v26a3 3 0 0 1-3 3H12a3 3 0 0 1-3-3V19a3 3 0 0 1 3-3zM14 23v6h11v-6z"/>
+  <path fill="currentColor" fill-rule="evenodd" d="M38 16h14a3 3 0 0 1 3 3v26a3 3 0 0 1-3 3H38a3 3 0 0 1-3-3V19a3 3 0 0 1 3-3zM39.5 20.5v23h11v-23z"/>
+  <rect class="acento" x="39.5" y="23" width="11" height="6" fill="currentColor"/></svg>
+<text x="370.0" y="364.0" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="20" font-weight="bold" fill="#131A17">02</text>
+<circle cx="590.0" cy="240.0" r="90.0" fill="#45B392"/>
+<circle cx="590.0" cy="240.0" r="82.5" fill="none" stroke="#131A17" stroke-opacity="0.25" stroke-width="1.5" stroke-dasharray="4 5"/>
+<svg x="512.86" y="162.86" width="154.29" height="154.29" viewBox="0 0 64 64" overflow="visible" style="color:#131A17" fill="none"><rect x="5" y="24.5" width="15" height="15" rx="2.5" fill="currentColor"/>
+  <rect x="24.5" y="24.5" width="15" height="15" rx="2.5" fill="currentColor"/>
+  <path fill="currentColor" fill-rule="evenodd" d="M46.5 24.5h10a2.5 2.5 0 0 1 2.5 2.5v10a2.5 2.5 0 0 1-2.5 2.5h-10a2.5 2.5 0 0 1-2.5-2.5v-10a2.5 2.5 0 0 1 2.5-2.5zM48 28.5v7h7v-7z"/></svg>
+<text x="590.0" y="364.0" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="20" font-weight="bold" fill="#131A17">03</text>
+<circle cx="810.0" cy="240.0" r="90.0" fill="#45B392"/>
+<circle cx="810.0" cy="240.0" r="82.5" fill="none" stroke="#131A17" stroke-opacity="0.25" stroke-width="1.5" stroke-dasharray="4 5"/>
+<svg x="732.86" y="162.86" width="154.29" height="154.29" viewBox="0 0 64 64" overflow="visible" style="color:#131A17" fill="none"><path d="M21 15L43 37M43 15L21 37" stroke="currentColor" stroke-width="9" stroke-linecap="round"/>
+  <rect class="acento" x="18" y="47" width="28" height="7" rx="2" fill="currentColor"/></svg>
+<text x="810.0" y="364.0" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="20" font-weight="bold" fill="#131A17">04</text>
+<circle cx="1030.0" cy="240.0" r="90.0" fill="#45B392"/>
+<circle cx="1030.0" cy="240.0" r="82.5" fill="none" stroke="#131A17" stroke-opacity="0.25" stroke-width="1.5" stroke-dasharray="4 5"/>
+<svg x="952.86" y="162.86" width="154.29" height="154.29" viewBox="0 0 64 64" overflow="visible" style="color:#131A17" fill="none"><g transform="translate(1.5 -2)">
+  <rect class="acento" x="9" y="29" width="20" height="7" rx="2" fill="currentColor"/>
+  <path fill="currentColor" d="M51 27C51 38 44 46 33 51L31 47C37.5 43.5 41.5 39.5 42 36A9 9 0 1 1 51 27Z"/>
+  </g></svg>
+<text x="1030.0" y="364.0" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="20" font-weight="bold" fill="#131A17">05</text>
+<circle cx="1250.0" cy="240.0" r="90.0" fill="#45B392"/>
+<circle cx="1250.0" cy="240.0" r="82.5" fill="none" stroke="#131A17" stroke-opacity="0.25" stroke-width="1.5" stroke-dasharray="4 5"/>
+<svg x="1172.86" y="162.86" width="154.29" height="154.29" viewBox="0 0 64 64" overflow="visible" style="color:#131A17" fill="none"><rect class="acento" x="29.5" y="12" width="5" height="9" rx="2" fill="currentColor"/>
+  <rect x="10" y="25" width="44" height="7" rx="2" fill="currentColor"/>
+  <path d="M32 32L42 49H22Z" fill="currentColor" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/></svg>
+<text x="1250.0" y="364.0" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="20" font-weight="bold" fill="#131A17">06</text>
+<circle cx="1470.0" cy="240.0" r="90.0" fill="#45B392"/>
+<circle cx="1470.0" cy="240.0" r="82.5" fill="none" stroke="#131A17" stroke-opacity="0.25" stroke-width="1.5" stroke-dasharray="4 5"/>
+<svg x="1392.86" y="162.86" width="154.29" height="154.29" viewBox="0 0 64 64" overflow="visible" style="color:#131A17" fill="none"><rect x="12" y="12" width="36" height="7" rx="3.5" fill="currentColor"/>
+  <rect x="12" y="23" width="12" height="7" rx="3.5" fill="currentColor"/>
+  <rect x="12" y="34" width="12" height="7" rx="3.5" fill="currentColor"/>
+  <rect class="acento" x="32" y="34" width="20" height="7" rx="3.5" fill="currentColor"/>
+  <rect x="12" y="45" width="40" height="7" rx="3.5" fill="currentColor"/></svg>
+<text x="1470.0" y="364.0" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="20" font-weight="bold" fill="#131A17">07</text>
+<circle cx="1690.0" cy="240.0" r="90.0" fill="#45B392"/>
+<circle cx="1690.0" cy="240.0" r="82.5" fill="none" stroke="#131A17" stroke-opacity="0.25" stroke-width="1.5" stroke-dasharray="4 5"/>
+<svg x="1612.86" y="162.86" width="154.29" height="154.29" viewBox="0 0 64 64" overflow="visible" style="color:#131A17" fill="none"><path class="acento-trazo" d="M47.6 18.4A21 21 0 1 0 53 32" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>
+  <rect x="20" y="28.5" width="24" height="7" rx="2" fill="currentColor"/></svg>
+<text x="1690.0" y="364.0" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="20" font-weight="bold" fill="#131A17">08</text>
+<circle cx="1910.0" cy="240.0" r="90.0" fill="#45B392"/>
+<circle cx="1910.0" cy="240.0" r="82.5" fill="none" stroke="#131A17" stroke-opacity="0.25" stroke-width="1.5" stroke-dasharray="4 5"/>
+<svg x="1832.86" y="162.86" width="154.29" height="154.29" viewBox="0 0 64 64" overflow="visible" style="color:#131A17" fill="none"><rect x="10" y="15" width="7" height="34" rx="1.5" fill="currentColor"/>
+  <rect x="10" y="42" width="23" height="7" rx="1.5" fill="currentColor"/>
+  <rect x="26" y="32" width="7" height="17" rx="1.5" fill="currentColor"/>
+  <rect x="22" y="32" width="11" height="7" rx="1.5" fill="currentColor"/>
+  <rect x="40" y="18" width="7" height="31" rx="1.5" fill="currentColor"/>
+  <rect class="acento" x="10" y="15" width="44" height="7" rx="1.5" fill="currentColor"/></svg>
+<text x="1910.0" y="364.0" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="20" font-weight="bold" fill="#131A17">09</text>
+<circle cx="2130.0" cy="240.0" r="90.0" fill="#45B392"/>
+<circle cx="2130.0" cy="240.0" r="82.5" fill="none" stroke="#131A17" stroke-opacity="0.25" stroke-width="1.5" stroke-dasharray="4 5"/>
+<svg x="2052.86" y="162.86" width="154.29" height="154.29" viewBox="0 0 64 64" overflow="visible" style="color:#131A17" fill="none"><rect x="11" y="13" width="42" height="7" rx="2" fill="currentColor"/>
+  <path class="acento" d="M24 20H40V51L32 42L24 51Z" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/></svg>
+<text x="2130.0" y="364.0" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="20" font-weight="bold" fill="#131A17">10</text>
+<circle cx="150.0" cy="490.0" r="90.0" fill="#131A17"/>
+<circle cx="150.0" cy="490.0" r="82.5" fill="none" stroke="#F5F7F5" stroke-opacity="0.25" stroke-width="1.5" stroke-dasharray="4 5"/>
+<svg x="72.86" y="412.86" width="154.29" height="154.29" viewBox="0 0 64 64" overflow="visible" style="color:#F5F7F5" fill="none"><rect class="acento" x="13" y="10" width="7" height="44" rx="2" fill="currentColor"/>
+  <rect x="26" y="14" width="25" height="7" rx="2" fill="currentColor"/>
+  <rect x="26" y="28.5" width="25" height="7" rx="2" fill="currentColor"/>
+  <rect x="26" y="43" width="14" height="7" rx="2" fill="currentColor"/></svg>
+<text x="150.0" y="614.0" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="20" font-weight="bold" fill="#131A17">01</text>
+<circle cx="370.0" cy="490.0" r="90.0" fill="#131A17"/>
+<circle cx="370.0" cy="490.0" r="82.5" fill="none" stroke="#F5F7F5" stroke-opacity="0.25" stroke-width="1.5" stroke-dasharray="4 5"/>
+<svg x="292.86" y="412.86" width="154.29" height="154.29" viewBox="0 0 64 64" overflow="visible" style="color:#F5F7F5" fill="none"><path fill="currentColor" fill-rule="evenodd" d="M12 16h14a3 3 0 0 1 3 3v26a3 3 0 0 1-3 3H12a3 3 0 0 1-3-3V19a3 3 0 0 1 3-3zM14 23v6h11v-6z"/>
+  <path fill="currentColor" fill-rule="evenodd" d="M38 16h14a3 3 0 0 1 3 3v26a3 3 0 0 1-3 3H38a3 3 0 0 1-3-3V19a3 3 0 0 1 3-3zM39.5 20.5v23h11v-23z"/>
+  <rect class="acento" x="39.5" y="23" width="11" height="6" fill="currentColor"/></svg>
+<text x="370.0" y="614.0" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="20" font-weight="bold" fill="#131A17">02</text>
+<circle cx="590.0" cy="490.0" r="90.0" fill="#131A17"/>
+<circle cx="590.0" cy="490.0" r="82.5" fill="none" stroke="#F5F7F5" stroke-opacity="0.25" stroke-width="1.5" stroke-dasharray="4 5"/>
+<svg x="512.86" y="412.86" width="154.29" height="154.29" viewBox="0 0 64 64" overflow="visible" style="color:#F5F7F5" fill="none"><rect x="5" y="24.5" width="15" height="15" rx="2.5" fill="currentColor"/>
+  <rect x="24.5" y="24.5" width="15" height="15" rx="2.5" fill="currentColor"/>
+  <path fill="currentColor" fill-rule="evenodd" d="M46.5 24.5h10a2.5 2.5 0 0 1 2.5 2.5v10a2.5 2.5 0 0 1-2.5 2.5h-10a2.5 2.5 0 0 1-2.5-2.5v-10a2.5 2.5 0 0 1 2.5-2.5zM48 28.5v7h7v-7z"/></svg>
+<text x="590.0" y="614.0" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="20" font-weight="bold" fill="#131A17">03</text>
+<circle cx="810.0" cy="490.0" r="90.0" fill="#131A17"/>
+<circle cx="810.0" cy="490.0" r="82.5" fill="none" stroke="#F5F7F5" stroke-opacity="0.25" stroke-width="1.5" stroke-dasharray="4 5"/>
+<svg x="732.86" y="412.86" width="154.29" height="154.29" viewBox="0 0 64 64" overflow="visible" style="color:#F5F7F5" fill="none"><path d="M21 15L43 37M43 15L21 37" stroke="currentColor" stroke-width="9" stroke-linecap="round"/>
+  <rect class="acento" x="18" y="47" width="28" height="7" rx="2" fill="currentColor"/></svg>
+<text x="810.0" y="614.0" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="20" font-weight="bold" fill="#131A17">04</text>
+<circle cx="1030.0" cy="490.0" r="90.0" fill="#131A17"/>
+<circle cx="1030.0" cy="490.0" r="82.5" fill="none" stroke="#F5F7F5" stroke-opacity="0.25" stroke-width="1.5" stroke-dasharray="4 5"/>
+<svg x="952.86" y="412.86" width="154.29" height="154.29" viewBox="0 0 64 64" overflow="visible" style="color:#F5F7F5" fill="none"><g transform="translate(1.5 -2)">
+  <rect class="acento" x="9" y="29" width="20" height="7" rx="2" fill="currentColor"/>
+  <path fill="currentColor" d="M51 27C51 38 44 46 33 51L31 47C37.5 43.5 41.5 39.5 42 36A9 9 0 1 1 51 27Z"/>
+  </g></svg>
+<text x="1030.0" y="614.0" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="20" font-weight="bold" fill="#131A17">05</text>
+<circle cx="1250.0" cy="490.0" r="90.0" fill="#131A17"/>
+<circle cx="1250.0" cy="490.0" r="82.5" fill="none" stroke="#F5F7F5" stroke-opacity="0.25" stroke-width="1.5" stroke-dasharray="4 5"/>
+<svg x="1172.86" y="412.86" width="154.29" height="154.29" viewBox="0 0 64 64" overflow="visible" style="color:#F5F7F5" fill="none"><rect class="acento" x="29.5" y="12" width="5" height="9" rx="2" fill="currentColor"/>
+  <rect x="10" y="25" width="44" height="7" rx="2" fill="currentColor"/>
+  <path d="M32 32L42 49H22Z" fill="currentColor" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/></svg>
+<text x="1250.0" y="614.0" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="20" font-weight="bold" fill="#131A17">06</text>
+<circle cx="1470.0" cy="490.0" r="90.0" fill="#131A17"/>
+<circle cx="1470.0" cy="490.0" r="82.5" fill="none" stroke="#F5F7F5" stroke-opacity="0.25" stroke-width="1.5" stroke-dasharray="4 5"/>
+<svg x="1392.86" y="412.86" width="154.29" height="154.29" viewBox="0 0 64 64" overflow="visible" style="color:#F5F7F5" fill="none"><rect x="12" y="12" width="36" height="7" rx="3.5" fill="currentColor"/>
+  <rect x="12" y="23" width="12" height="7" rx="3.5" fill="currentColor"/>
+  <rect x="12" y="34" width="12" height="7" rx="3.5" fill="currentColor"/>
+  <rect class="acento" x="32" y="34" width="20" height="7" rx="3.5" fill="currentColor"/>
+  <rect x="12" y="45" width="40" height="7" rx="3.5" fill="currentColor"/></svg>
+<text x="1470.0" y="614.0" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="20" font-weight="bold" fill="#131A17">07</text>
+<circle cx="1690.0" cy="490.0" r="90.0" fill="#131A17"/>
+<circle cx="1690.0" cy="490.0" r="82.5" fill="none" stroke="#F5F7F5" stroke-opacity="0.25" stroke-width="1.5" stroke-dasharray="4 5"/>
+<svg x="1612.86" y="412.86" width="154.29" height="154.29" viewBox="0 0 64 64" overflow="visible" style="color:#F5F7F5" fill="none"><path class="acento-trazo" d="M47.6 18.4A21 21 0 1 0 53 32" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>
+  <rect x="20" y="28.5" width="24" height="7" rx="2" fill="currentColor"/></svg>
+<text x="1690.0" y="614.0" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="20" font-weight="bold" fill="#131A17">08</text>
+<circle cx="1910.0" cy="490.0" r="90.0" fill="#131A17"/>
+<circle cx="1910.0" cy="490.0" r="82.5" fill="none" stroke="#F5F7F5" stroke-opacity="0.25" stroke-width="1.5" stroke-dasharray="4 5"/>
+<svg x="1832.86" y="412.86" width="154.29" height="154.29" viewBox="0 0 64 64" overflow="visible" style="color:#F5F7F5" fill="none"><rect x="10" y="15" width="7" height="34" rx="1.5" fill="currentColor"/>
+  <rect x="10" y="42" width="23" height="7" rx="1.5" fill="currentColor"/>
+  <rect x="26" y="32" width="7" height="17" rx="1.5" fill="currentColor"/>
+  <rect x="22" y="32" width="11" height="7" rx="1.5" fill="currentColor"/>
+  <rect x="40" y="18" width="7" height="31" rx="1.5" fill="currentColor"/>
+  <rect class="acento" x="10" y="15" width="44" height="7" rx="1.5" fill="currentColor"/></svg>
+<text x="1910.0" y="614.0" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="20" font-weight="bold" fill="#131A17">09</text>
+<circle cx="2130.0" cy="490.0" r="90.0" fill="#131A17"/>
+<circle cx="2130.0" cy="490.0" r="82.5" fill="none" stroke="#F5F7F5" stroke-opacity="0.25" stroke-width="1.5" stroke-dasharray="4 5"/>
+<svg x="2052.86" y="412.86" width="154.29" height="154.29" viewBox="0 0 64 64" overflow="visible" style="color:#F5F7F5" fill="none"><rect x="11" y="13" width="42" height="7" rx="2" fill="currentColor"/>
+  <path class="acento" d="M24 20H40V51L32 42L24 51Z" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/></svg>
+<text x="2130.0" y="614.0" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="20" font-weight="bold" fill="#131A17">10</text>
+</svg>

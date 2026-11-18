@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none" style="color:#131A17">
+  <!-- 07B Cinco renglones -->
+  <path fill="currentColor" d="M14 10H46A2 2 0 0 1 48 12V14A2 2 0 0 1 46 16H14A2 2 0 0 1 12 14V12A2 2 0 0 1 14 10Z"/>
+  <path fill="currentColor" d="M14 19.5H21A2 2 0 0 1 23 21.5V23.5A2 2 0 0 1 21 25.5H14A2 2 0 0 1 12 23.5V21.5A2 2 0 0 1 14 19.5Z"/>
+  <path fill="currentColor" d="M14 29H21A2 2 0 0 1 23 31V33A2 2 0 0 1 21 35H14A2 2 0 0 1 12 33V31A2 2 0 0 1 14 29Z"/>
+  <path class="acento" fill="#45B392" d="M33 29H50A2 2 0 0 1 52 31V33A2 2 0 0 1 50 35H33A2 2 0 0 1 31 33V31A2 2 0 0 1 33 29Z"/>
+  <path fill="currentColor" d="M14 38.5H21A2 2 0 0 1 23 40.5V42.5A2 2 0 0 1 21 44.5H14A2 2 0 0 1 12 42.5V40.5A2 2 0 0 1 14 38.5Z"/>
+  <path fill="currentColor" d="M43 38.5H50A2 2 0 0 1 52 40.5V42.5A2 2 0 0 1 50 44.5H43A2 2 0 0 1 41 42.5V40.5A2 2 0 0 1 43 38.5Z"/>
+  <path fill="currentColor" d="M14 48H50A2 2 0 0 1 52 50V52A2 2 0 0 1 50 54H14A2 2 0 0 1 12 52V50A2 2 0 0 1 14 48Z"/>
+</svg>

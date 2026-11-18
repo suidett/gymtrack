@@ -1,0 +1,612 @@
+<!doctype html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GymTrack · Perfil y ajustes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="sistema.css">
+<style>
+  /* ── Quién eres ─────────────────────────────────────────────────────────── */
+  .yo { display: flex; align-items: center; gap: 14px; padding: 16px 0 20px; }
+  .yo .ceja { margin-bottom: 2px; }
+  /* Avatar común: 40 dp, radio 8, iniciales 700 14 px en mono; el grande, 56 dp. */
+  .avatar { flex: 0 0 40px; height: 40px; border-radius: var(--radio); background: var(--sup-alta);
+    display: flex; align-items: center; justify-content: center; font-size: 14px; }
+  .avatar.grande { flex-basis: 56px; height: 56px; font-size: 18px; }
+  .mes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .dato { background: var(--sup); border: 1px solid var(--sup-alta); border-radius: var(--radio); padding: 12px; }
+  .dato .cifra { display: block; font-size: 24px; line-height: 1.1; }
+  .dato .cifra small { font-size: 14px; margin-left: 2px; color: var(--texto-2); }
+  .dato .sec { font-size: 13px; margin-top: 4px; }
+
+  /* ── Entrenadora vinculada ─────────────────────────────────────────────── */
+  .ent-cabeza { display: flex; align-items: center; gap: 12px; }
+  .ent-cabeza .h3 { font-size: 16px; }
+  .ent-texto { margin-top: 12px; }
+  .pie-tarjeta { display: flex; justify-content: flex-end; margin: 8px -12px -8px 0; }
+
+  /* ── Seis cajas del código: las mismas de Encuesta y Clientes ──────────── */
+  /* 44 × 56 dp, radio 8, cifra 700 28 px. Para escribir: borde 2 px sobre el fondo del campo (la activa con el color
+     de la acción, válida con el borde de lo hecho, error en rojo). Para mostrar: fondo de superficie alta, sin borde. */
+  .celdas { position: relative; display: flex; gap: 8px; width: max-content; }
+  .celda { flex: 0 0 44px; height: 56px; border-radius: var(--radio); border: 2px solid var(--campo-borde); background: var(--campo-fondo);
+    display: flex; align-items: center; justify-content: center; font: 700 28px/1 var(--mono); }
+  .celda.activa { border-color: var(--accion); }
+  .celda.activa:empty::after { content: ""; width: 2px; height: 28px; background: var(--texto); }
+  .celdas.error .celda { border-color: var(--peligro); }
+  .celdas.ok .celda { border-color: var(--hecho-borde); }
+  .celdas.fijas .celda { border: 0; background: var(--sup-alta); }
+  .celdas.vencido .celda { color: var(--desh-texto); }
+  .codigo-input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; font-size: 16px; cursor: text; border: 0; padding: 0; }
+  .codigo-card .sec { margin-top: 12px; }
+  .codigo-card .vence { color: var(--texto); font-weight: 600; }
+  .acciones-codigo { display: flex; gap: 8px; margin-top: 16px; }
+  .acciones-codigo .btn { flex: 1; }
+  .codigo-card .otro { margin: 8px 0 -8px -12px; }
+  .vencido-txt { color: var(--peligro) !important; font-weight: 600; }
+
+  /* Insignia de alertas nuevas sobre la pestaña Alertas (la misma de Alertas y Clientes). */
+  .pestana .insignia { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px;
+    padding: 0 4px; margin-left: 4px; border-radius: 4px; background: var(--hecho-fondo); color: var(--visto);
+    font: 700 11px/1 var(--mono); vertical-align: 1px; }
+
+  /* ── Filas de ajustes ──────────────────────────────────────────────────── */
+  .ajustes { padding: 0 16px; }
+  .fila { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 64px; padding: 12px 0;
+    border: 0; border-top: 1px solid var(--sup-alta); background: transparent; color: var(--texto);
+    text-align: left; font: inherit; cursor: pointer; }
+  .ajustes > .fila:first-child, .ajustes > .bloque:first-child { border-top: 0; }
+  button.fila:active { background: var(--fantasma-pres); }
+  .fila:focus-visible { outline: 2px solid var(--foco); outline-offset: -2px; }
+  .fila .txt { flex: 1; min-width: 0; }
+  .fila .t { display: block; font: 600 16px/1.3 var(--letra); }
+  .fila .s { display: block; margin-top: 2px; font-size: 13px; line-height: 1.35; color: var(--texto-2); }
+  .fila.peligro .t { color: var(--peligro); }
+  .fila .chev { flex: 0 0 20px; width: 20px; height: 20px; }
+  .fila .chev path { fill: none; stroke: var(--texto-2); stroke-width: 2.5; stroke-linecap: square; }
+  .fila[disabled] { cursor: progress; }
+  .bloque { padding: 12px 0 16px; border-top: 1px solid var(--sup-alta); }
+  .bloque .fila { border-top: 0; padding-bottom: 8px; min-height: 0; cursor: default; }
+  .unidades .chip { flex: 0 0 56px; }
+  .preparando { display: block; height: 4px; margin-top: 8px; border-radius: 1px; background: var(--sup-alta); overflow: hidden; }
+  .preparando i { display: block; width: 0; height: 100%; background: var(--hecho-fondo); animation: llena 1.4s linear forwards; }
+  @keyframes llena { to { width: 100%; } }
+
+  /* Interruptor: recto, como todo en Más. Encendido toma el color de la acción. */
+  .interruptor { position: relative; flex: 0 0 52px; height: 32px; border-radius: var(--radio); border: 2px solid var(--borde);
+    transition: background-color var(--t-soltar) var(--curva), border-color var(--t-soltar) var(--curva); }
+  .interruptor::after { content: ""; position: absolute; top: 6px; left: 6px; width: 16px; height: 16px; border-radius: 4px;
+    background: var(--borde); transition: left var(--t-soltar) var(--curva); }
+  [aria-checked="true"] > .interruptor { background: var(--accion); border-color: var(--accion); }
+  [aria-checked="true"] > .interruptor::after { top: 4px; left: 24px; width: 20px; height: 20px; background: var(--accion-texto); }
+
+  .salir { margin-top: 24px; }
+  .pie-app { margin: 16px 0 0; text-align: center; font-size: 13px; color: var(--texto-2); }
+  .pie-app button { border: 0; background: none; color: var(--texto); font: inherit; text-decoration: underline;
+    text-underline-offset: 3px; min-height: 48px; padding: 0 8px; cursor: pointer; }
+
+  /* ── Botón deshabilitado (no está en el sistema) ───────────────────────── */
+  .tel .btn:disabled { background: var(--desh-fondo); color: var(--desh-texto); border-color: transparent; cursor: not-allowed; }
+
+  /* ── Hoja con teclado ──────────────────────────────────────────────────── */
+  .velo.columna { flex-direction: column; justify-content: flex-end; align-items: stretch; }
+  .velo .gesto-falso { flex: 0 0 20px; display: flex; align-items: center; justify-content: center; background: var(--sup); }
+  .velo .gesto-falso::before { content: ""; width: 108px; height: 4px; border-radius: 2px; background: var(--texto-2); }
+  .hoja .celdas { margin-top: 16px; }
+  .codigo-estado { min-height: 24px; margin-top: 12px; }
+  .codigo-estado .sec { font-size: 14px; }
+  .quien { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: var(--radio); background: var(--fondo); border: 1px solid var(--sup-alta); }
+  .quien .h3 { font-size: 16px; }
+  .error-txt { margin: 0; font: 600 14px/1.35 var(--letra); color: var(--peligro); }
+  .velo.sin-teclado .teclado { display: none; }
+  .hoja .acciones-vincular .btn:first-child { flex: 0 0 128px; }
+
+  .teclado { flex: 0 0 auto; padding: 8px 3px 2px; background: var(--sup); border-top: 1px solid var(--sup-alta); }
+  .t-fila { display: flex; justify-content: center; gap: 4px; margin-bottom: 8px; }
+  .tecla { flex: 1; max-width: 37px; height: 44px; padding: 0; border: 0; border-radius: 6px; cursor: pointer;
+    background: var(--sup-alta); color: var(--texto); font: 500 19px/1 var(--letra);
+    display: flex; align-items: center; justify-content: center; }
+  .tecla:active { background: var(--fantasma-pres); outline: 1px solid var(--borde); }
+  .tecla.esp { flex: 1.5; max-width: 54px; font-size: 14px; font-weight: 600; }
+  .tecla.espacio { flex: 5; max-width: none; font-size: 13px; color: var(--texto-2); }
+  .tecla.listo { background: var(--accion); color: var(--accion-texto); }
+  .tecla svg { width: 22px; height: 22px; }
+  .tecla path { fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: round; }
+
+  /* ── Borrar cuenta (pantalla completa) ─────────────────────────────────── */
+  .barra-sup { flex: 0 0 56px; display: flex; align-items: center; gap: 4px; padding: 0 4px; }
+  .barra-sup .h3 { flex: 1; }
+  .consecuencias { list-style: none; margin: 16px 0 0; padding: 0; }
+  .consecuencias li { display: flex; gap: 12px; padding: 12px 0; border-top: 1px solid var(--sup-alta); font-size: 15px; line-height: 1.45; }
+  .consecuencias li:first-child { border-top: 0; padding-top: 0; }
+  .consecuencias .n { flex: 0 0 24px; height: 24px; border-radius: 4px; background: var(--sup-alta);
+    display: flex; align-items: center; justify-content: center; font-size: 13px; }
+  .llevate { margin-top: 20px; }
+  .llevate .btn { margin-top: 12px; }
+  .rot-campo { display: block; margin: 24px 0 8px; font: 600 15px/1.3 var(--letra); }
+  .rot-campo .cifra { letter-spacing: 0.04em; }
+  .texto-campo { width: 100%; height: 56px; padding: 0 14px; border-radius: var(--radio);
+    border: 2px solid var(--campo-borde); background: var(--campo-fondo); color: var(--texto);
+    font: 700 20px/1 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; }
+  .texto-campo:focus { outline: none; border-color: var(--texto); }
+  .texto-campo.listo { border-color: var(--peligro); }
+
+  .notas-maqueta { max-width: 860px; margin: 32px auto 0; color: var(--p-texto-2); font-size: 14px; }
+  .notas-maqueta h2 { color: var(--p-texto); font-size: 16px; margin: 0 0 8px; }
+  .notas-maqueta ul { margin: 0; padding-left: 18px; }
+  .notas-maqueta li { margin: 4px 0; }
+</style>
+</head>
+<body>
+<main class="maqueta">
+  <header class="maqueta-cabeza">
+    <h1>Pantalla 15 · Perfil y ajustes</h1>
+    <p>Dirección Más · 412 × 892 dp · <a href="hoy.html">Hoy</a> · <a href="index.html">todas las pantallas</a></p>
+  </header>
+
+  <div class="controles" role="group" aria-label="Controles de la maqueta">
+    <label class="grupo"><span class="rot">Estado</span>
+      <select class="ctl" data-ctl="estado">
+        <optgroup label="Alumna">
+          <option value="vinculada">Con entrenadora</option>
+          <option value="sin-entrenador">Sin entrenador</option>
+          <option value="vincular">Vincular: ingresar código</option>
+          <option value="codigo-valido">Vincular: código correcto</option>
+          <option value="codigo-error">Vincular: código que no sirve</option>
+          <option value="desvincular">Desvincular (confirmación)</option>
+          <option value="borrar">Borrar cuenta (confirmación)</option>
+        </optgroup>
+        <optgroup label="Entrenadora">
+          <option value="entrenador">Código vigente</option>
+          <option value="entrenador-vencido">Código vencido</option>
+          <option value="entrenador-borrar">Borrar cuenta (confirmación)</option>
+        </optgroup>
+      </select></label>
+    <label class="grupo"><span class="rot">Tema</span>
+      <select class="ctl" data-ctl="tema">
+        <option value="gimnasio">Modo gimnasio</option>
+        <option value="clara">Clara</option>
+        <option value="ambos">Las dos</option>
+      </select></label>
+    <label class="grupo"><span class="rot">Tamaño</span>
+      <select class="ctl" data-ctl="zoom">
+        <option value="ajustar">Ajustar al ancho</option>
+        <option value="100">Real (1 dp = 1 px)</option>
+        <option value="150">150 %</option>
+      </select></label>
+    <label class="grupo"><input type="checkbox" data-ctl="medidas"><span>Medidas de toque</span></label>
+  </div>
+
+  <div class="escenario" id="escenario"></div>
+
+  <section class="notas-maqueta">
+    <h2>Qué mirar</h2>
+    <ul>
+      <li>El interruptor de modo gimnasio funciona: con un solo tema a la vista, cambia el teléfono entero. Los otros interruptores, las unidades y el descanso también responden.</li>
+      <li>Vincular: escribe en las 6 casillas (con tu teclado o con el dibujado). El código de prueba es <b>K7P2QX</b>; cualquier otro da error. Antes de vincular se ve a quién y qué va a ver, porque son datos de salud.</li>
+      <li>Desvincular y borrar cuenta piden confirmación. Borrar es más fuerte: explica qué pasa hoy y qué pasa en 30 días, ofrece exportar antes y pide escribir BORRAR.</li>
+      <li>«Exportar mis datos» muestra que se está armando el archivo y avisa cuando está listo.</li>
+      <li>Con el rol de entrenadora, el código va arriba en las mismas seis cajas de 44 × 56 dp que la clienta usa para escribirlo (aquí sin borde, porque solo se muestra). Copiar, compartir y generar otro funcionan.</li>
+      <li>La adherencia de la entrenadora es la misma de Clientes esa semana (90 %), y la pestaña Alertas lleva la insignia con las 3 nuevas, como en todas sus pantallas.</li>
+      <li>Para ver más abajo sin bajar a mano: agrega <code>&amp;seccion=ajustes</code> o <code>&amp;seccion=cuenta</code> a la dirección.</li>
+    </ul>
+  </section>
+</main>
+
+<script src="maqueta.js"></script>
+<script>
+// ── Datos de prueba ──────────────────────────────────────────────────────────
+// Martina: cuenta y encuesta el 1 de septiembre, vinculada con Camila el 5 de octubre, 34 sesiones en total.
+const ALUMNA = { n: 'Martina Fuentes', i: 'MF', desde: 'desde el 1 de septiembre', sesiones: 34, racha: 12, adh: 94 };
+// La adherencia de la semana es la misma que muestra Clientes (9 de 10 sesiones hasta hoy).
+const ENTRENADORA = { n: 'Camila Rojas', i: 'CR', desde: 'desde agosto', clientes: 12, conRutina: 10, adh: 90 };
+const ALERTAS_NUEVAS = 3;
+const CODIGO_VALIDO = 'K7P2QX';
+const ESTADOS_ENT = ['entrenador', 'entrenador-vencido', 'entrenador-borrar'];
+const HOY_MAS_30 = '17 de diciembre';
+
+// ── Íconos de trazo ──────────────────────────────────────────────────────────
+const icoVolver = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H5M11 5l-7 7 7 7"/></svg>';
+const icoChev = '<svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>';
+const icoMayus = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l7 8h-4v7H9v-7H5z"/></svg>';
+const icoRetro = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12v12H8l-5-6z"/><path d="M11 9.5l5 5M16 9.5l-5 5"/></svg>';
+const icoListo = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5 9.5-10"/></svg>';
+
+// ── Estado de la pantalla ────────────────────────────────────────────────────
+let P;
+const hojaDe = (e) => ({ vincular: 'vincular', 'codigo-valido': 'vincular', 'codigo-error': 'vincular', desvincular: 'desvincular' }[e] || null);
+function prepararEstado(estado) {
+  P = {
+    unidad: 'kg', descanso: 90, exportando: false, confirmar: '', volverA: null,
+    avisos: { descanso: true, recordatorio: true, entrenadora: true, alertas: true, notas: true },
+    inv: estado === 'entrenador-vencido' ? { codigo: 'H4M9TB', vencido: true } : { codigo: CODIGO_VALIDO, vencido: false },
+  };
+  ajustarA(estado);
+}
+// Lo que depende del estado sin borrar las preferencias que la persona ya tocó.
+function ajustarA(estado) {
+  P.vinculada = !['sin-entrenador', 'vincular', 'codigo-valido', 'codigo-error'].includes(estado);
+  P.hoja = hojaDe(estado);
+  P.codigo = { 'codigo-valido': CODIGO_VALIDO, 'codigo-error': 'K7P2QZ' }[estado] || '';
+  P.teclado = estado !== 'codigo-valido';
+  if (estado === 'borrar') P.volverA = 'vinculada';
+  if (estado === 'entrenador-borrar') P.volverA = 'entrenador';
+}
+const esEnt = (estado) => ESTADOS_ENT.includes(estado);
+
+// ── Piezas ───────────────────────────────────────────────────────────────────
+const interruptor = (clave, t, s, on) => `<button class="fila" role="switch" aria-checked="${on}" data-accion="interruptor" data-clave="${clave}" data-toque>
+  <span class="txt"><span class="t">${t}</span>${s ? `<span class="s">${s}</span>` : ''}</span><span class="interruptor" aria-hidden="true"></span></button>`;
+const filaIr = (accion, t, s, extra = '') => `<button class="fila${extra}" data-accion="${accion}" data-toque>
+  <span class="txt"><span class="t">${t}</span>${s ? `<span class="s">${s}</span>` : ''}</span>${icoChev}</button>`;
+
+function quien(ent) {
+  const d = ent ? ENTRENADORA : ALUMNA;
+  const datos = ent
+    ? `<div class="dato"><span class="cifra">${d.clientes}</span><p class="sec">clientes</p></div>
+       <div class="dato"><span class="cifra">${d.conRutina}</span><p class="sec">con rutina activa</p></div>
+       <div class="dato"><span class="cifra">${d.adh}<small>%</small></span><p class="sec">adherencia semana</p></div>`
+    : `<div class="dato"><span class="cifra">${d.sesiones}</span><p class="sec">sesiones</p></div>
+       <div class="dato"><span class="cifra">${d.racha}</span><p class="sec">días de racha</p></div>
+       <div class="dato"><span class="cifra">${d.adh}<small>%</small></span><p class="sec">adherencia 4 semanas</p></div>`;
+  return `<section class="yo"><span class="avatar grande cifra">${d.i}</span>
+      <div><p class="ceja">${ent ? 'Cuenta de entrenadora' : 'Cuenta de cliente'} · ${d.desde}</p><h1 class="h2">${d.n}</h1></div></section>
+    <div class="mes">${datos}</div>`;
+}
+
+function celdas(codigo, clase, conInput, tema) {
+  const activa = conInput && codigo.length < 6 ? codigo.length : -1;
+  const cs = Array.from({ length: 6 }, (_, i) => `<span class="celda${i === activa ? ' activa' : ''}">${codigo[i] || ''}</span>`).join('');
+  const input = conInput
+    ? `<input class="codigo-input" id="codigo-${tema}" data-campo="codigo" value="${codigo}" maxlength="6" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false" aria-label="Código de 6 caracteres">` : '';
+  return `<div class="celdas ${clase}">${input}${cs}</div>`;
+}
+
+function bloqueEntrenadora(ent) {
+  if (ent) {
+    const I = P.inv;
+    const cuerpo = I.vencido
+      ? `${celdas(I.codigo, 'fijas vencido', false)}
+         <p class="sec vencido-txt">Venció el dom 15 nov. Nadie lo usó.</p>
+         <p class="sec">Genera uno nuevo para invitar a alguien. Dura 7 días y sirve para una persona.</p>
+         <div class="acciones-codigo"><button class="btn btn-primario alto" data-accion="generar" data-toque>Generar código nuevo</button></div>`
+      : `${celdas(I.codigo, 'fijas', false)}
+         <p class="sec">Sirve para una persona. Vence el <span class="vence">mar 24 nov</span>, en 7 días.</p>
+         <div class="acciones-codigo">
+           <button class="btn btn-secundario" data-accion="copiar" data-toque>Copiar</button>
+           <button class="btn btn-primario" data-accion="compartir" data-toque>Compartir</button>
+         </div>
+         <button class="btn btn-fantasma otro" data-accion="generar" data-toque>Generar otro código</button>`;
+    return `<div class="seccion-cabeza"><h2 class="h3">Código para invitar</h2></div>
+      <div class="tarjeta codigo-card">${cuerpo}</div>`;
+  }
+  if (!P.vinculada) {
+    return `<div class="seccion-cabeza"><h2 class="h3">¿Entrenas con alguien?</h2></div>
+      <div class="tarjeta">
+        <p class="sec">Si tu entrenador te dio un código de 6 caracteres, ingrésalo. Verá tus sesiones y tu avance, y podrá armarte las rutinas.</p>
+        <button class="btn btn-secundario ancho" style="margin-top:12px" data-accion="abrir" data-hoja="vincular" data-toque>Ingresar código</button>
+      </div>`;
+  }
+  return `<div class="seccion-cabeza"><h2 class="h3">Tu entrenadora</h2></div>
+    <div class="tarjeta">
+      <div class="ent-cabeza"><span class="avatar cifra">CR</span>
+        <div><p class="h3">Camila Rojas</p><p class="sec">Vinculada desde el 5 de octubre</p></div></div>
+      <p class="sec ent-texto">Ve tus sesiones, tu peso, tus medidas y tus fotos, y te arma las rutinas.</p>
+      <div class="pie-tarjeta"><button class="btn btn-fantasma peligro" data-accion="abrir" data-hoja="desvincular" data-toque>Desvincular</button></div>
+    </div>`;
+}
+
+function preferencias(tema, ent) {
+  const unidades = ['kg', 'lb'].map((u) => `<button class="chip" data-accion="unidad" data-v="${u}" aria-pressed="${P.unidad === u}" data-toque><span>${u}</span></button>`).join('');
+  const d = P.descanso;
+  const descanso = ent ? '' : `<div class="bloque">
+      <div class="fila"><span class="txt"><span class="t">Descanso entre series</span><span class="s">Para los ejercicios que no traen uno propio.</span></span></div>
+      <div class="paso">
+        <button class="btn-paso${d <= 30 ? ' limite' : ''}" data-accion="descanso" data-v="-15" aria-label="Quince segundos menos" data-toque><span class="barra-menos"></span></button>
+        <div class="campo"><span class="valor">${fmtReloj(d)}</span><span class="unidad">min</span></div>
+        <button class="btn-paso${d >= 300 ? ' limite' : ''}" data-accion="descanso" data-v="15" aria-label="Quince segundos más" data-toque>${simbolo('simbolo', '')}</button>
+      </div></div>`;
+  return `<div class="seccion-cabeza" data-seccion="ajustes"><h2 class="h3">${ent ? 'Preferencias' : 'Entrenamiento'}</h2></div>
+    <div class="tarjeta ajustes">
+      ${interruptor('gimnasio', 'Modo gimnasio', 'Oscuro y con más contraste, para leer rápido entre series.', tema === 'gimnasio')}
+      <div class="fila" style="cursor:default"><span class="txt"><span class="t">Unidades</span><span class="s">${P.unidad === 'kg' ? 'Ves los pesos en kilos.' : 'Ves los pesos en libras.'}</span></span>
+        <div class="chips unidades" role="group" aria-label="Unidades">${unidades}</div></div>
+      ${descanso}
+    </div>`;
+}
+
+function avisos(ent) {
+  const A = P.avisos;
+  const filas = ent
+    ? interruptor('alertas', 'Alertas de tus clientes', 'Cuando alguien no avanza, baja su rendimiento o anota un dolor.', A.alertas)
+      + interruptor('notas', 'Notas nuevas', 'Cuando un cliente deja una observación.', A.notas)
+    : interruptor('descanso', 'Fin del descanso', 'Vibra y suena aunque tengas la pantalla apagada.', A.descanso)
+      + interruptor('recordatorio', 'Recordatorio para entrenar', '30 minutos antes de tu hora habitual, las 19:00.', A.recordatorio)
+      + (P.vinculada ? interruptor('entrenadora', 'Mensajes de tu entrenadora', 'Cuando Camila te deja un consejo o responde una nota.', A.entrenadora) : '');
+  return `<div class="seccion-cabeza"><h2 class="h3">Avisos</h2></div><div class="tarjeta ajustes">${filas}</div>`;
+}
+
+function cuenta(ent) {
+  const exportar = P.exportando
+    ? `<button class="fila" disabled data-toque><span class="txt"><span class="t">Preparando tu archivo…</span>
+        <span class="s">Puede tardar unos segundos.</span><span class="preparando"><i></i></span></span></button>`
+    : filaIr('exportar', 'Exportar mis datos', ent ? 'Tus rutinas, ejercicios propios y observaciones, en un archivo para planilla.' : 'Sesiones, series, medidas, encuesta y observaciones, en un archivo para planilla.');
+  return `<div class="seccion-cabeza" data-seccion="cuenta"><h2 class="h3">Tu cuenta</h2></div>
+    <div class="tarjeta ajustes">
+      ${filaIr('datos', 'Datos personales', ent ? 'Nombre, correo y contraseña.' : 'Nombre, correo, contraseña, fecha de nacimiento y altura.')}
+      ${exportar}
+      ${filaIr('borrar', 'Borrar mi cuenta', ent ? 'Se borra todo en 30 días.' : 'Se borra todo en 30 días, con tus fotos.', ' peligro')}
+    </div>
+    <button class="btn btn-secundario ancho salir" data-accion="abrir" data-hoja="salir" data-toque>Cerrar sesión</button>
+    <p class="pie-app"><span class="cifra" style="font-weight:500">GymTrack 1.0</span> · <button data-accion="privacidad" data-toque>Política de privacidad</button></p>`;
+}
+
+function teclado() {
+  const k = (c) => `<button class="tecla" data-tecla="${c}" tabindex="-1">${c}</button>`;
+  const fila = (s) => `<div class="t-fila">${[...s].map(k).join('')}</div>`;
+  return `<div class="teclado" aria-hidden="true">${fila('1234567890')}${fila('QWERTYUIOP')}${fila('ASDFGHJKLÑ')}
+    <div class="t-fila"><button class="tecla esp" data-tecla="mayus" tabindex="-1">${icoMayus}</button>${[...'ZXCVBNM'].map(k).join('')}<button class="tecla esp" data-tecla="borrar" tabindex="-1">${icoRetro}</button></div>
+    <div class="t-fila"><button class="tecla esp" data-tecla="num" tabindex="-1">?123</button>${k(',')}<button class="tecla espacio" data-tecla="espacio" tabindex="-1">Español</button>${k('.')}<button class="tecla esp listo" data-tecla="listo" tabindex="-1" aria-label="Listo">${icoListo}</button></div>
+  </div>`;
+}
+
+function estadoCodigo() {
+  const c = P.codigo;
+  if (c.length < 6) return '<p class="sec">Mayúsculas o minúsculas da lo mismo.</p>';
+  if (c !== CODIGO_VALIDO) return '<p class="error-txt" role="alert">Ese código no existe o ya venció. Pídele uno nuevo a tu entrenador.</p>';
+  return `<div class="quien"><span class="avatar cifra">CR</span>
+      <div><p class="h3">Camila Rojas</p><p class="sec">Entrenadora · el código vence el mar 24 nov</p></div></div>
+    <p class="sec" style="margin-top:12px">Al vincularte, Camila verá tus sesiones, tu peso, tus medidas y tus fotos. Puedes desvincularte cuando quieras desde aquí.</p>`;
+}
+const claseCeldas = () => (P.codigo.length < 6 ? '' : P.codigo === CODIGO_VALIDO ? 'ok' : 'error');
+
+function hojas(tema) {
+  const valido = P.codigo === CODIGO_VALIDO;
+  const ver = (h) => (P.hoja === h ? ' ver' : '');
+  return `<div class="velo columna${ver('vincular')}${P.teclado ? '' : ' sin-teclado'}" data-hoja="vincular">
+      <div class="hoja" role="dialog" aria-modal="true" aria-labelledby="t-vin-${tema}">
+        <h2 class="h2" id="t-vin-${tema}">Ingresa el código</h2>
+        <p class="sec" style="margin-top:6px">Te lo da tu entrenador. Son 6 caracteres, entre letras y números, y dura 7 días.</p>
+        ${celdas(P.codigo, claseCeldas(), true, tema)}
+        <div class="codigo-estado" aria-live="polite">${estadoCodigo()}</div>
+        <div class="acciones acciones-vincular"><button class="btn btn-secundario" data-accion="cerrar-hoja" data-toque>Cancelar</button>
+          <button class="btn btn-primario" data-accion="vincularme" ${valido ? '' : 'disabled'} data-toque>${valido ? 'Vincularme con Camila' : 'Vincular'}</button></div>
+      </div>
+      ${teclado()}
+      <div class="gesto-falso"></div>
+    </div>
+    <div class="velo${ver('desvincular')}" data-hoja="desvincular"><div class="hoja" role="dialog" aria-modal="true" aria-labelledby="t-des-${tema}">
+      <h2 class="h2" id="t-des-${tema}">¿Desvincularte de Camila?</h2>
+      <p class="sec" style="margin-top:8px">Desde ahora deja de ver tus sesiones, tu peso, tus medidas y tus fotos. Tú conservas todo tu historial.</p>
+      <div class="acciones"><button class="btn btn-secundario" data-accion="cerrar-hoja" data-toque>Cancelar</button>
+        <button class="btn btn-peligro" data-accion="si-desvincular" data-toque>Desvincular</button></div>
+    </div></div>
+    <div class="velo${ver('salir')}" data-hoja="salir"><div class="hoja" role="dialog" aria-modal="true" aria-labelledby="t-sal-${tema}">
+      <h2 class="h2" id="t-sal-${tema}">¿Cerrar sesión?</h2>
+      <p class="sec" style="margin-top:8px">Todo lo que registraste queda guardado en tu cuenta. Para volver, ingresas con tu correo y tu contraseña.</p>
+      <div class="acciones"><button class="btn btn-secundario" data-accion="cerrar-hoja" data-toque>Cancelar</button>
+        <button class="btn btn-primario" data-accion="si-salir" data-toque>Cerrar sesión</button></div>
+    </div></div>`;
+}
+
+// La pestaña Alertas lleva las nuevas en todas las pantallas de la entrenadora.
+const pestanasEntrenador = () => pestanas(PESTANAS_ENTRENADOR, 'Perfil')
+  .replace('>Alertas</button>', `>Alertas<span class="insignia" aria-label="${ALERTAS_NUEVAS} nuevas">${ALERTAS_NUEVAS}</span></button>`);
+
+function pantallaPerfil(tema, ctl, ent) {
+  return `<div class="tel" data-tema="${tema}">
+    <div class="tel-estado"><span class="cifra" style="font-weight:600">9:41</span><span>5G · 82 %</span></div>
+    <div class="tel-contenido">
+      ${quien(ent)}
+      ${bloqueEntrenadora(ent)}
+      ${preferencias(tema, ent)}
+      ${avisos(ent)}
+      ${cuenta(ent)}
+    </div>
+    ${ent ? pestanasEntrenador() : pestanas(PESTANAS_ALUMNO, 'Perfil')}
+    <div class="tel-gesto"></div>
+    <div class="aviso" role="status"></div>
+    ${hojas(tema)}
+  </div>`;
+}
+
+function pantallaBorrar(tema, ent) {
+  const listo = P.confirmar.trim().toUpperCase() === 'BORRAR';
+  const pasos = ent
+    ? [`<b>Hoy</b> se cierra tu sesión en todos tus teléfonos. Tus <span class="cifra">12</span> clientes quedan sin entrenadora, con todo su historial.`,
+      `<b>El ${HOY_MAS_30}</b> borramos tu cuenta, tus rutinas y tus ejercicios propios.`,
+      'Después de esa fecha no hay forma de recuperarlos.']
+    : [`<b>Hoy</b> se cierra tu sesión en todos tus teléfonos y ${P.vinculada ? 'Camila deja de ver tus datos' : 'nadie más puede ver tus datos'}.`,
+      `<b>El ${HOY_MAS_30}</b> borramos todo: sesiones, series, récords, peso, medidas, fotos, encuesta y observaciones.`,
+      'Después de esa fecha no hay forma de recuperarlo.'];
+  return `<div class="tel" data-tema="${tema}">
+    <div class="tel-estado"><span class="cifra" style="font-weight:600">9:41</span><span>5G · 82 %</span></div>
+    <div class="barra-sup">
+      <button class="btn-icono" data-accion="volver-borrar" aria-label="Volver al perfil" data-toque>${icoVolver}</button>
+      <h1 class="h3">Borrar cuenta</h1>
+    </div>
+    <div class="tel-contenido">
+      <h2 class="h2" style="margin-top:8px">Antes de borrar, lee esto</h2>
+      <ol class="consecuencias">${pasos.map((p, i) => `<li><span class="n cifra">${i + 1}</span><span>${p}</span></li>`).join('')}</ol>
+      <div class="tarjeta llevate">
+        <p class="h3" style="font-size:16px">Llévate tus datos primero</p>
+        <p class="sec" style="margin-top:4px">${ent ? 'Un archivo para planilla con tus rutinas, ejercicios y observaciones.' : 'Un archivo para planilla con todo lo que registraste.'}</p>
+        <button class="btn btn-secundario ancho" data-accion="exportar" ${P.exportando ? 'disabled' : ''} data-toque>${P.exportando ? 'Preparando…' : 'Exportar mis datos'}</button>
+      </div>
+      <label class="rot-campo" for="confirmar-${tema}">Para confirmar, escribe <span class="cifra">BORRAR</span></label>
+      <input class="texto-campo${listo ? ' listo' : ''}" id="confirmar-${tema}" data-campo="confirmar" value="${P.confirmar}" autocomplete="off" autocapitalize="characters" spellcheck="false">
+    </div>
+    <div class="tel-accion"><button class="btn btn-peligro ancho alto" data-accion="si-borrar" ${listo ? '' : 'disabled'} data-toque>Borrar mi cuenta</button></div>
+    <div class="tel-gesto"></div>
+    <div class="aviso" role="status"></div>
+  </div>`;
+}
+
+function telefono(tema, ctl) {
+  if (!ESTADOS_ENT.includes(ctl.estado) && !hojaDe(ctl.estado) && !['vinculada', 'sin-entrenador', 'borrar'].includes(ctl.estado)) ctl.estado = 'vinculada';
+  const ent = esEnt(ctl.estado);
+  // El rol sigue al estado, para que las pestañas y la dirección queden coherentes.
+  ctl.rol = ent ? 'entrenador' : 'alumno';
+  if (ctl.estado === 'borrar' || ctl.estado === 'entrenador-borrar') return pantallaBorrar(tema, ent);
+  return pantallaPerfil(tema, ctl, ent);
+}
+
+// ── Maqueta ──────────────────────────────────────────────────────────────────
+// Si llega desde las pestañas de la entrenadora (#rol=entrenador), parte en su perfil.
+const pedido = new URLSearchParams(location.hash.slice(1));
+const m = iniciarMaqueta({
+  telefono, alCambiarEstado: prepararEstado,
+  porDefecto: { estado: pedido.get('rol') === 'entrenador' && !pedido.get('estado') ? 'entrenador' : 'vinculada' },
+});
+const { ctl, escenario } = m;
+const todos = (sel) => escenario.querySelectorAll(sel);
+const avisarTodos = (t) => todos('.tel').forEach((tel) => avisar(tel, t));
+
+function repintar() {
+  const scroll = [...todos('.tel-contenido')].map((c) => c.scrollTop);
+  m.pintar();
+  todos('.tel-contenido').forEach((c, k) => { c.scrollTop = scroll[k] || 0; });
+}
+function irA(estado) { ctl.estado = estado; ajustarA(estado); m.pintar(); }
+function bajarA(seccion) {
+  todos('.tel').forEach((tel) => {
+    const c = tel.querySelector('.tel-contenido'), s = tel.querySelector(`[data-seccion="${seccion}"]`);
+    if (s) c.scrollTop = s.offsetTop - c.offsetTop - 8;
+  });
+}
+document.fonts.ready.then(() => { if (ctl.seccion) bajarA(ctl.seccion); });
+
+// Al escribir el código no se repinta el teléfono: se actualizan las casillas y el aviso.
+function pintarCodigo(origen) {
+  const valido = P.codigo === CODIGO_VALIDO;
+  if (valido) P.teclado = false;
+  todos('.velo[data-hoja="vincular"]').forEach((v) => {
+    const inp = v.querySelector('[data-campo="codigo"]');
+    if (inp !== origen) inp.value = P.codigo;
+    const cont = v.querySelector('.celdas');
+    cont.className = `celdas ${claseCeldas()}`;
+    cont.querySelectorAll('.celda').forEach((c, i) => {
+      c.textContent = P.codigo[i] || '';
+      c.classList.toggle('activa', i === P.codigo.length && P.codigo.length < 6);
+    });
+    v.querySelector('.codigo-estado').innerHTML = estadoCodigo();
+    const b = v.querySelector('[data-accion="vincularme"]');
+    b.disabled = !valido; b.textContent = valido ? 'Vincularme con Camila' : 'Vincular';
+    v.classList.toggle('sin-teclado', !P.teclado);
+  });
+  if (valido && origen) origen.blur();
+}
+const limpiarCodigo = (s) => s.toUpperCase().replace(/[^A-Z0-9Ñ]/g, '').slice(0, 6);
+
+function nuevoCodigo() {
+  const letras = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // sin 0, O, 1 ni I, que se confunden
+  let c = ''; while (c.length < 6) c += letras[Math.floor(Math.random() * letras.length)];
+  return c;
+}
+
+escenario.addEventListener('pointerdown', (ev) => { if (ev.target.closest('[data-tecla]')) ev.preventDefault(); });
+
+escenario.addEventListener('click', (ev) => {
+  const t = ev.target.closest('[data-tecla]');
+  if (t) {
+    const k = t.dataset.tecla;
+    if (k === 'listo') { P.teclado = false; pintarCodigo(null); return; }
+    if (['mayus', 'num', 'espacio', ',', '.'].includes(k)) return;
+    P.codigo = k === 'borrar' ? P.codigo.slice(0, -1) : limpiarCodigo(P.codigo + k);
+    pintarCodigo(null);
+    return;
+  }
+  const b = ev.target.closest('[data-accion]'); if (!b || b.disabled) return;
+  const tel = b.closest('.tel');
+  switch (b.dataset.accion) {
+    case 'interruptor': {
+      const k = b.dataset.clave;
+      if (k === 'gimnasio') {
+        if (ctl.tema === 'ambos') {
+          avisar(tel, `En la app, esto cambia todo a ${tel.dataset.tema === 'gimnasio' ? 'clara' : 'modo gimnasio'}. Aquí ves los dos lado a lado.`);
+        } else { ctl.tema = ctl.tema === 'gimnasio' ? 'clara' : 'gimnasio'; repintar(); }
+        break;
+      }
+      P.avisos[k] = !P.avisos[k]; repintar();
+      break;
+    }
+    case 'unidad': P.unidad = b.dataset.v; repintar(); break;
+    case 'descanso': {
+      const v = Math.min(300, Math.max(30, P.descanso + +b.dataset.v));
+      if (v === P.descanso) { avisar(tel, v === 300 ? 'El máximo es 5 minutos.' : 'El mínimo es 30 segundos.'); break; }
+      P.descanso = v; repintar();
+      break;
+    }
+    case 'datos': avisar(tel, 'Aquí se editan tus datos personales.'); break;
+    case 'privacidad': avisar(tel, 'Se abre la política de privacidad en el navegador.'); break;
+    case 'exportar':
+      P.exportando = true; repintar();
+      setTimeout(() => { P.exportando = false; repintar(); avisarTodos('Listo: gymtrack-mis-datos.zip. Elige dónde guardarlo o a quién mandarlo.'); }, 1500);
+      break;
+    case 'borrar': P.volverA = ctl.estado; P.confirmar = ''; ctl.estado = esEnt(ctl.estado) ? 'entrenador-borrar' : 'borrar'; m.pintar(); break;
+    case 'volver-borrar': irA(P.volverA || (esEnt(ctl.estado) ? 'entrenador' : 'vinculada')); break;
+    case 'si-borrar':
+      avisarTodos(`Tu cuenta se borra el ${HOY_MAS_30}. Te mandamos un correo con el detalle.`);
+      setTimeout(() => m.ir('ingreso.html'), 1800);
+      break;
+    case 'abrir': {
+      const h = b.dataset.hoja;
+      if (h === 'vincular') { ctl.estado = 'vincular'; ajustarA('vincular'); m.pintar(); }
+      else if (h === 'desvincular') { ctl.estado = 'desvincular'; P.hoja = h; repintar(); }
+      else { P.hoja = h; repintar(); }
+      if (h === 'vincular') { const inp = tel && escenario.querySelector('.velo.ver [data-campo="codigo"]'); if (inp) inp.focus(); }
+      break;
+    }
+    case 'cerrar-hoja': {
+      const h = P.hoja; P.hoja = null;
+      if (h === 'vincular') irA('sin-entrenador');
+      else if (h === 'desvincular') irA('vinculada');
+      else repintar();
+      break;
+    }
+    case 'vincularme': irA('vinculada'); avisarTodos('Listo. Camila Rojas ya ve tus sesiones y tu avance.'); break;
+    case 'si-desvincular': irA('sin-entrenador'); avisarTodos('Te desvinculaste de Camila. Tu historial sigue aquí.'); break;
+    case 'si-salir': m.ir('ingreso.html'); break;
+    case 'copiar':
+      try { navigator.clipboard.writeText(P.inv.codigo); } catch (e) { /* en la maqueta da lo mismo */ }
+      avisar(tel, `Código copiado: ${P.inv.codigo}`);
+      break;
+    case 'compartir':
+      avisar(tel, `Se abre el menú de compartir: «Entrena conmigo en GymTrack. Tu código es ${P.inv.codigo} y vence el mar 24 nov.»`);
+      break;
+    case 'generar': {
+      const antes = P.inv.vencido;
+      P.inv = { codigo: nuevoCodigo(), vencido: false };
+      if (antes) ctl.estado = 'entrenador';
+      repintar();
+      avisarTodos(antes ? `Código nuevo: ${P.inv.codigo}. Vence el mar 24 nov.` : `Código nuevo: ${P.inv.codigo}. El anterior ya no sirve.`);
+      break;
+    }
+  }
+});
+
+escenario.addEventListener('input', (ev) => {
+  const t = ev.target;
+  if (t.matches('[data-campo="codigo"]')) { P.codigo = limpiarCodigo(t.value); t.value = P.codigo; pintarCodigo(t); }
+  if (t.matches('[data-campo="confirmar"]')) {
+    P.confirmar = t.value;
+    const listo = P.confirmar.trim().toUpperCase() === 'BORRAR';
+    todos('[data-campo="confirmar"]').forEach((x) => { if (x !== t) x.value = t.value; x.classList.toggle('listo', listo); });
+    todos('[data-accion="si-borrar"]').forEach((x) => { x.disabled = !listo; });
+  }
+});
+escenario.addEventListener('focusin', (ev) => {
+  if (ev.target.matches('[data-campo="codigo"]') && P.codigo !== CODIGO_VALIDO) { P.teclado = true; pintarCodigo(ev.target); }
+});
+// Escape cierra la hoja (maqueta.js la oculta; aquí se vuelve al estado de base).
+document.addEventListener('keydown', (ev) => {
+  if (ev.key !== 'Escape' || !P.hoja) return;
+  const h = P.hoja; P.hoja = null;
+  if (h === 'vincular') irA('sin-entrenador'); else if (h === 'desvincular') irA('vinculada'); else repintar();
+});
+</script>
+</body>
+</html>

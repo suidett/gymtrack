@@ -1,0 +1,94 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# CI común · borrador que reemplaza al .github/workflows/ci.yml actual
+#
+# Corre en cada PR y en cada push a main. Hace lo que hace hoy el job «verificar»
+# (tipos, lint, pruebas) y suma cobertura, lint de shared, formato, secretos y
+# auditoría. El bundle de Android se mueve a app.yml.
+# Checks obligatorios que salen de aquí: «calidad» y «seguridad».
+# Pruebas del plan: UNI, ACC-003, ACC-004, SEG-013, SEG-020, SEG-021.
+# ─────────────────────────────────────────────────────────────────────────────
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+# En un PR, un push nuevo cancela la corrida anterior; en main se deja terminar.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  calidad:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/preparar
+
+      - name: Tipos
+        run: pnpm typecheck
+
+      # PENDIENTE: agregar ESLint a packages/shared y apps/api; hoy el lint cubre solo la app (H-06).
+      - name: Lint de app, API y shared
+        run: pnpm lint
+
+      # PENDIENTE: script «format:check» en la raíz (prettier --check .).
+      - name: Formato
+        run: pnpm format:check
+
+      # Motor, fórmulas, historial y detección (UNI), y contraste de los tokens (ACC-003, ACC-004).
+      # PENDIENTE: @vitest/coverage-v8 y umbral de 100 % de ramas en el motor (ver plan, regla 7).
+      - name: Unitarias con cobertura
+        run: |
+          pnpm --filter @gymtrack/shared exec vitest run --coverage \
+            --reporter=default --reporter=junit --outputFile=reportes/junit.xml
+          pnpm --filter @gymtrack/tokens --if-present test
+
+      - name: Resumen
+        if: always()
+        run: |
+          echo "### Unitarias" >> "$GITHUB_STEP_SUMMARY"
+          echo "Reporte JUnit y cobertura en el artefacto «calidad-reportes»." >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: calidad-reportes
+          path: |
+            packages/shared/reportes/
+            packages/shared/coverage/
+          retention-days: 14
+
+  seguridad:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # gitleaks necesita la historia del PR
+
+      # SEG-020: el CI falla si detecta una clave (§Seguridad).
+      # Si el repo pasa a una organización, gitleaks pide GITLEAKS_LICENSE.
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: ./.github/actions/preparar
+
+      # SEG-021: auditoría de dependencias en cada PR (§Seguridad).
+      - name: Auditoría de dependencias
+        run: pnpm audit --audit-level high
+
+      # SEG-013: consultas solo por Prisma, sin SQL armado con texto del usuario.
+      - name: Sin SQL armado a mano
+        run: |
+          if grep -rnE '\$(queryRaw|executeRaw)Unsafe' apps/api/src 2>/dev/null; then
+            echo "::error::Usa Prisma o \$queryRaw con plantilla; nunca la variante Unsafe (§Seguridad)."
+            exit 1
+          fi

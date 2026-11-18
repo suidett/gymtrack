@@ -1,0 +1,14 @@
+{
+  "_borrador": "BORRADOR. Copiar a .firebaserc en la raíz con los ids reales y borrar esta clave. Las maquetas viven en el proyecto de staging; producción queda solo con datos reales y la web futura.",
+  "projects": {
+    "staging": "<proyecto-staging>",
+    "produccion": "<proyecto-produccion>"
+  },
+  "targets": {
+    "<proyecto-staging>": {
+      "hosting": {
+        "maquetas": ["<sitio-maquetas>"]
+      }
+    }
+  }
+}

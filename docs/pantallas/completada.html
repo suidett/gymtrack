@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GymTrack · Rutina completada</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="sistema.css">
+<style>
+  /* ── Felicitación: el símbolo se completa (al menos se le suma el trazo) ── */
+  .hero { padding-top: 20px; }
+  .hero-simb { display: block; width: 56px; height: 56px; margin-bottom: 20px; }
+  .hero-simb .h { fill: var(--texto); }
+  /* Desde 48 px el símbolo va en dos tonos también sobre claro. */
+  .hero-simb .v { fill: var(--hecho-fondo); transform-box: fill-box; transform-origin: 50% 50%; }
+  /* Al llegar, el trazo crece desde el centro: al menos se le suma el más. */
+  .hero-simb.entra .v { animation: trazo-entra 260ms var(--curva) 120ms both; }
+  @keyframes trazo-entra { from { transform: scaleY(0); } }
+  @media (prefers-reduced-motion: reduce) { .hero-simb.entra .v { animation: none; } }
+  .hero .titulo { margin-top: 4px; }
+  .hero .sec { margin-top: 6px; }
+  .hero .avance { margin-top: 20px; }
+  .hero .avance i { height: 8px; }
+  .avance-txt { margin: 8px 0 0; font-size: 13px; color: var(--texto-2); }
+  .avance-txt .cifra { color: var(--texto); }
+
+  .sin-red { display: flex; gap: 12px; align-items: flex-start; margin-top: 12px; padding: 12px 14px;
+    border-radius: var(--radio); background: var(--sup); border: 1px solid var(--borde); font-size: 14px; line-height: 1.4; }
+  .sin-red svg { flex: 0 0 20px; width: 20px; height: 20px; margin-top: 1px; }
+  .sin-red path { stroke: var(--texto); fill: none; stroke-width: 2; stroke-linecap: square; }
+
+  /* ── Cifras de la sesión ───────────────────────────────────────────────── */
+  .datos { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 20px; }
+  .dato { background: var(--sup); border: 1px solid var(--sup-alta); border-radius: var(--radio); padding: 12px 14px; }
+  .dato .rot { margin: 0; font-size: 13px; color: var(--texto-2); }
+  .dato > .cifra { display: block; margin-top: 6px; font-size: 26px; line-height: 1.1; }
+  .dato > .cifra small { font: 500 14px/1 var(--letra); color: var(--texto-2); margin-left: 4px; }
+  .dato .extra { margin: 4px 0 0; font-size: 13px; color: var(--texto-2); }
+  .sube { color: var(--acento-texto); }
+
+  /* ── Récords ───────────────────────────────────────────────────────────── */
+  .prs > li { justify-content: flex-start; padding: 10px 0; }
+  .prs .simbolo { flex: 0 0 24px; }
+  .pr-txt { flex: 1; min-width: 0; }
+  .pr-txt .nom { margin: 0; font-size: 16px; line-height: 1.3; }
+  .pr-txt .sec { font-size: 13px; margin-top: 2px; }
+  .pr-dif { font-size: 16px; color: var(--acento-texto); white-space: nowrap; }
+  .tarjeta .lista-filas { margin: -6px 0; }
+
+  /* ── Sugerencias para la próxima vez ───────────────────────────────────── */
+  .sug > li { padding: 10px 0; }
+  .sug .nom { margin: 0; font-size: 16px; line-height: 1.3; }
+  .sug .por { margin: 2px 0 0; font-size: 13px; line-height: 1.35; color: var(--texto-2); }
+  .sug .d { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; white-space: nowrap; }
+  .sug .kg { font-size: 16px; }
+  .sug .reps { font-size: 13px; color: var(--texto-2); font-weight: 500; }
+  .sug .sin { color: var(--texto-2); }
+  .mas { color: var(--acento-texto); margin-right: 6px; }
+  .pie-nota { margin: 8px 0 0; font-size: 13px; color: var(--texto-2); }
+
+  /* ── Próxima sesión, peso, observación ─────────────────────────────────── */
+  .fila-btn { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; text-align: left;
+    font: inherit; color: var(--texto); cursor: pointer; }
+  .fila-btn:active { background: var(--fantasma-pres); }
+  .fila-btn:focus-visible { outline: 2px solid var(--foco); outline-offset: 2px; }
+  .fila-btn .h3 { margin-top: 2px; }
+  .fila-btn .sec { margin-top: 2px; }
+  .chevron { flex: 0 0 24px; width: 24px; height: 24px; }
+  .chevron path { stroke: var(--texto-2); fill: none; stroke-width: 2.5; stroke-linecap: square; }
+  .peso .sec { margin-top: 4px; }
+  .peso .btn { margin-top: 12px; }
+  .obs-hecha .nota { margin: 8px 0 0; padding: 2px 0 2px 12px; border-left: 4px solid var(--hecho-fondo); font-size: 15px; line-height: 1.45; }
+  .obs-hecha .sec { margin-top: 8px; font-size: 13px; }
+  .bloque-obs { margin-top: 24px; }
+
+  /* ── Pie: dos acciones a la mano ───────────────────────────────────────── */
+  .pie-2 { display: flex; gap: 8px; }
+  .pie-2 .btn { flex: 1; padding: 0 12px; }
+
+  /* ── Hoja de observación ───────────────────────────────────────────────── */
+  /* Rótulos del formulario de dolor: los mismos de Detalle de ejercicio y de la Ficha. */
+  .hoja .rot-campo { margin: 16px 0 8px; font: 600 14px/1.3 var(--letra); color: var(--texto); }
+  .chips.envuelve { flex-wrap: wrap; gap: 0 6px; }
+  .chips.envuelve .chip { flex: 0 0 auto; }
+  .aviso-dolor { margin: 8px 0 0; font-size: 13px; color: var(--texto-2); }
+  .campo .de { font: 500 13px/1 var(--letra); color: var(--texto-2); margin-top: 10px; }
+
+  /* El aviso flota sobre el botón de abajo, no encima de él. Con una hoja abierta, sale arriba y por encima del velo. */
+  .tel:has(.tel-accion) .aviso { bottom: 113px; }
+  .tel:has(.velo.ver) .aviso { z-index: 7; top: 40px; bottom: auto; }
+
+  .notas-maqueta { max-width: 860px; margin: 32px auto 0; color: var(--p-texto-2); font-size: 14px; }
+  .notas-maqueta h2 { color: var(--p-texto); font-size: 16px; margin: 0 0 8px; }
+  .notas-maqueta ul { margin: 0; padding-left: 18px; }
+  .notas-maqueta li { margin: 4px 0; }
+</style>
+</head>
+<body>
+<main class="maqueta">
+  <header class="maqueta-cabeza">
+    <h1>Pantalla 13 · Rutina completada</h1>
+    <p>Dirección Más · 412 × 892 dp · <a href="registro.html#estado=final">Registro</a> · <a href="index.html">todas las pantallas</a></p>
+  </header>
+
+  <div class="controles" role="group" aria-label="Controles de la maqueta">
+    <label class="grupo"><span class="rot">Estado</span>
+      <select class="ctl" data-ctl="estado">
+        <option value="records">Con récords</option>
+        <option value="sinrecords">Sin récords</option>
+        <option value="incompleta">Sesión incompleta</option>
+        <option value="observacion">Anotar observación (hoja abierta)</option>
+        <option value="sinred">Sin señal (queda en cola)</option>
+      </select></label>
+    <label class="grupo"><span class="rot">Tema</span>
+      <select class="ctl" data-ctl="tema">
+        <option value="gimnasio">Modo gimnasio</option>
+        <option value="clara">Clara</option>
+        <option value="ambos">Las dos</option>
+      </select></label>
+    <label class="grupo"><span class="rot">Tamaño</span>
+      <select class="ctl" data-ctl="zoom">
+        <option value="ajustar">Ajustar al ancho</option>
+        <option value="100">Real (1 dp = 1 px)</option>
+        <option value="150">150 %</option>
+      </select></label>
+    <label class="grupo"><input type="checkbox" data-ctl="medidas"><span>Medidas de toque</span></label>
+  </div>
+
+  <div class="escenario" id="escenario"></div>
+
+  <section class="notas-maqueta">
+    <h2>Qué mirar</h2>
+    <ul>
+      <li>La celebración es la marca: al llegar, al menos del símbolo se le suma el trazo ámbar. Sin confeti ni frases de más. Si quedaron series sin marcar, el símbolo llega quieto y el título dice «Sesión guardada».</li>
+      <li>Las cifras salen de las series del registro con las fórmulas del PRD: volumen = kilos × repeticiones de las series hechas; kcal = 5 × 62,4 kg × horas.</li>
+      <li>«Para la próxima Pierna A» aplica la doble progresión: si llegaste al tope del rango en todas las series, sube (en ámbar); si no, repite el peso. Cada fila dice por qué.</li>
+      <li>Toca «Anotar observación» y elige «Dolor»: aparecen «Dónde» (las zonas de la encuesta) y «Cuánto molesta», con más y menos de 56 dp. Es el mismo formulario de Detalle de ejercicio y de la Ficha. La línea de los 7 puntos va en gris porque informa, no es un error.</li>
+      <li>«Ver mi progreso» lleva a Progreso con la sesión de hoy ya sumada (récords de sentadilla y prensa, semana en 16,1 t); «Volver al inicio» a Hoy (día de descanso, porque Hoy no tiene un estado de «ya entrenaste hoy»); «Registrar peso» abre la hoja de peso en Progreso.</li>
+      <li>«Próxima sesión» abre Empuje B en el detalle de la rutina de Camila: 5 ejercicios y 16 series, los mismos de Ajustar cargas.</li>
+    </ul>
+  </section>
+</main>
+
+<script src="maqueta.js"></script>
+<script>
+// ── Datos de prueba: Pierna A del martes 17 de noviembre ─────────────────────
+// inc: lo que sube la doble progresión. antes: el récord de peso vigente antes de hoy.
+const PLAN = [
+  { n: 'Sentadilla', s: 4, rmin: 6, rmax: 8, inc: 2.5, antes: { kg: 80, reps: 8, f: '10 nov' } },
+  { n: 'Peso muerto rumano', s: 3, rmin: 8, rmax: 10, inc: 2.5, antes: { kg: 60, reps: 10, f: '20 oct' } },
+  { n: 'Prensa', s: 3, rmin: 10, rmax: 12, inc: 5, antes: { kg: 135, reps: 12, f: '10 nov' } },
+  { n: 'Zancadas con mancuernas', s: 3, rmin: 8, rmax: 10, inc: 2, antes: { kg: 16, reps: 10, f: '27 oct' } },
+  { n: 'Curl femoral', s: 3, rmin: 10, rmax: 12, inc: 2.5, antes: { kg: 35, reps: 12, f: '3 nov' } },
+  { n: 'Gemelos de pie', s: 4, rmin: 12, rmax: 15, inc: 2.5, antes: { kg: 42.5, reps: 10, f: '22 sep' } },
+];
+const PESO_CORPORAL = 62.4;          // último registro: martes 10 de noviembre
+const ULTIMA_PIERNA = { f: '10 nov', volumen: 12965 };
+
+// Lo que se registró en cada caso: [kilos, repeticiones por serie] o null si no se marcó.
+const SESIONES = {
+  records: { dur: 3254, ej: [[82.5, [8, 8, 8, 7]], [60, [10, 10, 9]], [140, [12, 12, 12]], [16, [10, 10, 10]], [35, [12, 12, 12]], [40, [15, 15, 15, 15]]] },
+  sinrecords: { dur: 3160, ej: [[80, [8, 8, 8, 8]], [60, [10, 10, 9]], [135, [12, 12, 12]], [16, [10, 10, 10]], [35, [12, 11, 11]], [37.5, [15, 15, 15, 15]]] },
+  incompleta: { dur: 2465, ej: [[82.5, [8, 8, 8, 7]], [60, [10, 10, 9]], [140, [12, 12, 12]], [16, [10, 10, 10]], null, null], planeado: [null, null, null, null, 35, 40] },
+};
+SESIONES.observacion = SESIONES.records;
+SESIONES.sinred = SESIONES.records;
+
+// ── Cálculos (las fórmulas del PRD) ──────────────────────────────────────────
+const fmtT = (kg) => (kg / 1000).toFixed(1).replace('.', ',');
+const firmado = (n, f = fmtKg) => (n > 0 ? '+' : n < 0 ? '−' : '±') + f(Math.abs(n));
+function resumen(estado) {
+  const ses = SESIONES[estado];
+  let volumen = 0, hechas = 0, total = 0;
+  const prs = [], sugerencias = [];
+  PLAN.forEach((p, i) => {
+    total += p.s;
+    const r = ses.ej[i];
+    if (!r) {
+      const kg = ses.planeado[i];
+      sugerencias.push({ n: p.n, kg, sube: 0, rango: `${p.rmin}–${p.rmax}`, por: `Sin series hoy. Se mantiene ${fmtKg(kg)} kg.` });
+      return;
+    }
+    const [kg, reps] = r;
+    hechas += reps.length;
+    volumen += kg * reps.reduce((a, b) => a + b, 0);
+    if (kg > p.antes.kg) prs.push({ n: p.n, kg, reps: Math.max(...reps), dif: kg - p.antes.kg, antes: p.antes });
+    // Doble progresión: todas las series en el tope del rango, sube; si no, repite el peso.
+    const faltan = reps.map((x, k) => [x, k]).filter(([x]) => x < p.rmax);
+    if (!faltan.length) {
+      sugerencias.push({ n: p.n, kg: kg + p.inc, sube: p.inc, rango: `${p.rmin}–${p.rmax}`, por: `Llegaste a ${p.rmax} en las ${reps.length} series.` });
+    } else {
+      const [x, k] = faltan[faltan.length - 1];
+      const por = faltan.length === 1
+        ? `Te faltó ${p.rmax - x === 1 ? '1 repetición' : `${p.rmax - x} repeticiones`} en la serie ${k + 1}.`
+        : `Apunta a ${p.rmax} en las ${reps.length} series.`;
+      sugerencias.push({ n: p.n, kg, sube: 0, rango: `${p.rmin}–${p.rmax}`, por });
+    }
+  });
+  const kcal = Math.round(5 * PESO_CORPORAL * (ses.dur / 3600));
+  return { volumen, hechas, total, prs, sugerencias, kcal, dur: ses.dur, dif: volumen - ULTIMA_PIERNA.volumen };
+}
+
+// ── Íconos ───────────────────────────────────────────────────────────────────
+const icoChevron = '<svg class="chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>';
+const icoNube = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4l18 16M7 18h10.5a3.5 3.5 0 0 0 1.4-6.7M6.6 9.2A5 5 0 0 0 7 18M10 6.3A5.5 5.5 0 0 1 16.4 9"/></svg>';
+
+// ── Piezas ───────────────────────────────────────────────────────────────────
+function hero(estado, r) {
+  const incompleta = estado === 'incompleta';
+  const barras = Array.from({ length: r.total }, (_, i) => `<i class="${i < r.hechas ? 'si' : ''}"></i>`).join('');
+  const titulo = incompleta ? 'Sesión guardada' : r.prs.length ? `${r.prs.length === 1 ? 'Un récord' : r.prs.length === 2 ? 'Dos récords' : `${r.prs.length} récords`} hoy` : 'Pierna A lista';
+  const ceja = incompleta ? '<p class="ceja">Pierna A</p>' : '<p class="ceja acento">Sesión completada</p>';
+  const sec = incompleta
+    ? `Quedaron <span class="cifra">${r.total - r.hechas}</span> series sin marcar, de Curl femoral y Gemelos de pie. Se guardaron como no hechas.`
+    : 'Pierna A · semana 3 de 8 · martes 17 de noviembre';
+  const red = estado === 'sinred'
+    ? `<div class="sin-red" role="status">${icoNube}<span>Sin señal. La sesión quedó guardada en tu teléfono y se sube sola cuando vuelva la conexión.</span></div>` : '';
+  return `<section class="hero" aria-label="Resumen">
+      <svg class="hero-simb${incompleta ? '' : performance.now() < animarHasta ? ' entra' : ''}" viewBox="0 0 24 24" role="img" aria-label="GymTrack">
+        <rect class="h" x="3" y="10" width="5.5" height="4" rx="1"/><rect class="h" x="15.5" y="10" width="5.5" height="4" rx="1"/>
+        <rect class="v" x="10" y="3" width="4" height="18" rx="1"/></svg>
+      ${ceja}
+      <h1 class="titulo">${titulo}</h1>
+      <p class="sec">${sec}</p>
+      <div class="avance" aria-hidden="true">${barras}</div>
+      <p class="avance-txt"><span class="cifra">${r.hechas}</span> de <span class="cifra">${r.total}</span> series</p>
+      ${red}
+    </section>`;
+}
+
+function datos(estado, r) {
+  const dif = estado === 'incompleta'
+    ? `<p class="extra"><span class="cifra">${fmtT(ULTIMA_PIERNA.volumen)}</span> t el ${ULTIMA_PIERNA.f}</p>`
+    : `<p class="extra"><span class="cifra${r.dif > 0 ? ' sube' : ''}">${firmado(+fmtT(r.dif).replace(',', '.'))} t</span> frente al ${ULTIMA_PIERNA.f}</p>`;
+  return `<div class="datos">
+      <div class="dato"><p class="rot">Volumen</p><span class="cifra">${fmtT(r.volumen)}<small>t</small></span>${dif}</div>
+      <div class="dato"><p class="rot">Tiempo</p><span class="cifra">${fmtReloj(r.dur)}</span><p class="extra">min y segundos</p></div>
+      <div class="dato"><p class="rot">Energía</p><span class="cifra">${r.kcal}<small>kcal</small></span><p class="extra">estimadas</p></div>
+      <div class="dato"><p class="rot">Récords</p><span class="cifra${r.prs.length ? ' sube' : ''}">${r.prs.length}</span><p class="extra">${r.prs.length ? 'de peso' : 'esta vez'}</p></div>
+    </div>`;
+}
+
+function records(r) {
+  if (!r.prs.length) {
+    const suben = r.sugerencias.filter((s) => s.sube).length;
+    return `<div class="seccion-cabeza"><h3 class="h3">Récords</h3></div>
+      <div class="tarjeta"><p class="sec">Hoy no hubo récords. Igualaste tus marcas y eso también cuenta: la próxima vez subes en <span class="cifra">${suben}</span> ejercicios.</p></div>`;
+  }
+  const filas = r.prs.map((p) => `<li>${simbolo('simbolo', '')}
+      <div class="pr-txt"><p class="nom">${p.n}</p><p class="sec"><span class="cifra">${fmtKg(p.kg)} kg × ${p.reps}</span> · antes ${fmtKg(p.antes.kg)} kg, ${p.antes.f}</p></div>
+      <span class="cifra pr-dif">+${fmtKg(p.dif)} kg</span></li>`).join('');
+  return `<div class="seccion-cabeza"><h3 class="h3">Récords de hoy</h3></div>
+    <div class="tarjeta"><ul class="lista-filas prs">${filas}</ul></div>`;
+}
+
+function proxima() {
+  return `<div class="seccion-cabeza"><h3 class="h3">Próxima sesión</h3></div>
+    <button class="tarjeta fila-btn" data-ir="rutina.html#estado=entrenador&dia=2" data-toque>
+      <span><span class="ceja">Jueves 19 de noviembre</span><span class="h3" style="display:block">Empuje B</span>
+      <span class="sec" style="display:block">5 ejercicios · 16 series · unos 50 min</span></span>${icoChevron}
+    </button>`;
+}
+
+function sugerencias(r) {
+  const filas = r.sugerencias.map((s) => `<li><div><p class="nom">${s.n}</p><p class="por">${s.por}</p></div>
+      <div class="d"><span class="kg cifra${s.kg == null ? ' sin' : ''}">${s.sube ? `<span class="mas">+${fmtKg(s.sube)}</span>` : ''}${fmtKg(s.kg)} kg</span>
+      <span class="reps cifra">× ${s.rango}</span></div></li>`).join('');
+  return `<div class="seccion-cabeza"><h3 class="h3">Para la próxima Pierna A</h3><span class="sec">mar 24 nov</span></div>
+    <div class="tarjeta"><ul class="lista-filas sug">${filas}</ul></div>
+    <p class="pie-nota"><span class="mas cifra">+2,5</span>sube el peso · sin signo, repite. Camila puede cambiarlas antes del martes.</p>`;
+}
+
+function recordatorioPeso() {
+  return `<div class="seccion-cabeza"><h3 class="h3">Tu peso</h3></div>
+    <div class="tarjeta peso">
+      <p class="sec">El último registro es del mar 10 nov: <span class="cifra" style="color:var(--texto)">${fmtKg(PESO_CORPORAL)} kg</span>. Anótalo hoy para seguir tu tendencia y para que las kcal salgan más justas.</p>
+      <button class="btn btn-secundario ancho" data-ir="progreso.html#estado=peso&sesion=hecha" data-toque>Registrar peso</button>
+    </div>`;
+}
+
+function bloqueObservacion(estado) {
+  if (obs) {
+    const cab = obs.tipo === 'dolor' ? `Dolor · ${obs.zona} · <span class="cifra">${obs.intensidad}</span> de 10` : 'Observación';
+    return `<div class="bloque-obs tarjeta obs-hecha"><p class="ceja">${cab}</p>
+      <p class="nota">${obs.texto || 'Sin comentario.'}</p>
+      <p class="sec">Camila la ve en tu ficha y te puede responder.</p></div>`;
+  }
+  const texto = estado === 'incompleta' ? 'Anotar por qué quedaron series' : 'Anotar observación de la sesión';
+  return `<div class="bloque-obs"><button class="btn btn-secundario ancho" data-accion="abrir-obs" data-toque>${texto}</button></div>`;
+}
+
+function hojaObservacion(tema, abierta) {
+  const zonas = ['Hombro', 'Rodilla', 'Espalda baja', 'Muñeca', 'Cadera', 'Otra'];
+  const esDolor = borrador.tipo === 'dolor';
+  const zonaChips = zonas.map((z) => `<button class="chip texto" data-accion="zona" data-v="${z}" aria-pressed="${borrador.zona === z}" data-toque><span>${z}</span></button>`).join('');
+  return `<div class="velo${abierta ? ' ver' : ''}" data-hoja="obs"><div class="hoja" role="dialog" aria-modal="true" aria-labelledby="t-obs-${tema}">
+      <h2 class="h2" id="t-obs-${tema}">Sobre la sesión</h2>
+      <div class="chips" role="group" aria-label="Tipo" style="margin-top:12px;justify-content:flex-start">
+        <button class="chip texto" data-accion="tipo" data-v="obs" aria-pressed="${!esDolor}" style="flex:0 0 auto" data-toque><span>Observación</span></button>
+        <button class="chip texto" data-accion="tipo" data-v="dolor" aria-pressed="${esDolor}" style="flex:0 0 auto" data-toque><span>Dolor</span></button>
+      </div>
+      ${esDolor ? `<p class="rot-campo">Dónde</p>
+      <div class="chips envuelve" role="group" aria-label="Zona">${zonaChips}</div>
+      <p class="rot-campo">Cuánto molesta</p>
+      <div class="paso">
+        <button class="btn-paso${borrador.intensidad <= 1 ? ' limite' : ''}" data-accion="intensidad" data-paso-i="-1" aria-label="Molesta menos" data-toque><span class="barra-menos"></span></button>
+        <div class="campo"><span class="valor" data-valor="intensidad">${borrador.intensidad}</span><span class="de">de 10</span></div>
+        <button class="btn-paso${borrador.intensidad >= 10 ? ' limite' : ''}" data-accion="intensidad" data-paso-i="1" aria-label="Molesta más" data-toque>${simbolo('simbolo', '')}</button>
+      </div>
+      <p class="aviso-dolor">Con 7 o más, Camila recibe un aviso al instante.</p>` : ''}
+      <textarea class="area" style="margin-top:16px" data-campo-obs aria-label="${esDolor ? 'Qué dolor sentiste' : 'Tu observación de la sesión'}" placeholder="${esDolor ? 'Por ejemplo: molestia en la rodilla derecha al bajar en la sentadilla' : 'Por ejemplo: dormí poco y me costó la sentadilla'}">${borrador.texto}</textarea>
+      <p class="sec" style="margin-top:8px;font-size:13px">La sesión ya no se edita, pero puedes sumarle observaciones.</p>
+      <div class="acciones"><button class="btn btn-secundario" data-accion="cerrar-hoja" data-toque>Cancelar</button>
+        <button class="btn btn-primario" data-accion="guardar-obs" data-toque>Guardar</button></div>
+    </div></div>`;
+}
+
+function telefono(tema, ctl) {
+  const estado = ctl.estado;
+  const r = resumen(estado);
+  return `<div class="tel" data-tema="${tema}">
+    <div class="tel-estado"><span class="cifra" style="font-weight:600">9:41</span><span>5G · 74 %</span></div>
+    <div class="tel-contenido">
+      ${hero(estado, r)}
+      ${datos(estado, r)}
+      ${records(r)}
+      ${proxima()}
+      ${sugerencias(r)}
+      ${recordatorioPeso()}
+      ${bloqueObservacion(estado)}
+    </div>
+    <div class="tel-accion"><div class="pie-2">
+      <button class="btn btn-secundario alto" data-ir="hoy.html#estado=descanso" data-toque>Volver al inicio</button>
+      <button class="btn btn-primario alto" data-ir="progreso.html#sesion=hecha" data-toque>Ver mi progreso</button>
+    </div></div>
+    <div class="tel-gesto"></div>
+    <div class="aviso" role="status"></div>
+    ${hojaObservacion(tema, hojaAbierta)}
+  </div>`;
+}
+
+// ── Maqueta ──────────────────────────────────────────────────────────────────
+// El trazo entra al llegar (los dos primeros pintados caen en esta ventana); los repintados por tocar no lo repiten.
+let obs = null, hojaAbierta = false, animarHasta = 0;
+let borrador = { tipo: 'obs', zona: 'Rodilla', intensidad: 3, texto: '' };
+function alCambiarEstado(estado) {
+  obs = null; animarHasta = performance.now() + 800;
+  borrador = { tipo: 'obs', zona: 'Rodilla', intensidad: 3, texto: '' };
+  hojaAbierta = estado === 'observacion';
+}
+const m = iniciarMaqueta({ telefono, porDefecto: { estado: 'records' }, alCambiarEstado });
+const { ctl, escenario } = m;
+
+function repintar() {
+  const scroll = [...escenario.querySelectorAll('.tel-contenido')].map((c) => c.scrollTop);
+  m.pintar();
+  escenario.querySelectorAll('.tel-contenido').forEach((c, k) => { c.scrollTop = scroll[k] || 0; });
+}
+const leerTexto = (tel) => { const t = tel && tel.querySelector('[data-campo-obs]'); if (t) borrador.texto = t.value; };
+
+escenario.addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-accion]'); if (!b) return;
+  const tel = b.closest('.tel');
+  switch (b.dataset.accion) {
+    case 'abrir-obs': hojaAbierta = true; repintar(); break;
+    case 'tipo': leerTexto(tel); borrador.tipo = b.dataset.v; repintar(); break;
+    case 'zona': leerTexto(tel); borrador.zona = b.dataset.v; repintar(); break;
+    case 'intensidad': {
+      const n = Math.min(10, Math.max(1, borrador.intensidad + +b.dataset.pasoI));
+      if (n === borrador.intensidad) { avisar(tel, n === 10 ? 'Llegaste al máximo.' : 'Llegaste al mínimo.'); break; }
+      leerTexto(tel); borrador.intensidad = n; repintar();
+      break;
+    }
+    case 'cerrar-hoja':
+      hojaAbierta = false;
+      if (ctl.estado === 'observacion') ctl.estado = 'records';
+      repintar(); break;
+    case 'guardar-obs': {
+      leerTexto(tel);
+      obs = { ...borrador, zona: borrador.zona.toLowerCase() };
+      hojaAbierta = false;
+      if (ctl.estado === 'observacion') ctl.estado = 'records';
+      repintar();
+      const msg = obs.tipo === 'dolor' && obs.intensidad >= 7
+        ? 'Guardado. Camila recibió un aviso por el dolor.' : 'Guardado. Camila lo verá en tu ficha.';
+      escenario.querySelectorAll('.tel').forEach((t) => avisar(t, msg));
+      break;
+    }
+  }
+});
+// El texto se escribe en un teléfono; se copia al otro para que los dos muestren lo mismo.
+escenario.addEventListener('input', (ev) => {
+  if (!ev.target.matches('[data-campo-obs]')) return;
+  borrador.texto = ev.target.value;
+  escenario.querySelectorAll('[data-campo-obs]').forEach((t) => { if (t !== ev.target) t.value = ev.target.value; });
+});
+</script>
+</body>
+</html>

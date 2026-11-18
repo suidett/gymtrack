@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none" style="color:#131A17">
+  <!-- 09 Dos letras, un renglon: G y T unidas por el mismo renglon superior -->
+  <rect x="10" y="15" width="7" height="34" rx="1.5" fill="currentColor"/>
+  <rect x="10" y="42" width="23" height="7" rx="1.5" fill="currentColor"/>
+  <rect x="26" y="32" width="7" height="17" rx="1.5" fill="currentColor"/>
+  <rect x="22" y="32" width="11" height="7" rx="1.5" fill="currentColor"/>
+  <rect x="40" y="18" width="7" height="31" rx="1.5" fill="currentColor"/>
+  <rect class="acento" x="10" y="15" width="44" height="7" rx="1.5" fill="#45B392"/>
+</svg>

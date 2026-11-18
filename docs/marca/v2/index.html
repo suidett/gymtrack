@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GymTrack · Marca v2</title>
+<style>
+  :root {
+    --fondo: #f6f6f4;
+    --superficie: #ffffff;
+    --texto: #16181a;
+    --texto-2: #5b6066;
+    --borde: #e2e3e0;
+    --marca-oscura: #131517;
+    --recomendada: #8a5a00;
+    --radio: 14px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --fondo: #111214;
+      --superficie: #1a1c1f;
+      --texto: #eceef0;
+      --texto-2: #a2a8ae;
+      --borde: #2c2f33;
+      --recomendada: #f5b83d;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--fondo); color: var(--texto);
+    font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  main { max-width: 1180px; margin: 0 auto; padding: 40px 24px 80px; }
+  h1 { font-size: 30px; line-height: 1.15; margin: 0 0 6px; letter-spacing: -0.01em; }
+  h2 { font-size: 22px; margin: 0 0 4px; }
+  h3 { font-size: 15px; margin: 0 0 8px; color: var(--texto-2); font-weight: 600; }
+  p { margin: 0 0 10px; }
+  .sub { color: var(--texto-2); margin-bottom: 28px; max-width: 760px; }
+  .caja { background: var(--superficie); border: 1px solid var(--borde); border-radius: var(--radio); padding: 22px; }
+  .reco { border-left: 4px solid var(--recomendada); margin-bottom: 36px; }
+  .reco ol { margin: 6px 0 12px; padding-left: 20px; }
+  .reco li { margin: 2px 0; }
+
+  /* cara a cara */
+  .tres { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .cara { display: flex; flex-direction: column; gap: 14px; }
+  .cara .nombre { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+  .cara .nombre b { font-size: 18px; }
+  .puesto { font-size: 13px; color: var(--texto-2); }
+  .puesto.uno { color: var(--recomendada); font-weight: 700; }
+  .iconos { display: flex; align-items: flex-end; gap: 14px; }
+  .iconos img { display: block; }
+  .iconos .rotulo { font-size: 12px; color: var(--texto-2); text-align: center; margin-top: 4px; }
+  .logotipo { background: #fff; border-radius: 10px; padding: 14px 16px; border: 1px solid var(--borde); }
+  .logotipo.oscuro { background: var(--marca-oscura); border-color: var(--marca-oscura); }
+  .logotipo img { display: block; height: 34px; width: auto; max-width: 100%; }
+  .concepto { color: var(--texto-2); font-size: 15px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--borde); }
+  th { color: var(--texto-2); font-weight: 600; width: 16%; }
+  thead th { color: var(--texto); font-size: 15px; }
+  .tabla { overflow-x: auto; margin: 36px 0; }
+
+  /* secciones por dirección */
+  .dir { margin-top: 56px; }
+  .dir header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; margin-bottom: 14px; }
+  .dir header .concepto { margin: 0; }
+  .lamina { display: block; width: 100%; height: auto; border-radius: var(--radio); border: 1px solid var(--borde); }
+  .dos { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+  ul.lista { margin: 0; padding-left: 18px; font-size: 14.5px; }
+  ul.lista li { margin: 3px 0; }
+  .boton {
+    display: inline-flex; align-items: center; min-height: 48px; padding: 0 20px; border-radius: 10px;
+    background: var(--texto); color: var(--fondo); text-decoration: none; font-weight: 600;
+  }
+  .boton:focus-visible { outline: 3px solid var(--recomendada); outline-offset: 2px; }
+  .acciones { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 16px; }
+  .acciones .nota { color: var(--texto-2); font-size: 14px; }
+  details { margin-top: 16px; }
+  summary { cursor: pointer; font-weight: 600; min-height: 48px; display: flex; align-items: center; }
+  iframe { width: 100%; height: 900px; border: 1px solid var(--borde); border-radius: var(--radio); background: #fff; }
+  .lanzador { margin-top: 16px; }
+  .lanzador img { width: 100%; height: auto; border-radius: var(--radio); border: 1px solid var(--borde); }
+  footer { margin-top: 64px; color: var(--texto-2); font-size: 14px; }
+  code { font-size: 13px; }
+
+  @media (max-width: 860px) {
+    .tres, .dos { grid-template-columns: 1fr; }
+    main { padding: 28px 16px 64px; }
+    iframe { height: 700px; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>GymTrack · logo y botones</h1>
+  <p class="sub">Tres direcciones minimalistas, hechas desde cero. En las tres, el logo sale de un botón real de la app, no de una inicial ni de un objeto de gimnasio. Elige una o dime qué mezclar.</p>
+
+  <section class="caja reco" aria-labelledby="reco-t">
+    <h2 id="reco-t">Lo que recomienda la revisión</h2>
+    <ol>
+      <li><b>Más</b>: la más propia y la que mejor funciona en el gimnasio con poca luz.</li>
+      <li><b>Dupla</b>: el sistema de botones más coherente, pero el logo es el más anónimo.</li>
+      <li><b>Visto</b>: correcta y la más barata de construir, pero un visto en un círculo es el signo más común que existe.</li>
+    </ol>
+    <p>Mezcla posible: el logo y los botones de Más, con el aro vacío de Dupla para la serie pendiente.</p>
+  </section>
+
+  <section aria-label="Las tres, cara a cara">
+    <div class="tres">
+      <article class="caja cara">
+        <div class="nombre"><b>Más</b><span class="puesto uno">1.º de la revisión</span></div>
+        <div class="iconos">
+          <div><img src="mas/logo/png/icono-app-vista-redondeada-512.png" width="96" height="96" alt="Ícono de app de Más: signo más ámbar sobre grafito"><div class="rotulo">96</div></div>
+          <div><img src="mas/logo/png/icono-app-vista-redondeada-512.png" width="48" height="48" alt=""><div class="rotulo">48</div></div>
+          <div><img src="mas/logo/png/simbolo-16-sobre-oscuro.png" width="16" height="16" alt="" style="background:#0f1113;padding:4px;box-sizing:content-box;border-radius:4px"><div class="rotulo">16</div></div>
+        </div>
+        <div class="logotipo oscuro"><img src="mas/logo/logotipo-horizontal-sobre-oscuro.svg" alt="Logotipo GymTrack de Más"></div>
+        <p class="concepto">El logo es el botón de más: entrenar es sumar un poco cada vez.</p>
+      </article>
+      <article class="caja cara">
+        <div class="nombre"><b>Dupla</b><span class="puesto">2.º</span></div>
+        <div class="iconos">
+          <div><img src="dupla/logo/png/icono-app-vista-redondeada-512.png" width="96" height="96" alt="Ícono de app de Dupla: aro vacío y disco lleno sobre hueso"><div class="rotulo">96</div></div>
+          <div><img src="dupla/logo/png/icono-app-vista-redondeada-512.png" width="48" height="48" alt=""><div class="rotulo">48</div></div>
+          <div><img src="dupla/logo/png/simbolo-16.png" width="16" height="16" alt="" style="background:#fff;padding:4px;box-sizing:content-box;border-radius:4px"><div class="rotulo">16</div></div>
+        </div>
+        <div class="logotipo"><img src="dupla/logo/logotipo-horizontal.svg" alt="Logotipo GymTrack de Dupla"></div>
+        <p class="concepto">Un aro vacío y un disco lleno: lo planeado y lo hecho, tu entrenador y tú.</p>
+      </article>
+      <article class="caja cara">
+        <div class="nombre"><b>Visto</b><span class="puesto">3.º</span></div>
+        <div class="iconos">
+          <div><img src="visto/logo/png/icono-app-vista-cuadrado-512.png" width="96" height="96" alt="Ícono de app de Visto: visto tinta sobre menta"><div class="rotulo">96</div></div>
+          <div><img src="visto/logo/png/icono-app-vista-cuadrado-512.png" width="48" height="48" alt=""><div class="rotulo">48</div></div>
+          <div><img src="visto/logo/png/simbolo-16.png" width="16" height="16" alt="" style="background:#fff;padding:4px;box-sizing:content-box;border-radius:4px"><div class="rotulo">16</div></div>
+        </div>
+        <div class="logotipo"><img src="visto/logo/logotipo-horizontal.svg" alt="Logotipo GymTrack de Visto"></div>
+        <p class="concepto">El logo es el botón que tocas al terminar una serie: un círculo menta con un visto.</p>
+      </article>
+    </div>
+  </section>
+
+  <div class="caja tabla">
+    <table>
+      <thead><tr><th></th><th>Más</th><th>Dupla</th><th>Visto</th></tr></thead>
+      <tbody>
+        <tr><th>Símbolo</th><td>Signo más de dos tonos: un trazo ámbar que cruza un menos</td><td>Aro vacío junto a un disco lleno, más chico</td><td>Círculo menta con un visto tinta</td></tr>
+        <tr><th>Paleta</th><td>Grafito oscuro con ámbar; el modo gimnasio es el principal</td><td>Blanco y negro; violeta solo para foco y avisos</td><td>La menta del PRD, clara</td></tr>
+        <tr><th>Botones</th><td>Rectos, radio 8. El bloque de más y menos es el protagonista</td><td>Pastillas: contorno es «por hacer», relleno es «hecho»</td><td>Redondeados, radio 16, amables</td></tr>
+        <tr><th>Movimiento</th><td>Seco: las cifras giran como contador en 100 ms</td><td>Directo: las cosas se llenan, sin escala</td><td>Suave: el visto se dibuja en 200 ms</td></tr>
+        <tr><th>Letra</th><td>Archivo + JetBrains Mono</td><td>Instrument Sans + DM Mono</td><td>Manrope + IBM Plex Mono (las del proyecto)</td></tr>
+        <tr><th>Riesgo</th><td>Que recuerde a una cruz de farmacia (por eso nunca va en verde, rojo ni dentro de un círculo)</td><td>Dos círculos es una forma muy simple y ya la usan otras marcas</td><td>El visto es el signo universal de «listo»</td></tr>
+        <tr><th>Costo de construir</th><td>Cambia letras y paleta del proyecto</td><td>Cambia letras y paleta del proyecto</td><td>El más bajo: usa los tokens que ya existen</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Más -->
+  <section class="dir" id="mas" aria-labelledby="mas-t">
+    <header><h2 id="mas-t">1. Más</h2><p class="concepto">El logo es el botón de más: un kilo más, una repetición más.</p></header>
+    <img class="lamina" src="mas/lamina-logo.png" width="1600" height="1660" alt="Lámina del logo de Más: construcción, logotipos, ícono de app, tamaños y versiones" loading="lazy">
+    <div class="dos">
+      <div class="caja"><h3>Lo que tiene a favor</h3><ul class="lista">
+        <li>Es el único símbolo que no se confunde con el de otra app.</li>
+        <li>A 16 px sale nítido al píxel.</li>
+        <li>El bloque de más y menos es el mejor de las tres: tres piezas de 56 dp y cifra grande.</li>
+        <li>La fila hecha en ámbar se reconoce de un vistazo, en oscuro y en claro.</li>
+      </ul></div>
+      <div class="caja"><h3>Ya corregido tras la revisión</h3><ul class="lista">
+        <li>La serie pendiente es un cuadrado vacío, sin visto tenue.</li>
+        <li>Los kilos se ven enteros («85»), con «,5» solo cuando corresponde.</li>
+        <li>El par «m T» del logotipo se cerró para que se lea como una palabra.</li>
+        <li>En la versión clara, el ámbar tiene un segundo lugar fijo: el interruptor encendido.</li>
+        <li>Ícono con fondo <code>#1A1D20</code>, probado en una grilla de lanzador.</li>
+      </ul></div>
+    </div>
+    <div class="lanzador"><img src="mas/icono-lanzador.png" width="2560" height="2370" alt="Prueba del ícono de Más en una grilla de lanzador sobre tres fondos de pantalla" loading="lazy"></div>
+    <div class="acciones"><a class="boton" href="mas/botones.html" target="_blank" rel="noopener">Probar los botones de Más</a><span class="nota">Se abre en otra pestaña, con modo gimnasio, versión clara y «reducir movimiento».</span></div>
+    <details><summary>Ver los botones aquí mismo</summary><iframe title="Botones de Más" data-src="mas/botones.html"></iframe></details>
+  </section>
+
+  <!-- Dupla -->
+  <section class="dir" id="dupla" aria-labelledby="dupla-t">
+    <header><h2 id="dupla-t">2. Dupla</h2><p class="concepto">Lo planeado y lo hecho. Contorno es «por hacer», relleno es «hecho».</p></header>
+    <img class="lamina" src="dupla/lamina-logo.png" width="1600" height="1400" alt="Lámina del logo de Dupla: construcción, logotipos, ícono de app y versiones" loading="lazy">
+    <div class="dos">
+      <div class="caja"><h3>Lo que tiene a favor</h3><ul class="lista">
+        <li>Una sola regla explica todos los botones: contorno o relleno.</li>
+        <li>La serie pendiente (aro vacío) es la más clara de las tres.</li>
+        <li>Ícono claro, que se separa de tanto ícono negro del rubro.</li>
+        <li>El violeta aparece solo en foco, enlaces y avisos del entrenador.</li>
+      </ul></div>
+      <div class="caja"><h3>Ya corregido tras la revisión</h3><ul class="lista">
+        <li>El aro ahora es más grande que el disco, para no parecerse a otras marcas de dos círculos.</li>
+        <li>El símbolo del ícono subió al 64 % del ancho.</li>
+        <li>Se sacó la variante invertida, que se leía como un par de ojos.</li>
+        <li>El visto de la serie hecha subió a 30 dp; kilos y repeticiones miden lo mismo.</li>
+        <li>«Sí, borrar» se oscurece al presionarlo, en vez de vaciarse.</li>
+      </ul></div>
+    </div>
+    <div class="acciones"><a class="boton" href="dupla/botones.html" target="_blank" rel="noopener">Probar los botones de Dupla</a><span class="nota">Se abre en otra pestaña.</span></div>
+    <details><summary>Ver los botones aquí mismo</summary><iframe title="Botones de Dupla" data-src="dupla/botones.html"></iframe></details>
+  </section>
+
+  <!-- Visto -->
+  <section class="dir" id="visto" aria-labelledby="visto-t">
+    <header><h2 id="visto-t">3. Visto</h2><p class="concepto">El logo es el botón de serie hecha, en la menta del PRD.</p></header>
+    <img class="lamina" src="visto/lamina-logo.png" width="1600" height="1290" alt="Lámina del logo de Visto: símbolo, construcción, logotipos, ícono de app, tamaños y versiones" loading="lazy">
+    <div class="dos">
+      <div class="caja"><h3>Lo que tiene a favor</h3><ul class="lista">
+        <li>Usa la paleta y las letras que ya tiene el proyecto: la más barata de construir.</li>
+        <li>El visto se lee bien a 16 px.</li>
+        <li>La zona de prueba interactiva es la más completa.</li>
+      </ul></div>
+      <div class="caja"><h3>Ya corregido tras la revisión</h3><ul class="lista">
+        <li>El visto del ícono es más grande y sale por la esquina, para no parecer casilla de app de tareas.</li>
+        <li>La serie pendiente es un aro vacío, sin visto tenue.</li>
+        <li>«Borrar rutina» va con contorno; el relleno rojo queda solo para confirmar.</li>
+        <li>Lo que no se arregla sin cambiar el concepto: un visto en un círculo sigue siendo un signo de todos.</li>
+      </ul></div>
+    </div>
+    <div class="acciones"><a class="boton" href="visto/botones.html" target="_blank" rel="noopener">Probar los botones de Visto</a><span class="nota">Se abre en otra pestaña.</span></div>
+    <details><summary>Ver los botones aquí mismo</summary><iframe title="Botones de Visto" data-src="visto/botones.html"></iframe></details>
+  </section>
+
+  <footer>
+    <p>Todo está en <code>docs/marca/v2/</code>: <code>investigacion.md</code> (14 apps revisadas), <code>direccion.md</code>, <code>revision.md</code> y, por dirección, <code>notas.md</code>, <code>tokens.json</code> y el logo en SVG y PNG.</p>
+    <p>No se probó en un teléfono Android real. La app, su ícono y su pantalla de carga no se tocaron.</p>
+  </footer>
+</main>
+<script>
+  // Las páginas de botones pesan; se cargan recién cuando abres su sección.
+  document.querySelectorAll('details').forEach(function (d) {
+    d.addEventListener('toggle', function () {
+      var f = d.querySelector('iframe');
+      if (d.open && f && !f.src) f.src = f.dataset.src;
+    });
+  });
+</script>
+</body>
+</html>

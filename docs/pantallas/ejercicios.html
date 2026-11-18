@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GymTrack · Ejercicios</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="sistema.css">
+<style>
+  /* ── Parte fija de arriba: título, buscador y filtros ──────────────────── */
+  .arriba { flex: 0 0 auto; padding: 0 16px 4px; }
+  .cabeza { display: flex; align-items: center; justify-content: space-between; height: 56px; }
+  .crear { margin-right: -12px; padding: 0 12px 0 8px; }
+  .crear .simbolo { width: 22px; height: 22px; }
+  .crear:disabled { color: var(--desh-texto); cursor: not-allowed; }
+  .crear:disabled .simbolo rect { fill: var(--desh-texto); }
+  .tel .btn-primario:disabled { background: var(--desh-fondo); color: var(--desh-texto); cursor: not-allowed; }
+
+  .buscador { display: flex; align-items: center; height: 52px; padding-left: 14px;
+    border: 2px solid var(--campo-borde); border-radius: var(--radio); background: var(--campo-fondo); }
+  .buscador:focus-within, .buscador.activo { border-color: var(--texto); }
+  .buscador .lupa { flex: 0 0 20px; width: 20px; height: 20px; }
+  .buscador .lupa path { stroke: var(--texto-2); fill: none; stroke-width: 2.5; stroke-linecap: square; }
+  .buscador input { flex: 1; min-width: 0; height: 100%; padding: 0 4px 0 10px; border: 0; outline: none;
+    background: transparent; color: var(--texto); font: 500 16px/1 var(--letra); }
+  .buscador input::placeholder { color: var(--texto-2); }
+  .buscador input::-webkit-search-cancel-button { display: none; }
+  .buscador .limpiar { display: none; }
+  .buscador.con-texto .limpiar { display: inline-flex; }
+
+  .filtros { margin: 8px -16px 0; }
+  .fila-chips { display: flex; align-items: center; gap: 6px; overflow-x: auto; padding: 0 16px; scrollbar-width: none; }
+  .fila-chips::-webkit-scrollbar { display: none; }
+  .fila-chips .chip { flex: 0 0 auto; }
+  .fila-chips .rot { flex: 0 0 56px; font-size: 13px; color: var(--texto-2); }
+
+  /* ── Resultados ─────────────────────────────────────────────────────────── */
+  .conteo { display: flex; align-items: center; justify-content: space-between; min-height: 48px; margin-top: 4px; }
+  .conteo .sec { font-size: 14px; }
+  .conteo .cifra { color: var(--texto); }
+  .conteo .btn-fantasma { margin-right: -12px; font-size: 15px; }
+  .sec-lista { margin: 12px 0 0; }
+  .lista-filas > li { display: block; min-height: 0; }
+  .fila-ej { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 72px; padding: 10px 0;
+    border: 0; background: transparent; color: var(--texto); text-align: left; cursor: pointer; font: inherit; }
+  .fila-ej:active { background: var(--fantasma-pres); }
+  .fila-ej:focus-visible { outline: 2px solid var(--foco); outline-offset: -2px; }
+  .fila-ej .txt { flex: 1; min-width: 0; }
+  .fila-ej .n { display: block; font: 600 16px/1.3 var(--letra); }
+  .fila-ej .m { display: block; margin-top: 2px; font-size: 13px; line-height: 1.3; color: var(--texto-2); }
+  .fila-ej .pr { flex: 0 0 auto; text-align: right; white-space: nowrap; }
+  .fila-ej .pr small { display: block; margin-bottom: 4px; font: 500 12px/1 var(--letra); color: var(--texto-2); }
+  .fila-ej .pr .cifra { font-size: 15px; }
+  .coincide { font-weight: 700; text-decoration: underline; text-decoration-thickness: 2px;
+    text-underline-offset: 3px; text-decoration-color: var(--acento-texto); }
+
+  /* Miniatura: la pose clave del ejercicio, mientras no haya foto. */
+  .mini { flex: 0 0 52px; height: 52px; border-radius: var(--radio); background: var(--sup); border: 1px solid var(--sup-alta); }
+  .mini svg { display: block; width: 100%; height: 100%; }
+  .mini polyline { fill: none; stroke: var(--texto); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+  .mini .banco { fill: none; stroke: var(--texto-2); stroke-width: 2.5; }
+  .mini .barra { fill: none; stroke: var(--hecho-borde); stroke-width: 3; stroke-linecap: round; }
+  .mini .cab { fill: var(--texto); }
+  .mini .disco { fill: var(--hecho-fondo); stroke: var(--hecho-borde); stroke-width: 1.5; }
+  .mini.vacia { background: transparent; border: 2px dashed var(--borde); }
+
+  /* Sin resultados */
+  .vacio { margin-top: 8px; padding: 20px 16px; border-radius: var(--radio); background: var(--sup); border: 1px solid var(--sup-alta); }
+  .vacio .sec { margin-top: 6px; }
+  .vacio .btn { margin: 12px 0 -8px -12px; }
+  .accion-crear span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* Cargando y sin conexión */
+  .esqueleto > li { display: flex; align-items: center; gap: 12px; min-height: 72px; }
+  .esqueleto .b { display: block; border-radius: 4px; background: var(--sup-alta); }
+  /* Banda de sin conexión: la misma de Rutinas (ícono, borde de 1 dp, 12/14 de relleno). */
+  .banda { display: flex; gap: 10px; align-items: flex-start; margin-top: 8px; padding: 12px 14px; border-radius: var(--radio);
+    background: var(--sup); border: 1px solid var(--borde); font-size: 14px; line-height: 1.4; }
+  .banda .ico { flex: 0 0 24px; width: 24px; height: 24px; margin-top: -1px; color: var(--texto-2); }
+  .banda .ico path { stroke: currentColor; fill: none; stroke-width: 2.5; stroke-linecap: square; }
+  .banda b { font-weight: 700; }
+
+  /* Insignia de nuevas sobre la pestaña Alertas (la misma de alertas.html). */
+  .pestana .insignia { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px;
+    padding: 0 4px; margin-left: 4px; border-radius: 4px; background: var(--hecho-fondo); color: var(--visto);
+    font: 700 11px/1 var(--mono); vertical-align: 1px; }
+
+  .ranura-accion { flex: 0 0 auto; }
+
+  /* ── Teclado del sistema (solo para ver cuánto espacio queda) ──────────── */
+  .teclado { display: none; flex: 0 0 auto; padding: 8px 3px 2px; background: var(--sup); border-top: 1px solid var(--sup-alta); }
+  .con-teclado .teclado { display: block; }
+  .con-teclado .pestanas { display: none; }
+  .t-fila { display: flex; justify-content: center; gap: 4px; margin-bottom: 8px; }
+  .tecla { flex: 1; max-width: 37px; height: 44px; padding: 0; border: 0; border-radius: 6px; cursor: pointer;
+    background: var(--sup-alta); color: var(--texto); font: 500 19px/1 var(--letra);
+    display: flex; align-items: center; justify-content: center; }
+  .tecla:active { background: var(--fantasma-pres); outline: 1px solid var(--borde); }
+  .tecla.esp { flex: 1.5; max-width: 54px; font-size: 14px; font-weight: 600; }
+  .tecla.espacio { flex: 5; max-width: none; font-size: 13px; color: var(--texto-2); }
+  .tecla.listo { background: var(--accion); color: var(--accion-texto); }
+  .tecla svg { width: 22px; height: 22px; }
+  .tecla path { fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: round; }
+
+  /* ── Crear ejercicio (pantalla completa) ───────────────────────────────── */
+  .barra-sup { flex: 0 0 56px; display: flex; align-items: center; gap: 4px; padding: 0 4px; }
+  .barra-sup .h3 { flex: 1; }
+  .rot-campo { margin: 20px 0 8px; font: 600 15px/1.3 var(--letra); }
+  .rot-campo:first-child { margin-top: 8px; }
+  .rot-campo .op { color: var(--texto-2); font-weight: 500; }
+  .texto-campo { width: 100%; height: 56px; padding: 0 14px; border-radius: var(--radio);
+    border: 2px solid var(--campo-borde); background: var(--campo-fondo); color: var(--texto); font: 600 17px/1 var(--letra); }
+  .texto-campo:focus { outline: none; border-color: var(--texto); }
+  .texto-campo.error { border-color: var(--peligro); }
+  .error-txt { margin: 6px 0 0; font: 600 14px/1.3 var(--letra); color: var(--peligro); }
+  .chips-envuelve { display: flex; flex-wrap: wrap; gap: 0 6px; }
+  .chips-envuelve .chip { flex: 0 0 auto; }
+  .chips-envuelve.error .chip > span { border-color: var(--peligro); }
+  .subir { padding: 16px; border: 2px dashed var(--borde); border-radius: var(--radio); }
+  .subir .acciones { display: flex; gap: 8px; margin-top: 12px; }
+  .subir .acciones .btn { flex: 1; padding: 0 8px; }
+  .ayuda { margin: 8px 0 0; font-size: 13px; color: var(--texto-2); }
+
+  .notas-maqueta { max-width: 860px; margin: 32px auto 0; color: var(--p-texto-2); font-size: 14px; }
+  .notas-maqueta h2 { color: var(--p-texto); font-size: 16px; margin: 0 0 8px; }
+  .notas-maqueta ul { margin: 0; padding-left: 18px; }
+  .notas-maqueta li { margin: 4px 0; }
+</style>
+</head>
+<body>
+<main class="maqueta">
+  <header class="maqueta-cabeza">
+    <h1>Pantalla 9 · Ejercicios</h1>
+    <p>Dirección Más · 412 × 892 dp · <a href="ejercicio.html">Detalle de ejercicio</a> · <a href="index.html">todas las pantallas</a></p>
+  </header>
+
+  <div class="controles" role="group" aria-label="Controles de la maqueta">
+    <label class="grupo"><span class="rot">Estado</span>
+      <select class="ctl" data-ctl="estado">
+        <option value="lista">Lista</option>
+        <option value="buscando">Buscando, con resultados</option>
+        <option value="filtro">Filtro aplicado</option>
+        <option value="sin-resultados">Sin resultados</option>
+        <option value="crear">Crear ejercicio propio</option>
+        <option value="cargando">Cargando</option>
+        <option value="sin-conexion">Sin conexión</option>
+      </select></label>
+    <label class="grupo"><span class="rot">Rol</span>
+      <select class="ctl" data-ctl="rol">
+        <option value="alumno">Alumna</option>
+        <option value="entrenador">Entrenadora</option>
+      </select></label>
+    <label class="grupo"><span class="rot">Tema</span>
+      <select class="ctl" data-ctl="tema">
+        <option value="gimnasio">Modo gimnasio</option>
+        <option value="clara">Clara</option>
+        <option value="ambos">Las dos</option>
+      </select></label>
+    <label class="grupo"><span class="rot">Tamaño</span>
+      <select class="ctl" data-ctl="zoom">
+        <option value="ajustar">Ajustar al ancho</option>
+        <option value="100">Real (1 dp = 1 px)</option>
+        <option value="150">150 %</option>
+      </select></label>
+    <label class="grupo"><input type="checkbox" data-ctl="medidas"><span>Medidas de toque</span></label>
+  </div>
+
+  <div class="escenario" id="escenario"></div>
+
+  <section class="notas-maqueta">
+    <h2>Qué mirar</h2>
+    <ul>
+      <li>Funciona de verdad: escribe en el buscador (no importan los tildes), toca los grupos y el equipo. El grupo es uno solo; el equipo se puede combinar.</li>
+      <li>El buscador y los filtros quedan fijos arriba; la lista corre por debajo. Al escribir se ve el teclado, para medir cuánta lista queda a la vista.</li>
+      <li>La miniatura es la pose clave del ejercicio dibujada con la marca: el disco y la barra en ámbar. Los ejercicios propios sin foto llevan el marco punteado.</li>
+      <li>A la derecha va tu récord de peso. La entrenadora no lo ve aquí: su lista es la biblioteca más los ejercicios que ella creó.</li>
+      <li>Sin resultados, la acción de abajo crea el ejercicio con el nombre que buscaste. «Guardar ejercicio» lleva a su detalle.</li>
+      <li>Abren su detalle Sentadilla (con historial), Sentadilla búlgara (sin historial) y Puente de glúteo con banda (propio).</li>
+    </ul>
+  </section>
+</main>
+
+<script src="maqueta.js"></script>
+<script>
+// ── Datos de prueba ──────────────────────────────────────────────────────────
+const GRUPOS = ['Todos', 'Piernas', 'Pecho', 'Espalda', 'Hombros', 'Brazos', 'Core'];
+const EQUIPOS = ['Barra', 'Mancuernas', 'Máquina', 'Polea', 'Peso corporal', 'Banda'];
+const MIDE = [['kg', 'Kilos y reps'], ['reps', 'Solo reps'], ['tiempo', 'Tiempo']];
+// p: patrón de movimiento (dibuja la miniatura). pr: récord de Martina. ir: estado del detalle maquetado.
+const BIBLIOTECA = [
+  { n: 'Abducción en máquina', g: 'Piernas', e: 'Máquina', p: 'cadera' },
+  { n: 'Aperturas en máquina', g: 'Pecho', e: 'Máquina', p: 'empuje', pr: '45 kg' },
+  { n: 'Aperturas en polea', g: 'Pecho', e: 'Polea', p: 'empuje', pr: '10 kg' },
+  { n: 'Crunch en polea', g: 'Core', e: 'Polea', p: 'core' },
+  { n: 'Curl de bíceps con barra', g: 'Brazos', e: 'Barra', p: 'tiron', pr: '20 kg' },
+  { n: 'Curl de bíceps con mancuernas', g: 'Brazos', e: 'Mancuernas', p: 'tiron', pr: '10 kg' },
+  { n: 'Curl martillo', g: 'Brazos', e: 'Mancuernas', p: 'tiron', pr: '8 kg' },
+  { n: 'Curl femoral', g: 'Piernas', e: 'Máquina', p: 'rodilla', pr: '35 kg' },
+  { n: 'Dominadas asistidas', g: 'Espalda', e: 'Máquina', p: 'tiron' },
+  { n: 'Elevaciones laterales', g: 'Hombros', e: 'Mancuernas', p: 'empuje', pr: '8 kg' },
+  { n: 'Extensión de tríceps en polea', g: 'Brazos', e: 'Polea', p: 'empuje', pr: '25 kg' },
+  { n: 'Face pull en polea', g: 'Hombros', e: 'Polea', p: 'tiron', pr: '15 kg' },
+  { n: 'Flexiones de brazos', g: 'Pecho', e: 'Peso corporal', p: 'empuje' },
+  { n: 'Fondos en paralelas', g: 'Pecho', e: 'Peso corporal', p: 'empuje' },
+  { n: 'Gemelos de pie', g: 'Piernas', e: 'Máquina', p: 'rodilla', pr: '37,5 kg' },
+  { n: 'Hip thrust con barra', g: 'Piernas', e: 'Barra', p: 'cadera' },
+  { n: 'Jalón al pecho', g: 'Espalda', e: 'Polea', p: 'tiron', pr: '40 kg' },
+  { n: 'Peso muerto', g: 'Espalda', e: 'Barra', p: 'cadera' },
+  { n: 'Peso muerto rumano', g: 'Piernas', e: 'Barra', p: 'cadera', pr: '60 kg' },
+  { n: 'Plancha', g: 'Core', e: 'Peso corporal', p: 'core', pr: '1:10' },
+  { n: 'Prensa', g: 'Piernas', e: 'Máquina', p: 'rodilla', pr: '135 kg' },
+  { n: 'Press de banca', g: 'Pecho', e: 'Barra', p: 'empuje', pr: '47,5 kg' },
+  { n: 'Press inclinado con mancuernas', g: 'Pecho', e: 'Mancuernas', p: 'empuje', pr: '22 kg' },
+  { n: 'Press militar con barra', g: 'Hombros', e: 'Barra', p: 'empuje', pr: '40 kg' },
+  { n: 'Remo con barra', g: 'Espalda', e: 'Barra', p: 'tiron', pr: '50 kg' },
+  { n: 'Remo en polea baja', g: 'Espalda', e: 'Polea', p: 'tiron', pr: '35 kg' },
+  { n: 'Rueda abdominal', g: 'Core', e: 'Peso corporal', p: 'core' },
+  { n: 'Sentadilla', g: 'Piernas', e: 'Barra', p: 'rodilla', pr: '80 kg', ir: 'historial' },
+  { n: 'Sentadilla búlgara', g: 'Piernas', e: 'Mancuernas', p: 'rodilla', ir: 'sin-historial' },
+  { n: 'Sentadilla frontal', g: 'Piernas', e: 'Barra', p: 'rodilla' },
+  { n: 'Sentadilla goblet', g: 'Piernas', e: 'Mancuernas', p: 'rodilla', pr: '16 kg' },
+  { n: 'Zancadas con mancuernas', g: 'Piernas', e: 'Mancuernas', p: 'rodilla', pr: '16 kg' },
+];
+// Propios: los de Martina (alumna) y los de Camila (entrenadora). Ninguno tiene foto todavía.
+const PROPIOS = {
+  alumno: [{ n: 'Puente de glúteo con banda', g: 'Piernas', e: 'Banda', p: 'cadera', pr: '20 reps', propio: true }],
+  entrenador: [{ n: 'Sentadilla con pausa', g: 'Piernas', e: 'Barra', p: 'rodilla', propio: true }],
+};
+
+// ── Íconos de trazo ──────────────────────────────────────────────────────────
+const icoLupa = '<svg class="lupa" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 4a6.5 6.5 0 1 1 0 13 6.5 6.5 0 0 1 0-13zM15.5 15.5L20 20"/></svg>';
+const icoVolver = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H5M11 5l-7 7 7 7"/></svg>';
+const icoX = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+const icoMayus = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l7 8h-4v7H9v-7H5z"/></svg>';
+const icoRetro = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12v12H8l-5-6z"/><path d="M11 9.5l5 5M16 9.5l-5 5"/></svg>';
+const icoSinRed = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19h2M9 19v-4M14 19v-8M19 19V7M3 4l18 18"/></svg>';
+const icoLupaT = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 4a6.5 6.5 0 1 1 0 13 6.5 6.5 0 0 1 0-13zM15.5 15.5L20 20"/></svg>';
+
+// Miniaturas: la pose clave de cada patrón (rodilla, cadera, empuje, tirón, core), con su propio encuadre.
+const FIG = {
+  rodilla: ['9 10 36 36', '<circle class="disco" cx="25.5" cy="22" r="4.5"/><polyline points="33,43 26,43 32,34 20,33 27,22"/><circle class="cab" cx="30.5" cy="16.5" r="3.6"/>'],
+  cadera: ['13 13 34 34', '<polyline points="32,43 25,43 27,33 20,24 34,26"/><polyline points="34,26 33,35"/><circle class="disco" cx="33" cy="37.5" r="4.5"/><circle class="cab" cx="40" cy="26.5" r="3.6"/>'],
+  empuje: ['2 5 40 40', '<path class="banco" d="M7 32.5H31M10 32.5V43M28 32.5V43"/><circle class="disco" cx="14" cy="11.5" r="4.5"/><polyline points="14,14 14,28 28,28 35,25 37,43"/><circle class="cab" cx="8.5" cy="27" r="3.6"/>'],
+  tiron: ['5 4 40 40', '<path class="barra" d="M10 7H38"/><polyline points="24,7 24,17 24,31 21,37 25,42"/><circle class="cab" cx="28.5" cy="14" r="3.6"/>'],
+  core: ['1 15 42 42', '<polyline points="19,43 12,43 12,33 40,41 41,43"/><circle class="cab" cx="7" cy="30.5" r="3.6"/>'],
+};
+const mini = (x) => (x.propio
+  ? '<span class="mini vacia" aria-hidden="true"></span>'
+  : `<span class="mini" aria-hidden="true"><svg viewBox="${FIG[x.p][0]}">${FIG[x.p][1]}</svg></span>`);
+
+// Teclado de Android, dibujado solo para ver el espacio que ocupa. Las teclas escriben.
+function teclado() {
+  const k = (c) => `<button class="tecla" data-tecla="${c}" tabindex="-1">${c}</button>`;
+  const fila = (s) => `<div class="t-fila">${[...s].map(k).join('')}</div>`;
+  return `<div class="teclado" aria-hidden="true">${fila('qwertyuiop')}${fila('asdfghjklñ')}
+    <div class="t-fila"><button class="tecla esp" data-tecla="mayus" tabindex="-1">${icoMayus}</button>${[...'zxcvbnm'].map(k).join('')}<button class="tecla esp" data-tecla="borrar" tabindex="-1">${icoRetro}</button></div>
+    <div class="t-fila"><button class="tecla esp" data-tecla="num" tabindex="-1">?123</button>${k(',')}<button class="tecla espacio" data-tecla=" " tabindex="-1">Español</button>${k('.')}<button class="tecla esp listo" data-tecla="listo" tabindex="-1" aria-label="Buscar">${icoLupaT}</button></div>
+  </div>`;
+}
+
+// ── Estado de la pantalla ────────────────────────────────────────────────────
+let F;
+function prepararEstado(estado) {
+  const base = { q: '', grupo: 'Todos', equipos: [], teclado: false, nuevo: null, errores: {}, volverA: 'lista' };
+  const extra = {
+    buscando: { q: 'sent', teclado: true },
+    filtro: { grupo: 'Piernas', equipos: ['Barra'] },
+    'sin-resultados': { q: 'curl nórdico' },
+    crear: { q: 'curl nórdico', volverA: 'sin-resultados', nuevo: { n: 'Curl nórdico', g: 'Piernas', e: 'Peso corporal', mide: 'reps', nota: '' } },
+  }[estado] || {};
+  F = { ...base, ...extra };
+}
+
+const norm = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+const catalogo = (rol) => [...PROPIOS[rol === 'entrenador' ? 'entrenador' : 'alumno'], ...BIBLIOTECA];
+const conFiltros = () => F.grupo !== 'Todos' || F.equipos.length > 0;
+function filtrar(rol) {
+  const q = norm(F.q.trim());
+  return catalogo(rol).filter((x) => (F.grupo === 'Todos' || x.g === F.grupo)
+    && (!F.equipos.length || F.equipos.includes(x.e)) && (!q || norm(x.n).includes(q)));
+}
+function parecidos(rol) {
+  const palabras = norm(F.q).split(/\s+/).filter((w) => w.length >= 4);
+  return catalogo(rol).filter((x) => palabras.some((w) => norm(x.n).includes(w))).slice(0, 3);
+}
+function resaltar(nombre, q) {
+  const t = norm(q.trim()); if (!t) return nombre;
+  const i = norm(nombre).indexOf(t); if (i < 0) return nombre;
+  return `${nombre.slice(0, i)}<span class="coincide">${nombre.slice(i, i + t.length)}</span>${nombre.slice(i + t.length)}`;
+}
+const conMayuscula = (s) => s.trim().charAt(0).toUpperCase() + s.trim().slice(1);
+
+// ── Piezas ───────────────────────────────────────────────────────────────────
+function destino(x, rol) {
+  const r = rol === 'entrenador' ? '&rol=entrenador' : '';
+  if (x.propio) return `ejercicio.html#estado=propio${r}`;
+  if (x.ir) return `ejercicio.html#estado=${x.ir}${r}`;
+  return '';
+}
+
+function filaEj(x, rol) {
+  const d = destino(x, rol);
+  const toque = d ? `data-ir="${d}"` : `data-accion="sin-detalle" data-nombre="${x.n}"`;
+  const pr = rol !== 'entrenador' && x.pr
+    ? `<span class="pr"><small>Récord</small><span class="cifra">${x.pr}</span></span>` : '';
+  return `<li><button class="fila-ej" ${toque} data-toque>${mini(x)}
+    <span class="txt"><span class="n">${resaltar(x.n, F.q)}</span><span class="m">${x.g} · ${x.e}</span></span>${pr}</button></li>`;
+}
+
+function lista(items, rol) {
+  const propios = items.filter((x) => x.propio), base = items.filter((x) => !x.propio);
+  return (propios.length ? `<p class="ceja sec-lista">Creados por ti</p><ul class="lista-filas">${propios.map((x) => filaEj(x, rol)).join('')}</ul>` : '')
+    + (base.length ? `<p class="ceja sec-lista">Biblioteca GymTrack</p><ul class="lista-filas">${base.map((x) => filaEj(x, rol)).join('')}</ul>` : '');
+}
+
+function resultados(ctl) {
+  if (ctl.estado === 'cargando') {
+    const fila = (w) => `<li><span class="b" style="width:52px;height:52px"></span>
+      <span style="flex:1"><span class="b" style="width:${w}%;height:14px"></span><span class="b" style="width:38%;height:10px;margin-top:10px"></span></span></li>`;
+    return `<div class="conteo"><p class="sec">Cargando ejercicios…</p></div>
+      <ul class="lista-filas esqueleto" aria-busy="true">${[70, 55, 80, 48, 64, 58, 72].map(fila).join('')}</ul>`;
+  }
+  const res = filtrar(ctl.rol), n = res.length;
+  const banda = ctl.estado === 'sin-conexion'
+    ? `<div class="banda" role="status">${icoSinRed}<span><b>Sin conexión.</b> Ves los ejercicios guardados en tu teléfono. Para crear uno nuevo necesitas señal.</span></div>` : '';
+  if (!n) {
+    const parec = F.q.trim() ? parecidos(ctl.rol) : [];
+    const msj = ctl.rol === 'entrenador'
+      ? 'Créalo como ejercicio propio. Quedará disponible para las rutinas de tus clientes.'
+      : 'Créalo como ejercicio propio. Tú eliges el grupo y el equipo, y puedes subir una foto o un video de referencia.';
+    return `${banda}<div class="vacio">
+        <p class="h3">${F.q.trim() ? `No encontramos «${F.q.trim()}»` : 'Nada con estos filtros'}</p>
+        <p class="sec">${F.q.trim() ? msj : 'Prueba con otro grupo o quita el equipo.'}</p>
+        ${conFiltros() ? '<button class="btn btn-fantasma" data-accion="quitar-filtros" data-toque>Buscar en todos los grupos</button>' : ''}
+      </div>
+      ${parec.length ? `<p class="ceja sec-lista" style="margin-top:20px">Lo más parecido</p><ul class="lista-filas">${parec.map((x) => filaEj(x, ctl.rol)).join('')}</ul>` : ''}`;
+  }
+  const detalle = [F.grupo !== 'Todos' ? F.grupo : '', ...F.equipos].filter(Boolean).join(' · ');
+  const conteo = F.q.trim() || conFiltros()
+    ? `<span class="cifra">${n}</span> ${n === 1 ? 'resultado' : 'resultados'}${detalle ? ` · ${detalle}` : ''}`
+    : `<span class="cifra">${n}</span> ejercicios`;
+  return `${banda}<div class="conteo"><p class="sec">${conteo}</p>
+      ${conFiltros() ? '<button class="btn btn-fantasma" data-accion="quitar-filtros" data-toque>Quitar filtros</button>' : ''}</div>
+    ${lista(res, ctl.rol)}`;
+}
+
+function accionInferior(ctl) {
+  if (ctl.estado === 'cargando' || !F.q.trim() || filtrar(ctl.rol).length) return '';
+  return `<div class="tel-accion"><button class="btn btn-primario ancho alto accion-crear" data-accion="crear" ${ctl.estado === 'sin-conexion' ? 'disabled' : ''} data-toque><span>Crear «${conMayuscula(F.q)}»</span></button></div>`;
+}
+
+function filtros() {
+  const g = GRUPOS.map((x) => `<button class="chip texto" data-accion="grupo" data-v="${x}" aria-pressed="${F.grupo === x}" data-toque><span>${x}</span></button>`).join('');
+  const e = EQUIPOS.map((x) => `<button class="chip texto" data-accion="equipo" data-v="${x}" aria-pressed="${F.equipos.includes(x)}" data-toque><span>${x}</span></button>`).join('');
+  return `<div class="filtros">
+    <div class="fila-chips" role="group" aria-label="Grupo muscular"><span class="rot">Grupo</span>${g}</div>
+    <div class="fila-chips" role="group" aria-label="Equipo"><span class="rot">Equipo</span>${e}</div>
+  </div>`;
+}
+
+function pantallaLista(tema, ctl) {
+  const ent = ctl.rol === 'entrenador';
+  return `<div class="tel${F.teclado ? ' con-teclado' : ''}" data-tema="${tema}">
+    <div class="tel-estado"><span class="cifra" style="font-weight:600">9:41</span><span>5G · 82 %</span></div>
+    <div class="arriba">
+      <div class="cabeza"><h1 class="titulo">Ejercicios</h1>
+        <button class="btn btn-fantasma crear" data-accion="crear" ${ctl.estado === 'sin-conexion' ? 'disabled' : ''} data-toque>${simbolo('simbolo', '')}Crear</button></div>
+      <label class="buscador${F.q ? ' con-texto' : ''}${F.teclado ? ' activo' : ''}">${icoLupa}
+        <input type="search" data-campo="q" value="${F.q}" placeholder="Buscar ejercicio" aria-label="Buscar ejercicio" autocomplete="off">
+        <button class="btn-icono limpiar" data-accion="limpiar" aria-label="Borrar la búsqueda" data-toque>${icoX}</button>
+      </label>
+      ${filtros()}
+    </div>
+    <div class="tel-contenido"><div class="resultados">${resultados(ctl)}</div></div>
+    <div class="ranura-accion">${accionInferior(ctl)}</div>
+    ${teclado()}
+    ${ent ? pestanas(PESTANAS_ENTRENADOR, 'Ejercicios').replace('>Alertas</button>', '>Alertas<span class="insignia" aria-label="3 nuevas">3</span></button>')
+      : pestanas(PESTANAS_ALUMNO, 'Ejercicios')}
+    <div class="tel-gesto"></div>
+    <div class="aviso" role="status"></div>
+  </div>`;
+}
+
+function pantallaCrear(tema, ctl) {
+  const N = F.nuevo, E = F.errores, ent = ctl.rol === 'entrenador';
+  const chips = (clave, opciones) => opciones.map(([v, t]) =>
+    `<button class="chip texto" data-accion="nuevo" data-k="${clave}" data-v="${v}" aria-pressed="${N[clave] === v}" data-toque><span>${t}</span></button>`).join('');
+  const par = (a) => a.map((x) => [x, x]);
+  return `<div class="tel" data-tema="${tema}">
+    <div class="tel-estado"><span class="cifra" style="font-weight:600">9:41</span><span>5G · 82 %</span></div>
+    <div class="barra-sup">
+      <button class="btn-icono" data-accion="cerrar-crear" aria-label="Volver sin guardar" data-toque>${icoVolver}</button>
+      <h1 class="h3">Nuevo ejercicio</h1>
+    </div>
+    <div class="tel-contenido">
+      <label class="rot-campo" for="nombre-${tema}" style="display:block">Nombre</label>
+      <input id="nombre-${tema}" class="texto-campo${E.n ? ' error' : ''}" data-campo="nombre" value="${N.n}" placeholder="Por ejemplo: Curl nórdico" autocomplete="off">
+      ${E.n ? `<p class="error-txt">${E.n}</p>` : ''}
+
+      <p class="rot-campo">Grupo muscular</p>
+      <div class="chips-envuelve${E.g ? ' error' : ''}" role="group" aria-label="Grupo muscular">${chips('g', par(GRUPOS.slice(1)))}</div>
+      ${E.g ? `<p class="error-txt">${E.g}</p>` : ''}
+
+      <p class="rot-campo">Equipo</p>
+      <div class="chips-envuelve${E.e ? ' error' : ''}" role="group" aria-label="Equipo">${chips('e', par([...EQUIPOS, 'Otro']))}</div>
+      ${E.e ? `<p class="error-txt">${E.e}</p>` : ''}
+
+      <p class="rot-campo">Cómo lo registras</p>
+      <div class="chips-envuelve" role="group" aria-label="Cómo lo registras">${chips('mide', MIDE)}</div>
+
+      <p class="rot-campo">Referencia <span class="op">· opcional</span></p>
+      <div class="subir">
+        <p class="sec">Una foto o un video corto para recordar cómo se hace. Hasta 50 MB.</p>
+        <div class="acciones">
+          <button class="btn btn-secundario" data-accion="subir" data-aviso="Se abre la cámara para grabar." data-toque>Grabar video</button>
+          <button class="btn btn-secundario" data-accion="subir" data-aviso="Se abre la galería del teléfono." data-toque>Elegir archivo</button>
+        </div>
+        <p class="ayuda">${ent ? 'La ven tú y tus clientes.' : 'Solo la ven tú y tu entrenadora.'}</p>
+      </div>
+
+      <label class="rot-campo" for="nota-${tema}" style="display:block">Cómo se hace <span class="op">· opcional</span></label>
+      <textarea id="nota-${tema}" class="area" data-campo="nota" placeholder="En pasos cortos. Por ejemplo: rodillas en una colchoneta, baja lento con el cuerpo recto.">${N.nota}</textarea>
+    </div>
+    <div class="tel-accion"><button class="btn btn-primario ancho alto" data-accion="guardar" data-toque>Guardar ejercicio</button></div>
+    <div class="tel-gesto"></div>
+    <div class="aviso" role="status"></div>
+  </div>`;
+}
+
+function telefono(tema, ctl) {
+  return ctl.estado === 'crear' && F.nuevo ? pantallaCrear(tema, ctl) : pantallaLista(tema, ctl);
+}
+
+// ── Maqueta ──────────────────────────────────────────────────────────────────
+const m = iniciarMaqueta({ telefono, porDefecto: { estado: 'lista', rol: 'alumno' }, alCambiarEstado: prepararEstado });
+const { ctl, escenario } = m;
+const todos = (sel) => escenario.querySelectorAll(sel);
+
+function repintar() {
+  const scroll = [...todos('.tel-contenido')].map((c) => c.scrollTop);
+  m.pintar();
+  todos('.tel-contenido').forEach((c, k) => { c.scrollTop = scroll[k] || 0; });
+}
+
+// Al escribir no se repinta el teléfono entero: así el campo no pierde el foco.
+function actualizarResultados(origen) {
+  todos('.tel').forEach((tel) => {
+    const inp = tel.querySelector('[data-campo="q"]'); if (!inp) return;
+    if (inp !== origen) inp.value = F.q;
+    tel.querySelector('.buscador').classList.toggle('con-texto', !!F.q);
+    tel.querySelector('.resultados').innerHTML = resultados(ctl);
+    tel.querySelector('.ranura-accion').innerHTML = accionInferior(ctl);
+    tel.querySelector('.tel-contenido').scrollTop = 0;
+  });
+  m.medir();
+}
+
+function abrirCrear() {
+  F.nuevo = { n: F.q.trim() ? conMayuscula(F.q) : '', g: F.grupo !== 'Todos' ? F.grupo : '', e: F.equipos[0] || '', mide: 'kg', nota: '' };
+  F.errores = {}; F.volverA = ctl.estado === 'crear' ? 'lista' : ctl.estado; F.teclado = false;
+  ctl.estado = 'crear'; m.pintar();
+}
+
+function guardar(tel) {
+  const N = F.nuevo, E = {};
+  const nombre = N.n.trim();
+  if (!nombre) E.n = 'Ponle un nombre.';
+  else if (catalogo(ctl.rol).some((x) => norm(x.n) === norm(nombre))) E.n = `«${nombre}» ya está en la biblioteca.`;
+  if (!N.g) E.g = 'Elige un grupo.';
+  if (!N.e) E.e = 'Elige el equipo.';
+  F.errores = E;
+  if (Object.keys(E).length) { repintar(); avisar(escenario.querySelector('.tel'), 'Revisa lo marcado en rojo.'); return; }
+  const p = new URLSearchParams({ estado: 'propio', nuevo: 'si', nombre, grupo: N.g, equipo: N.e, mide: N.mide });
+  if (ctl.rol === 'entrenador') p.set('rol', 'entrenador');
+  m.ir(`ejercicio.html#${p.toString()}`);
+}
+
+escenario.addEventListener('click', (ev) => {
+  const t = ev.target.closest('[data-tecla]');
+  if (t) { teclear(t); return; }
+  const b = ev.target.closest('[data-accion]'); if (!b || b.disabled) return;
+  const tel = b.closest('.tel');
+  switch (b.dataset.accion) {
+    case 'grupo': F.grupo = b.dataset.v; F.teclado = false; repintar(); break;
+    case 'equipo': {
+      const v = b.dataset.v;
+      F.equipos = F.equipos.includes(v) ? F.equipos.filter((x) => x !== v) : [...F.equipos, v];
+      F.teclado = false; repintar(); break;
+    }
+    case 'quitar-filtros': F.grupo = 'Todos'; F.equipos = []; repintar(); break;
+    case 'limpiar': {
+      F.q = ''; actualizarResultados(null);
+      const inp = tel.querySelector('[data-campo="q"]'); inp.value = ''; inp.focus();
+      break;
+    }
+    case 'sin-detalle': avisar(tel, `Aquí se abre ${b.dataset.nombre}. En la maqueta, prueba con Sentadilla.`); break;
+    case 'crear': abrirCrear(); break;
+    case 'cerrar-crear': ctl.estado = F.volverA || 'lista'; F.nuevo = null; m.pintar(); break;
+    case 'nuevo': F.nuevo[b.dataset.k] = b.dataset.v; delete F.errores[b.dataset.k]; repintar(); break;
+    case 'subir': avisar(tel, b.dataset.aviso); break;
+    case 'guardar': guardar(tel); break;
+  }
+});
+
+// Teclado dibujado: las teclas escriben en el buscador sin quitarle el foco.
+escenario.addEventListener('pointerdown', (ev) => { if (ev.target.closest('[data-tecla]')) ev.preventDefault(); });
+function teclear(t) {
+  const tel = t.closest('.tel'), inp = tel.querySelector('[data-campo="q"]'); if (!inp) return;
+  const k = t.dataset.tecla;
+  if (k === 'listo') { F.teclado = false; todos('.tel').forEach((x) => x.classList.remove('con-teclado')); inp.blur(); return; }
+  if (k === 'mayus' || k === 'num') return;
+  inp.value = k === 'borrar' ? inp.value.slice(0, -1) : inp.value + k;
+  inp.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
+escenario.addEventListener('input', (ev) => {
+  const t = ev.target;
+  if (t.matches('[data-campo="q"]')) { F.q = t.value; actualizarResultados(t); }
+  if (t.matches('[data-campo="nombre"]')) {
+    F.nuevo.n = t.value;
+    todos('[data-campo="nombre"]').forEach((x) => { if (x !== t) x.value = t.value; });
+  }
+  if (t.matches('[data-campo="nota"]')) {
+    F.nuevo.nota = t.value;
+    todos('[data-campo="nota"]').forEach((x) => { if (x !== t) x.value = t.value; });
+  }
+});
+escenario.addEventListener('focusin', (ev) => {
+  if (!ev.target.matches('[data-campo="q"]')) return;
+  F.teclado = true; ev.target.closest('.tel').classList.add('con-teclado');
+});
+escenario.addEventListener('focusout', (ev) => {
+  if (!ev.target.matches('[data-campo="q"]')) return;
+  F.teclado = false; ev.target.closest('.tel').classList.remove('con-teclado');
+  todos('.buscador').forEach((x) => x.classList.remove('activo'));
+});
+escenario.addEventListener('keydown', (ev) => {
+  if (ev.key === 'Enter' && ev.target.matches('[data-campo="q"]')) ev.target.blur();
+});
+</script>
+</body>
+</html>

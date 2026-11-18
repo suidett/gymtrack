@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none" style="color:#131A17">
+  <!-- 10 El marcapaginas: la cinta que cuelga del renglon y marca donde se quedo; de paso, una T -->
+  <rect x="11" y="13" width="42" height="7" rx="2" fill="currentColor"/>
+  <path class="acento" d="M24 20H40V51L32 42L24 51Z" fill="#45B392" stroke="#45B392" stroke-width="1" stroke-linejoin="round"/>
+</svg>

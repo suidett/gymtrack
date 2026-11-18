@@ -1,0 +1,28 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// Reglas de Cloud Storage para Firebase · BORRADOR
+//
+// GymTrack no usa Firebase Auth ni el SDK de Storage en la app. Todo pasa por la
+// API: la app pide una URL firmada V4 de 15 minutos (§Seguridad) y sube o baja con
+// ella. Por eso el cliente no puede leer, escribir, listar ni borrar nada por la
+// vía de Firebase.
+//
+// Ojo con lo que estas reglas NO cubren:
+//   - El Admin SDK de la API y del worker no pasa por reglas (usa IAM).
+//   - Las URLs firmadas tampoco pasan por reglas: las valida Cloud Storage.
+//   - El acceso público lo cierra el bucket: acceso uniforme, prevención de acceso
+//     público «enforced» y ningún permiso para allUsers ni allAuthenticatedUsers.
+// INF-25 prueba las tres cosas.
+//
+// Rutas que usa la API (para cuando haga falta afinar algo):
+//   fotos/<user_id>/<photo_id>.jpg           fotos de progreso
+//   ejercicios/<exercise_id>/<media_id>.<ext>  fotos y videos de ejercicios propios
+// ─────────────────────────────────────────────────────────────────────────────
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{todo=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,0 +1,55 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Override de staging · BORRADOR
+#
+# Igual que producción, con menos memoria. Staging comparte el servidor con
+# producción: sus límites son más bajos para que nunca le quite RAM a producción,
+# y se puede detener entero en cualquier momento (restaurar-prueba.sh lo pausa si
+# falta memoria). NODE_ENV sigue en production, así que no existen las rutas
+# /test/* (SEG-025); lo que distingue al entorno es APP_ENTORNO.
+# En el servidor va en /opt/gymtrack/app/compose.staging.yml.
+# ─────────────────────────────────────────────────────────────────────────────
+name: gymtrack-staging
+
+services:
+  api:
+    env_file: /opt/gymtrack/staging/app.env
+    environment:
+      APP_ENTORNO: staging
+      NODE_OPTIONS: --max-old-space-size=144
+      GOOGLE_APPLICATION_CREDENTIALS: /run/secretos/storage-api.json
+    volumes:
+      - /opt/gymtrack/staging/secretos/storage-api.json:/run/secretos/storage-api.json:ro
+    networks:
+      borde:
+        aliases: [api-staging]
+    mem_limit: 224m
+    memswap_limit: 224m
+    cpus: 0.5
+
+  worker:
+    env_file: /opt/gymtrack/staging/app.env
+    environment:
+      APP_ENTORNO: staging
+      NODE_OPTIONS: --max-old-space-size=96
+      GOOGLE_APPLICATION_CREDENTIALS: /run/secretos/storage-api.json
+    volumes:
+      - /opt/gymtrack/staging/secretos/storage-api.json:/run/secretos/storage-api.json:ro
+    mem_limit: 128m
+    memswap_limit: 128m
+    cpus: 0.25
+
+  db:
+    env_file: /opt/gymtrack/staging/db.env
+    command:
+      - postgres
+      - -c
+      - shared_buffers=48MB
+      - -c
+      - effective_cache_size=128MB
+      - -c
+      - work_mem=2MB
+      - -c
+      - max_connections=20
+    mem_limit: 256m
+    memswap_limit: 256m
+    cpus: 0.5

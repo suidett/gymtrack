@@ -1,0 +1,90 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# App · borrador
+#
+# Corre en cada PR y en cada push a main. Prueba la app sin emulador:
+# componentes con Jest y Testing Library, y el bundle de Android que hoy corre
+# en el ci.yml actual.
+# Checks obligatorios: «app-componentes» y «app-bundle».
+# Pruebas del plan: APP, SYNC en Jest, ACC-001, ACC-002, ACC-006, ACC-007, ACC-009, SEG-030.
+# ─────────────────────────────────────────────────────────────────────────────
+name: App
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: app-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  # Decide si el PR toca la app. Se hace con un job (y no con «paths:» del workflow)
+  # para que los checks obligatorios no queden pendientes cuando no hay nada que correr.
+  cambios:
+    runs-on: ubuntu-latest
+    outputs:
+      app: ${{ steps.filtro.outputs.app }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filtro
+        with:
+          filters: |
+            app:
+              - 'apps/mobile/**'
+              - 'packages/**'
+              - 'pnpm-lock.yaml'
+              - 'package.json'
+              - 'pnpm-workspace.yaml'
+              - 'tsconfig.base.json'
+              - '.github/workflows/app.yml'
+              - '.github/actions/**'
+
+  app-componentes:
+    needs: cambios
+    # !cancelled() y «result != 'success'»: si el job «cambios» falla, este job corre igual.
+    # Sin eso se saltaría, y un check obligatorio saltado cuenta como aprobado.
+    if: ${{ !cancelled() && (needs.cambios.result != 'success' || needs.cambios.outputs.app == 'true' || github.event_name == 'push') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      TZ: America/Santiago   # las pantallas muestran fechas en la zona del alumno
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/preparar
+
+      # PENDIENTE: instalar jest-expo, @testing-library/react-native, msw y jest-junit (H-06).
+      - name: Componentes con Jest
+        run: pnpm --filter mobile exec jest --ci --coverage --reporters=default --reporters=jest-junit
+        env:
+          JEST_JUNIT_OUTPUT_DIR: reportes
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: app-reportes
+          path: |
+            apps/mobile/reportes/
+            apps/mobile/coverage/
+          retention-days: 14
+
+  app-bundle:
+    needs: cambios
+    if: ${{ !cancelled() && (needs.cambios.result != 'success' || needs.cambios.outputs.app == 'true' || github.event_name == 'push') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/preparar
+
+      # Igual que el paso «Bundle de Android (prueba de humo)» del ci.yml actual.
+      - name: Bundle de Android
+        run: pnpm export:android
+        env:
+          CI: 1

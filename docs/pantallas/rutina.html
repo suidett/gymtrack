@@ -1,0 +1,577 @@
+<!doctype html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GymTrack · Detalle de rutina</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="sistema.css">
+<style>
+  /* ── Barra superior: volver y opciones ─────────────────────────────────── */
+  .barra-sup { flex: 0 0 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 4px; }
+  .barra-sup .ceja { flex: 1; text-align: center; }
+  .btn-icono rect { fill: currentColor; }
+  .ico { flex: 0 0 24px; width: 24px; height: 24px; }
+  .ico path { stroke: currentColor; fill: none; stroke-width: 2.5; stroke-linecap: square; }
+
+  /* ── Cabeza de la rutina ───────────────────────────────────────────────── */
+  .cabeza { padding: 4px 0 0; }
+  .cabeza .titulo { margin-top: 6px; }
+  .cabeza .sec { margin-top: 4px; }
+  .marcas { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  /* Etiqueta chica (la misma en todas las pantallas): 24 dp, radio 4. */
+  .etiqueta { display: inline-flex; align-items: center; height: 24px; padding: 0 8px; border-radius: 4px; background: transparent;
+    border: 1px solid var(--borde); font: 600 12px/1 var(--letra); color: var(--texto-2); white-space: nowrap; }
+  .etiqueta.acento { color: var(--acento-texto); border-color: var(--hecho-borde); }
+  .etiqueta.llena { background: var(--hecho-fondo); border-color: var(--hecho-borde); color: var(--visto); }
+  .etiqueta.peligro { color: var(--peligro); border-color: var(--peligro); }
+  .semanas { display: flex; gap: 3px; margin-top: 16px; }
+  .semanas i { flex: 1; height: 8px; border-radius: 1px; background: var(--sup-alta); }
+  .semanas i.si { background: var(--hecho-fondo); }
+  .semanas i.ahora { background: var(--texto); }
+  .avance-txt { margin: 8px 0 0; font-size: 13px; color: var(--texto-2); }
+  .avance-txt .cifra { color: var(--texto); }
+
+  .bloque { margin-top: 16px; }
+  .metodo .h3 { font-size: 15px; }
+  .metodo .sec { margin-top: 4px; }
+  .lectura { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; margin-top: 16px; border-radius: var(--radio);
+    background: var(--sup); border: 1px solid var(--sup-alta); font-size: 14px; line-height: 1.4; color: var(--texto-2); }
+  .lectura .ico { width: 20px; height: 20px; flex-basis: 20px; color: var(--texto-2); margin-top: 1px; }
+  .lectura b { color: var(--texto); font-weight: 600; }
+  .historial { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .dato { background: var(--sup); border: 1px solid var(--sup-alta); border-radius: var(--radio); padding: 12px; }
+  .dato .cifra { display: block; font-size: 22px; line-height: 1.1; }
+  .dato .cifra small { font-size: 13px; margin-left: 2px; color: var(--texto-2); }
+  .dato .sec { font-size: 13px; margin-top: 4px; }
+
+  .ent-cabeza { display: flex; align-items: center; gap: 12px; }
+  /* Avatar (el mismo en todas las pantallas): 40 dp; chico 32 dp; grande 56 dp. Radio 8. */
+  .avatar { flex: 0 0 40px; width: 40px; height: 40px; border-radius: var(--radio); background: var(--sup-alta); color: var(--texto);
+    display: inline-flex; align-items: center; justify-content: center; font: 700 14px/1 var(--mono); }
+  .avatar.chico { flex-basis: 32px; width: 32px; height: 32px; font-size: 12px; }
+  .avatar.grande { flex-basis: 56px; width: 56px; height: 56px; font-size: 18px; }
+  .nota { margin: 14px 0 0; padding: 2px 0 2px 12px; border-left: 4px solid var(--hecho-fondo); font-size: 15px; line-height: 1.45; }
+  .nota-pie { display: flex; align-items: center; justify-content: space-between; margin: 8px -12px 0 0; }
+  .nota-pie .sec { font-size: 13px; }
+
+  /* ── Días: selector y lista ────────────────────────────────────────────── */
+  .selector-dias { display: flex; gap: 4px; }
+  .sel-dia { flex: 1; min-width: 0; height: 60px; padding: 0 4px; border-radius: var(--radio); border: 2px solid var(--borde);
+    background: transparent; color: var(--texto); cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; }
+  .sel-dia .l { font: 700 12px/1 var(--mono); color: var(--texto-2); }
+  .sel-dia .n { font: 600 14px/1 var(--letra); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .sel-dia.hoy .l { color: var(--texto); }
+  .sel-dia.hoy .l::after { content: ""; display: block; width: 12px; height: 2px; margin: 3px auto 0; background: currentColor; }
+  .sel-dia:active { background: var(--fantasma-pres); }
+  .sel-dia:focus-visible { outline: 2px solid var(--foco); outline-offset: 2px; }
+  .sel-dia[aria-selected="true"] { background: var(--texto); border-color: var(--texto); color: var(--fondo); }
+  .sel-dia[aria-selected="true"] .l { color: var(--fondo); }
+
+  .dia-panel { margin-top: 12px; }
+  .dia-panel .fila-tit { display: flex; align-items: center; gap: 10px; }
+  .dia-panel .sec { margin-top: 4px; }
+  .ejercicios { margin-top: 12px; border-top: 1px solid var(--sup-alta); }
+  .ejercicios > li { display: block; min-height: 0; padding: 0; }
+  .ej-tocar { width: 100%; min-height: 64px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0;
+    border: 0; background: transparent; color: var(--texto); text-align: left; cursor: pointer; font: inherit; }
+  .ej-tocar:active { background: var(--fantasma-pres); }
+  .ej-tocar:focus-visible { outline: 2px solid var(--foco); outline-offset: -2px; }
+  .ej-nombre { display: block; font-size: 16px; line-height: 1.3; }
+  .ej-meta { display: block; margin-top: 3px; font: 500 12px/1.3 var(--mono); color: var(--texto-2); }
+  .ej-dato { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; white-space: nowrap; }
+  .ej-dato .sr { font-size: 15px; }
+  .ej-dato .sr .x { color: var(--texto-2); font-weight: 500; margin: 0 2px; }
+  .ej-dato .kg { font-size: 13px; color: var(--texto-2); }
+  .mas { color: var(--acento-texto); margin-right: 6px; }
+  .ej-nota { margin: -2px 0 12px; padding: 0 0 0 10px; border-left: 3px solid var(--hecho-fondo); font-size: 13px; line-height: 1.4; color: var(--texto-2); }
+  .leyenda { margin: 8px 0 0; font-size: 13px; color: var(--texto-2); }
+
+  .clientes { margin: 0; padding: 0; list-style: none; }
+  .clientes li + li { border-top: 1px solid var(--sup-alta); }
+  .cli-fila { width: 100%; min-height: 56px; display: flex; align-items: center; gap: 12px; padding: 8px 0; border: 0;
+    background: transparent; color: var(--texto); text-align: left; cursor: pointer; font: inherit; }
+  .cli-fila:active { background: var(--fantasma-pres); }
+  .cli-fila .quien { flex: 1; font-size: 16px; }
+  .cli-fila .sem { font-size: 13px; color: var(--texto-2); }
+  .cli-fila .sem .cifra { color: var(--texto); }
+  .cli-fila .ico { color: var(--texto-2); width: 20px; height: 20px; flex-basis: 20px; }
+
+  .pie-accion { display: flex; flex-direction: column; gap: 8px; }
+  .pie-accion .sec { font-size: 13px; text-align: center; }
+
+  /* Botón deshabilitado (sistema.css todavía no lo trae). */
+  .btn:disabled, .btn:disabled:active { background: var(--desh-fondo); color: var(--desh-texto); border-color: transparent; cursor: not-allowed; }
+  /* ── Hojas ─────────────────────────────────────────────────────────────── */
+  .hoja.alta { max-height: calc(100% - 48px); display: flex; flex-direction: column; padding-bottom: 20px; }
+  .hoja-cuerpo { flex: 1; min-height: 0; overflow-y: auto; margin: 0 -16px; padding: 0 16px; scrollbar-width: none; }
+  .hoja-cuerpo::-webkit-scrollbar { display: none; }
+  .hoja .h2 { font-size: 22px; }
+  .hoja .sec { margin-top: 6px; }
+  .menu { list-style: none; margin: 12px -16px 0; padding: 0; border-top: 1px solid var(--sup-alta); }
+  .menu li { border-bottom: 1px solid var(--sup-alta); }
+  .menu-fila { width: 100%; min-height: 56px; display: flex; flex-direction: column; justify-content: center; gap: 2px; padding: 8px 16px;
+    border: 0; background: transparent; color: var(--texto); text-align: left; font: 600 17px/1.25 var(--letra); cursor: pointer; }
+  .menu-fila:active { background: var(--fantasma-pres); }
+  .menu-fila small { font: 500 13px/1.35 var(--letra); color: var(--texto-2); }
+  .menu-fila.peligro { color: var(--peligro); }
+  .hoja .motivo { margin: 12px 0 0; font-size: 13px; color: var(--texto-2); }
+  .cliente { width: 100%; min-height: 56px; display: flex; align-items: center; gap: 12px; padding: 8px 0;
+    border: 0; border-top: 1px solid var(--sup-alta); background: transparent; color: var(--texto); text-align: left; cursor: pointer; font: inherit; }
+  .cliente:active { background: var(--fantasma-pres); }
+  .cliente:disabled { cursor: default; background: transparent; }
+  .cliente .quien { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .cliente .quien small { font-size: 13px; color: var(--texto-2); }
+  /* Casilla de lista (la misma en todas las pantallas): 32 dp, radio 8. */
+  .check { flex: 0 0 32px; height: 32px; border-radius: var(--radio); border: 2px solid var(--marcar-borde);
+    display: flex; align-items: center; justify-content: center; }
+  .check svg { width: 20px; height: 20px; }
+  .check path { stroke: var(--visto); }
+  [aria-checked="true"] .check { background: var(--hecho-fondo); border-color: var(--hecho-borde); }
+  .cliente:disabled .check { background: var(--sup-alta); border-color: var(--sup-alta); }
+  .cliente:disabled .check path { stroke: var(--texto-2); }
+  .grupo-rot { margin: 16px 0 4px; font: 600 13px/1.3 var(--letra); color: var(--texto-2); }
+
+  .notas-maqueta { max-width: 860px; margin: 32px auto 0; color: var(--p-texto-2); font-size: 14px; }
+  .notas-maqueta h2 { color: var(--p-texto); font-size: 16px; margin: 0 0 8px; }
+  .notas-maqueta ul { margin: 0; padding-left: 18px; }
+  .notas-maqueta li { margin: 4px 0; }
+</style>
+</head>
+<body>
+<main class="maqueta">
+  <header class="maqueta-cabeza">
+    <h1>Pantalla 8 · Detalle de rutina</h1>
+    <p>Dirección Más · 412 × 892 dp · <a href="rutinas.html">Rutinas</a> · <a href="nueva-rutina.html">Nueva rutina</a> · <a href="index.html">todas las pantallas</a></p>
+  </header>
+
+  <div class="controles" role="group" aria-label="Controles de la maqueta">
+    <label class="grupo"><span class="rot">Estado</span>
+      <select class="ctl" data-ctl="estado">
+        <optgroup label="Alumna">
+          <option value="activa">Activa, tuya</option>
+          <option value="entrenador">De la entrenadora (solo lectura)</option>
+          <option value="archivada">Archivada</option>
+          <option value="borrador">Recién creada, sin activar</option>
+          <option value="otro-dia">Mirando otro día (no toca hoy)</option>
+        </optgroup>
+        <optgroup label="Entrenadora">
+          <option value="plantilla">En la biblioteca de Camila</option>
+        </optgroup>
+      </select></label>
+    <label class="grupo"><span class="rot">Tema</span>
+      <select class="ctl" data-ctl="tema">
+        <option value="gimnasio">Modo gimnasio</option>
+        <option value="clara">Clara</option>
+        <option value="ambos">Las dos</option>
+      </select></label>
+    <label class="grupo"><span class="rot">Tamaño</span>
+      <select class="ctl" data-ctl="zoom">
+        <option value="ajustar">Ajustar al ancho</option>
+        <option value="100">Real (1 dp = 1 px)</option>
+        <option value="150">150 %</option>
+      </select></label>
+    <label class="grupo"><input type="checkbox" data-ctl="medidas"><span>Medidas de toque</span></label>
+  </div>
+
+  <div class="escenario" id="escenario"></div>
+
+  <section class="notas-maqueta">
+    <h2>Qué mirar</h2>
+    <ul>
+      <li>Arriba dice de quién es la rutina y en qué semana va. Los días se eligen con el selector; la raya bajo la letra marca hoy, igual que en Hoy.</li>
+      <li>Cada ejercicio muestra series, rango, RIR, descanso y la carga sugerida; el <b>+2,5</b> en ámbar es lo que sube esta vez. Las notas de Camila van bajo el ejercicio con la raya ámbar.</li>
+      <li>«Empezar Pierna A» solo aparece como acción principal en el día que toca. En otro día, el botón es secundario y pregunta antes de cambiar el plan.</li>
+      <li>La de Camila se ve en solo lectura: el menú ofrece duplicarla como tuya y explica por qué no se edita. Archivada muestra su historial y permite activarla de nuevo; si la activas, avisa qué rutina se archiva.</li>
+      <li>Solo Sentadilla abre su detalle; los otros ejercicios avisan. Con <code>#rol=entrenador</code> y sin estado, la página abre directo la vista de Camila.</li>
+      <li>Con «En la biblioteca de Camila» ves la misma rutina desde la entrenadora: a quién está asignada, la nota para sus clientes y «Asignar a clientes».</li>
+    </ul>
+  </section>
+</main>
+
+<script src="maqueta.js"></script>
+<script>
+// ── Datos de prueba ──────────────────────────────────────────────────────────
+const CAMILA = { nombre: 'Camila Rojas', corto: 'Camila', iniciales: 'CR' };
+// e(nombre, series, reps, rir, descanso s, kg o null, sube, nota)
+const e = (n, s, r, rir, desc, kg, mas = 0, nota = '') => ({ n, s, r, rir, desc, kg, mas, nota });
+const F4 = [
+  { n: 'Empuje A', l: 'L', dia: 'lunes', min: 55, hecho: true, ult: '16 nov', ej: [
+    e('Press de banca', 4, '6–8', 2, 180, 47.5, 2.5, 'Pausa de 1 segundo en el pecho.'), e('Press militar con barra', 3, '8–10', 2, 150, 35),
+    e('Aperturas en polea', 3, '12–15', 1, 60, 10), e('Elevaciones laterales', 3, '12–15', 1, 60, 8),
+    e('Fondos en paralelas', 3, '8–10', 2, 90, null), e('Extensión de tríceps en polea', 3, '10–12', 1, 60, 25)] },
+  { n: 'Pierna A', l: 'M', dia: 'martes', min: 55, hoy: true, ult: '10 nov', ej: [
+    e('Sentadilla', 4, '6–8', 2, 180, 82.5, 2.5, 'Baja en 3 segundos y sube rápido.'), e('Peso muerto rumano', 3, '8–10', 2, 120, 60),
+    e('Prensa', 3, '10–12', 2, 120, 140, 5), e('Zancadas con mancuernas', 3, '8–10', 2, 90, 16, 0, 'Si te molesta la rodilla, cámbialas por prensa a una pierna.'),
+    e('Curl femoral', 3, '10–12', 1, 90, 35), e('Gemelos de pie', 4, '12–15', 1, 60, 40, 2.5)] },
+  { n: 'Empuje B', l: 'J', dia: 'jueves', min: 50, ult: '12 nov', ej: [
+    e('Press militar con barra', 4, '6–8', 2, 150, 42.5, 2.5), e('Press inclinado con mancuernas', 3, '8–10', 2, 120, 22),
+    e('Aperturas en máquina', 3, '10–12', 2, 90, 45), e('Elevaciones laterales', 3, '12–15', 2, 60, 9, 1), e('Extensión de tríceps en polea', 3, '10–12', 1, 60, 27.5, 2.5)] },
+  { n: 'Tirón A', l: 'V', dia: 'viernes', min: 55, ult: '13 nov', ej: [
+    e('Jalón al pecho', 4, '8–10', 2, 120, 40), e('Remo con barra', 4, '6–8', 2, 150, 52.5, 2.5), e('Remo en polea baja', 3, '10–12', 2, 90, 35),
+    e('Face pull en polea', 3, '12–15', 1, 60, 15), e('Curl de bíceps con barra', 3, '8–10', 1, 60, 20), e('Curl martillo', 2, '10–12', 1, 60, 8)] },
+];
+// Las dos rutinas anteriores de Martina. Sentadilla va el lunes y el jueves, como en su historial (ejercicio.html).
+const BASICA = [
+  { n: 'Día A', l: 'L', dia: 'lunes', min: 45, ult: '28 sep', ej: [e('Sentadilla', 3, '10', 2, 150, 65), e('Press de banca', 3, '10', 2, 120, 35), e('Remo con barra', 3, '10', 2, 120, 35), e('Plancha', 3, '40 s', 2, 60, null)] },
+  { n: 'Día B', l: 'X', dia: 'miércoles', min: 45, ult: '30 sep', ej: [e('Peso muerto rumano', 3, '10', 2, 120, 45), e('Press militar con barra', 3, '8', 2, 120, 25), e('Jalón al pecho', 3, '10', 2, 90, 30), e('Rueda abdominal', 3, '8', 2, 60, null)] },
+  { n: 'Día C', l: 'J', dia: 'jueves', min: 45, ult: '1 oct', ej: [e('Sentadilla', 3, '10', 2, 150, 65), e('Press inclinado con mancuernas', 3, '10', 2, 90, 14), e('Remo en polea baja', 3, '10', 2, 90, 25), e('Curl martillo', 2, '10', 1, 60, 7)] },
+];
+const ADAPT = [
+  { n: 'Día A', l: 'L', dia: 'lunes', min: 45, ult: '26 oct', ej: [e('Sentadilla', 3, '10', 3, 150, 75), e('Press de banca', 3, '10', 3, 120, 40), e('Jalón al pecho', 3, '10', 3, 90, 35), e('Plancha', 3, '45 s', 3, 60, null)] },
+  { n: 'Día B', l: 'M', dia: 'martes', min: 45, ult: '30 oct', ej: [e('Peso muerto rumano', 3, '10', 3, 120, 60), e('Remo con barra', 3, '10', 3, 120, 50), e('Curl femoral', 3, '12', 3, 60, 30), e('Elevaciones laterales', 3, '12', 3, 60, 6)] },
+  { n: 'Día C', l: 'J', dia: 'jueves', min: 45, ult: '29 oct', ej: [e('Sentadilla', 3, '10', 3, 150, 75), e('Press militar con barra', 3, '8', 3, 120, 40), e('Press inclinado con mancuernas', 3, '10', 3, 90, 22), e('Remo en polea baja', 3, '10', 3, 90, 30)] },
+];
+const METODOS = {
+  doble: { n: 'Doble progresión', d: 'Cuando todas las series llegan al tope del rango con el RIR pedido, la próxima vez sube los kilos y vuelves al mínimo del rango.' },
+  lineal: { n: 'Lineal', d: 'Sube los kilos cada sesión mientras completes todas las series. Si fallas dos veces seguidas, baja un 10 % y vuelve a subir.' },
+};
+const NOTA_F4 = 'Estas 8 semanas son de fuerza. Prioriza la técnica en sentadilla y press: si una serie se pone fea, quédate con ese peso y me avisas.';
+const NOTA_ADAPT = 'Cuatro semanas para aprender la técnica. No busques el fallo: deja 2 o 3 repeticiones en reserva.';
+const CLIENTES = [
+  { n: 'Martina Fuentes', i: 'MF', r: 'f4', sem: 3 }, { n: 'Diego Araya', i: 'DA', r: 'f4', sem: 5 },
+  { n: 'Josefa Muñoz', i: 'JM', r: 'f4', sem: 1 }, { n: 'Matías Contreras', i: 'MC', r: 'f4', sem: 7 },
+  { n: 'Catalina Pérez', i: 'CP', r: 'Cuerpo completo 3 días' }, { n: 'Antonia Herrera', i: 'AH', r: 'Cuerpo completo 3 días' },
+  { n: 'Valentina Díaz', i: 'VD', r: 'Cuerpo completo 3 días' }, { n: 'Ignacio Soto', i: 'IS', r: 'Hipertrofia 5 días' },
+  { n: 'Joaquín Reyes', i: 'JR', r: 'Hipertrofia 5 días' }, { n: 'Fernanda Silva', i: 'FS', r: 'Fuerza 5 × 5' },
+  { n: 'Sebastián Morales', i: 'SM', r: null, desde: 'Se vinculó ayer' }, { n: 'Florencia Castro', i: 'FC', r: null, desde: 'Terminó su rutina' },
+];
+
+// Cada estado arma la rutina que se ve y quién la mira.
+function rutinaDe(ctl) {
+  const f4 = (extra) => ({ id: 'f4', n: 'Fuerza 4 días', metodo: 'doble', semanas: 8, semana: 3, desde: '2 nov', dias: F4, ...extra });
+  switch (ctl.estado) {
+    case 'activa': return f4({ de: 'yo', estado: 'activa' });
+    case 'otro-dia': return f4({ de: 'camila', estado: 'activa', nota: NOTA_F4 });
+    case 'entrenador': return f4({ de: 'camila', estado: 'activa', nota: NOTA_F4 });
+    case 'borrador': return ctl.r === 'copia'
+      ? f4({ n: 'Fuerza 4 días (copia)', de: 'yo', estado: 'borrador', semana: 0, copiaDe: 'camila' })
+      : f4({ de: 'yo', estado: 'borrador', semana: 0 });
+    case 'plantilla': return f4({ de: 'yo', estado: 'plantilla', semana: 0, nota: NOTA_F4, ent: true });
+    default:
+      if (ctl.r === 'adaptacion') return { id: 'adapt', n: 'Adaptación', de: 'camila', metodo: 'lineal', semanas: 4, estado: 'archivada', dias: ADAPT, nota: NOTA_ADAPT, fechas: '5 oct a 1 nov', sesiones: 11, adherencia: 92, volumen: '59,8' };
+      if (ctl.r === 'fuerza') return f4({ de: 'camila', estado: 'archivada', semana: 0, fechas: '2 nov a 17 nov', sesiones: 9, adherencia: 100, volumen: '41,3', nota: NOTA_F4 });
+      return { id: 'basica', n: 'Básica 3 días', de: 'yo', metodo: 'lineal', semanas: 6, estado: 'archivada', dias: BASICA, fechas: '1 sep a 4 oct', sesiones: 14, adherencia: 93, volumen: '52,8' };
+  }
+}
+
+// ── Estado de la maqueta ─────────────────────────────────────────────────────
+let V, U; // rutina que se ve, interfaz
+let M = null;
+function reiniciar(estado) {
+  // Al cambiar de estado con el selector, se olvidan la rutina y el día que venían en la dirección.
+  if (M) { delete M.ctl.r; delete M.ctl.dia; }
+  U = { hoja: null, sel: [] };
+  V = null;
+}
+
+// ── Íconos ───────────────────────────────────────────────────────────────────
+const icoVolver = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H5M11 5l-7 7 7 7"/></svg>';
+const icoMenu = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="10.25" y="4" width="3.5" height="3.5" rx="1"/><rect x="10.25" y="10.25" width="3.5" height="3.5" rx="1"/><rect x="10.25" y="16.5" width="3.5" height="3.5" rx="1"/></svg>';
+const icoSig = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>';
+const icoCandado = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 11h12v9H6zM9 11V8a3 3 0 0 1 6 0v3"/></svg>';
+
+// ── Utilidades ───────────────────────────────────────────────────────────────
+const series = (d) => d.ej.reduce((a, x) => a + x.s, 0);
+const idxHoy = (r) => r.dias.findIndex((d) => d.hoy);
+const mia = (r) => r.de === 'yo';
+function diaElegido(ctl, r) {
+  const d = ctl.dia !== undefined ? +ctl.dia : ctl.estado === 'otro-dia' ? 2 : r.estado === 'activa' ? Math.max(0, idxHoy(r)) : 0;
+  return Math.min(Math.max(0, d), r.dias.length - 1);
+}
+const puedeEntrenar = (r) => r.estado === 'activa';
+
+// ── Piezas ───────────────────────────────────────────────────────────────────
+function cabeza(r) {
+  let marcas = '';
+  if (r.estado === 'activa') marcas = '<span class="etiqueta acento">Activa</span>';
+  if (r.estado === 'archivada') marcas = '<span class="etiqueta">Archivada</span>';
+  if (r.estado === 'borrador') marcas = '<span class="etiqueta">Borrador · sin activar</span>';
+  if (r.estado === 'plantilla') marcas = '<span class="etiqueta">Tu biblioteca</span>';
+  const autor = r.ent ? '' : mia(r) ? 'Tuya' : `De ${CAMILA.nombre}`;
+  const m = METODOS[r.metodo];
+  let avance = '';
+  if (r.estado === 'activa') {
+    const segs = Array.from({ length: r.semanas }, (_, i) => `<i class="${i < r.semana - 1 ? 'si' : i === r.semana - 1 ? 'ahora' : ''}"></i>`).join('');
+    avance = `<div class="semanas" aria-hidden="true">${segs}</div>
+      <p class="avance-txt">Semana <span class="cifra">${r.semana}</span> de <span class="cifra">${r.semanas}</span> · empezó el ${r.desde}</p>`;
+  }
+  return `<div class="cabeza">
+    <div class="marcas">${marcas}${autor ? `<span class="sec" style="margin:0">${autor}</span>` : ''}</div>
+    <h1 class="titulo">${r.n}</h1>
+    <p class="sec">${m.n} · <span class="cifra">${r.semanas}</span> semanas · <span class="cifra">${r.dias.length}</span> días por semana</p>
+    ${avance}
+  </div>`;
+}
+
+function bloqueLectura(r) {
+  if (r.estado === 'activa' && !mia(r)) {
+    return `<div class="lectura">${icoCandado}<span><b>Solo lectura.</b> La arma ${CAMILA.corto}. Si quieres cambiar algo, duplícala como tuya o pídeselo a ella.</span></div>`;
+  }
+  if (r.estado === 'borrador' && r.copiaDe) {
+    return `<div class="lectura"><span><b>Copia de la rutina de ${CAMILA.corto}.</b> Esta sí la puedes editar. Si la activas, la de ${CAMILA.corto} queda archivada y ella se entera.</span></div>`;
+  }
+  return '';
+}
+
+function bloqueHistorial(r) {
+  if (r.estado !== 'archivada') return '';
+  return `<div class="seccion-cabeza"><h3 class="h3">Cuando la usaste</h3><span class="sec">${r.fechas}</span></div>
+    <div class="historial">
+      <div class="dato"><span class="cifra">${r.sesiones}</span><p class="sec">sesiones</p></div>
+      <div class="dato"><span class="cifra">${r.adherencia}<small>%</small></span><p class="sec">adherencia</p></div>
+      <div class="dato"><span class="cifra">${r.volumen}<small>t</small></span><p class="sec">levantadas</p></div>
+    </div>`;
+}
+
+function bloqueNota(r) {
+  if (!r.nota) return '';
+  if (r.ent) {
+    return `<div class="seccion-cabeza"><h3 class="h3">Nota para tus clientes</h3></div>
+      <div class="tarjeta"><p class="nota" style="margin-top:0">${r.nota}</p>
+        <div class="nota-pie"><span class="sec">La ven en el detalle de la rutina</span>
+          <button class="btn btn-fantasma" data-accion="aviso" data-aviso="Aquí se edita la nota. Les llega a los 4 clientes." data-toque>Editar nota</button></div></div>`;
+  }
+  return `<div class="seccion-cabeza"><h3 class="h3">Nota de tu entrenadora</h3></div>
+    <div class="tarjeta">
+      <div class="ent-cabeza"><span class="avatar">${CAMILA.iniciales}</span>
+        <div><p class="h3" style="font-size:16px">${CAMILA.nombre}</p><p class="sec" style="margin:0">${r.id === 'adapt' ? '5 oct' : '2 nov'}</p></div></div>
+      <p class="nota">${r.nota}</p>
+    </div>`;
+}
+
+function bloqueClientes(r) {
+  if (!r.ent) return '';
+  const cl = CLIENTES.filter((c) => c.r === 'f4');
+  return `<div class="seccion-cabeza"><h3 class="h3">La tienen</h3><span class="sec"><span class="cifra">${cl.length}</span> clientes</span></div>
+    <div class="tarjeta" style="padding-top:4px;padding-bottom:4px"><ul class="clientes">${cl.map((c) => `<li><button class="cli-fila" ${c.i === 'MF' ? 'data-ir="ficha.html"'
+      : `data-accion="aviso" data-aviso="Aquí se abre la ficha de ${c.n}. En la maqueta, prueba con Martina."`} data-toque>
+      <span class="avatar chico">${c.i}</span><span class="quien">${c.n}</span><span class="sem">semana <span class="cifra">${c.sem}</span> de <span class="cifra">8</span></span>${icoSig}</button></li>`).join('')}</ul></div>`;
+}
+
+function filaEjercicio(x, r) {
+  const kg = x.kg === null ? 'peso corporal'
+    : r.ent ? `sube ${fmtKg(x.mas || 2.5)} kg`
+    : `${x.mas && r.estado === 'activa' && !r.nueva ? `<span class="mas">+${fmtKg(x.mas)}</span>` : ''}${fmtKg(x.kg)} kg`;
+  const nota = x.nota && (r.de === 'camila' || r.ent) ? `<p class="ej-nota">${x.nota}</p>` : '';
+  const abrir = x.n === 'Sentadilla' ? `data-ir="ejercicio.html#estado=historial${r.ent ? '&rol=entrenador' : ''}"`
+    : `data-accion="aviso" data-aviso="Aquí se abre el detalle de ${x.n}. En la maqueta, prueba con Sentadilla."`;
+  return `<li><button class="ej-tocar" ${abrir} data-toque>
+      <span><span class="ej-nombre">${x.n}</span><span class="ej-meta">RIR ${x.rir} · descanso ${fmtReloj(x.desc)}</span></span>
+      <span class="ej-dato"><span class="sr cifra">${x.s}<span class="x">×</span>${x.r}</span><span class="kg cifra">${kg}</span></span>
+    </button>${nota}</li>`;
+}
+
+function bloqueDias(r, ctl) {
+  const k = diaElegido(ctl, r), d = r.dias[k];
+  const conHoy = r.estado === 'activa';
+  const sel = r.dias.map((x, i) => `<button class="sel-dia${conHoy && x.hoy ? ' hoy' : ''}" role="tab" aria-selected="${i === k}" data-accion="dia" data-v="${i}" data-toque>
+      <span class="l">${x.l}</span><span class="n">${x.n}</span></button>`).join('');
+  const archivada = r.estado === 'archivada';
+  let sub = `${d.dia[0].toUpperCase() + d.dia.slice(1)} · ${d.ej.length} ejercicios · ${series(d)} series · unos ${d.min} min`;
+  let pie = '';
+  if (r.estado === 'activa') {
+    sub += d.hecho ? ' · hecho esta semana' : '';
+    pie = !r.nueva && d.ej.some((y) => y.mas) ? '<p class="leyenda"><span class="mas cifra">+2,5</span>kilos más que la última vez</p>' : '';
+  }
+  const ultima = archivada ? `<p class="sec">Última vez el ${d.ult} · cargas de esa sesión</p>`
+    : r.estado === 'activa' && r.nueva ? '<p class="sec">Primera vez · cargas iniciales</p>'
+    : r.estado === 'activa' ? `<p class="sec">Última vez el ${d.ult} · cargas sugeridas para hoy</p>`
+    : r.ent ? '<p class="sec">Cada cliente parte con su propia carga</p>'
+    : '<p class="sec">Cargas iniciales para la primera sesión</p>';
+  const rotDias = r.estado === 'activa' ? 'Días' : 'Días del plan';
+  return `<div class="seccion-cabeza"><h3 class="h3">${rotDias}</h3></div>
+    <div class="selector-dias" role="tablist" aria-label="Días de la rutina">${sel}</div>
+    <section class="dia-panel" aria-label="${d.n}">
+      <div class="fila-tit"><h2 class="h2">${d.n}</h2>${conHoy && d.hoy ? '<span class="etiqueta llena">Hoy</span>' : ''}</div>
+      <p class="sec">${sub}</p>
+      ${ultima}
+      <ul class="lista-filas ejercicios">${d.ej.map((x) => filaEjercicio(x, r)).join('')}</ul>
+      ${pie}
+    </section>`;
+}
+
+function bloqueMetodo(r) {
+  const m = METODOS[r.metodo];
+  return `<div class="tarjeta metodo bloque"><p class="h3">Cómo sube: ${m.n.toLowerCase()}</p><p class="sec">${m.d}</p></div>`;
+}
+
+function accion(r, ctl) {
+  const k = diaElegido(ctl, r), d = r.dias[k];
+  if (r.estado === 'activa') {
+    if (d.hoy) return `<button class="btn btn-primario ancho alto" data-ir="registro.html#estado=empezando" data-toque>Empezar ${d.n}</button>`;
+    const hoy = r.dias[idxHoy(r)];
+    return `<div class="pie-accion"><p class="sec">${hoy ? `Hoy toca ${hoy.n}` : 'Hoy no toca entrenar'}</p>
+      <button class="btn btn-secundario ancho alto" data-accion="pedir-cambio" data-toque>Hacer ${d.n} hoy</button></div>`;
+  }
+  if (r.estado === 'archivada') {
+    return mia(r)
+      ? `<button class="btn btn-primario ancho alto" data-accion="pedir-activar" data-toque>Activar de nuevo</button>`
+      : `<button class="btn btn-secundario ancho alto" data-accion="duplicar" data-toque>Duplicar como mía</button>`;
+  }
+  if (r.estado === 'borrador') return `<button class="btn btn-primario ancho alto" data-accion="pedir-activar" data-toque>Activar rutina</button>`;
+  if (r.estado === 'plantilla') return `<button class="btn btn-primario ancho alto" data-accion="pedir-asignar" data-toque>Asignar a clientes</button>`;
+  return '';
+}
+
+// ── Hojas ────────────────────────────────────────────────────────────────────
+function filaMenu(texto, attrs, nota = '', clase = '') {
+  return `<li><button class="menu-fila ${clase}" ${attrs} data-toque>${texto}${nota ? `<small>${nota}</small>` : ''}</button></li>`;
+}
+function hojaHTML(r, ctl, tema) {
+  const h = U.hoja;
+  if (h === 'menu') {
+    const f = [];
+    if (r.ent) {
+      f.push(filaMenu('Editar', 'data-ir="nueva-rutina.html#estado=editar&rol=entrenador"', 'Los cambios llegan a sus 4 clientes desde la próxima sesión'));
+      f.push(filaMenu('Duplicar', 'data-accion="duplicar"', 'Crea una copia para variarla'));
+      f.push(filaMenu('Archivar', 'data-accion="archivar"', 'Sale de tu biblioteca; sus clientes la siguen usando'));
+    } else if (mia(r)) {
+      if (r.estado !== 'archivada') f.push(filaMenu('Editar', 'data-ir="nueva-rutina.html#estado=editar"', r.estado === 'activa' ? 'Los cambios corren desde tu próxima sesión' : ''));
+      f.push(filaMenu('Duplicar', 'data-accion="duplicar"', 'Crea una copia en borrador'));
+      if (r.estado === 'activa') f.push(filaMenu('Archivar', 'data-accion="pedir-archivar"', 'Quedas sin rutina activa; el historial se guarda'));
+      if (r.estado === 'borrador') f.push(filaMenu('Eliminar borrador', 'data-accion="pedir-eliminar"', 'Nunca se usó, así que se borra', 'peligro'));
+    } else {
+      f.push(filaMenu('Duplicar como mía', 'data-accion="duplicar"', 'Crea una copia tuya que sí puedes editar'));
+    }
+    const motivo = !r.ent && !mia(r) ? `<p class="motivo">La armó ${CAMILA.corto}: la puedes ver y duplicar, pero no editarla, activarla ni archivarla.</p>` : '';
+    return `<h2 class="h2" id="t-hoja-${tema}">${r.n}</h2><ul class="menu">${f.join('')}</ul>${motivo}
+      <div class="acciones"><button class="btn btn-secundario" data-accion="cerrar" data-toque>Cerrar</button></div>`;
+  }
+  if (h === 'activar') {
+    const otra = r.id === 'f4' ? null : 'Fuerza 4 días';
+    const txt = r.copiaDe ? `La rutina de ${CAMILA.corto} queda archivada con su historial y le avisamos del cambio.`
+      : otra ? `${otra} queda archivada con su historial. Como la armó ${CAMILA.corto}, le avisamos del cambio.`
+      : 'Empieza en la semana 1. Hoy y el registro usan esta rutina desde ahora.';
+    return `<h2 class="h2" id="t-hoja-${tema}">¿Activar ${r.n}?</h2><p class="sec">${txt}</p>
+      <div class="acciones"><button class="btn btn-secundario" data-accion="cerrar" data-toque>Cancelar</button>
+        <button class="btn btn-primario" data-accion="si-activar" data-toque>Activar</button></div>`;
+  }
+  if (h === 'archivar') {
+    return `<h2 class="h2" id="t-hoja-${tema}">¿Archivar ${r.n}?</h2><p class="sec">Quedas sin rutina activa hasta que actives otra. Tus sesiones y récords se guardan.</p>
+      <div class="acciones"><button class="btn btn-secundario" data-accion="cerrar" data-toque>Cancelar</button>
+        <button class="btn btn-primario" data-accion="si-archivar" data-toque>Archivar</button></div>`;
+  }
+  if (h === 'eliminar') {
+    return `<h2 class="h2" id="t-hoja-${tema}">¿Eliminar el borrador?</h2><p class="sec">${r.n} nunca se usó, así que se borra entera. No se puede deshacer.</p>
+      <div class="acciones"><button class="btn btn-secundario" data-accion="cerrar" data-toque>Cancelar</button>
+        <button class="btn btn-peligro" data-accion="si-eliminar" data-toque>Eliminar</button></div>`;
+  }
+  if (h === 'cambio') {
+    const d = r.dias[diaElegido(ctl, r)], hoy = r.dias[idxHoy(r)];
+    const txt = `${d.hecho ? `Ya la hiciste esta semana. ` : ''}${hoy ? `${hoy.n} queda pendiente para tu próximo día de entrenamiento.` : ''}`;
+    return `<h2 class="h2" id="t-hoja-${tema}">¿Hacer ${d.n} hoy?</h2><p class="sec">${txt}</p>
+      <div class="acciones"><button class="btn btn-secundario" data-accion="cerrar" data-toque>Cancelar</button>
+        <button class="btn btn-primario" data-ir="registro.html#estado=empezando" data-toque>Empezar ${d.n}</button></div>`;
+  }
+  if (h === 'asignar') {
+    const fila = (c) => {
+      const ya = c.r === 'f4', marcado = ya || U.sel.includes(c.i);
+      const sub = ya ? `Ya la tiene · semana ${c.sem}` : c.r ? `Tiene ${c.r}` : c.desde;
+      return `<button class="cliente" role="checkbox" aria-checked="${marcado}" ${ya ? 'disabled' : `data-accion="marcar" data-i="${c.i}"`} data-toque>
+        <span class="avatar chico">${c.i}</span><span class="quien"><span>${c.n}</span><small>${sub}</small></span>
+        <span class="check">${marcado ? visto() : ''}</span></button>`;
+    };
+    const grupo = (t, l) => (l.length ? `<p class="grupo-rot">${t}</p>${l.map(fila).join('')}` : '');
+    const reemplaza = U.sel.some((i) => CLIENTES.find((c) => c.i === i).r);
+    return `<h2 class="h2" id="t-hoja-${tema}">Asignar ${r.n}</h2>
+      <p class="sec">Se activa de inmediato y empieza en la semana 1.${reemplaza ? ' La rutina que tenían queda archivada con su historial.' : ''}</p>
+      <div class="hoja-cuerpo" style="margin-top:8px">${grupo('Sin rutina', CLIENTES.filter((c) => !c.r))}${grupo('Con otra rutina', CLIENTES.filter((c) => c.r && c.r !== 'f4'))}${grupo('Ya la tienen', CLIENTES.filter((c) => c.r === 'f4'))}</div>
+      <div class="acciones"><button class="btn btn-secundario" data-accion="cerrar" data-toque>Cancelar</button>
+        <button class="btn btn-primario" data-accion="si-asignar" ${U.sel.length ? '' : 'disabled'} data-toque><span>${U.sel.length ? `Asignar a <span class="cifra">${U.sel.length}</span>` : 'Elige clientes'}</span></button></div>`;
+  }
+  return '';
+}
+
+// ── Teléfono ─────────────────────────────────────────────────────────────────
+function telefono(tema, ctl) {
+  if (ctl.estado === 'plantilla') ctl.rol = 'entrenador'; else delete ctl.rol;
+  if (!V) V = rutinaDe(ctl);
+  const r = V;
+  const pie = accion(r, ctl);
+  const hoja = U.hoja ? `<div class="velo ver" data-velo><div class="hoja${U.hoja === 'asignar' ? ' alta' : ''}" role="dialog" aria-modal="true" aria-labelledby="t-hoja-${tema}">${hojaHTML(r, ctl, tema)}</div></div>` : '';
+  return `<div class="tel" data-tema="${tema}">
+    <div class="tel-estado"><span class="cifra" style="font-weight:600">9:41</span><span>5G · 82 %</span></div>
+    <div class="barra-sup">
+      <button class="btn-icono" data-accion="volver" aria-label="Volver a Rutinas" data-toque>${icoVolver}</button>
+      <button class="btn-icono" data-accion="menu" aria-label="Opciones de la rutina" data-toque>${icoMenu}</button>
+    </div>
+    <div class="tel-contenido">
+      ${cabeza(r)}
+      ${bloqueLectura(r)}
+      ${bloqueHistorial(r)}
+      ${bloqueClientes(r)}
+      ${bloqueDias(r, ctl)}
+      ${bloqueNota(r)}
+      ${bloqueMetodo(r)}
+    </div>
+    ${pie ? `<div class="tel-accion">${pie}</div>` : ''}
+    <div class="tel-gesto"></div>
+    <div class="aviso" role="status"></div>
+    ${hoja}
+  </div>`;
+}
+
+// ── Maqueta ──────────────────────────────────────────────────────────────────
+// Con #rol=entrenador y sin estado (por ejemplo desde la ficha o la biblioteca), se abre la rutina como la ve Camila.
+const rolInicial = new URLSearchParams(location.hash.slice(1)).get('rol');
+M = iniciarMaqueta({ telefono, porDefecto: { estado: rolInicial === 'entrenador' ? 'plantilla' : 'entrenador' }, alCambiarEstado: reiniciar });
+const { ctl, escenario } = M;
+const avisarTodos = (t) => escenario.querySelectorAll('.tel').forEach((tel) => avisar(tel, t));
+function repintar(arriba) {
+  const scroll = [...escenario.querySelectorAll('.tel-contenido, .hoja-cuerpo')].map((c) => c.scrollTop);
+  M.pintar();
+  escenario.querySelectorAll('.tel-contenido, .hoja-cuerpo').forEach((c, k) => { c.scrollTop = arriba ? 0 : scroll[k] || 0; });
+}
+function cerrar() { U.hoja = null; repintar(); }
+document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && U.hoja) cerrar(); });
+
+escenario.addEventListener('click', (ev) => {
+  if (ev.target.matches('[data-velo]')) { cerrar(); return; }
+  const b = ev.target.closest('[data-accion]'); if (!b || b.disabled) return;
+  switch (b.dataset.accion) {
+    case 'volver': {
+      // Vuelve a la lista donde vive esta rutina: la de Camila con entrenadora; la tuya, activa o recién creada, sola.
+      const sola = V.de === 'yo' && (V.estado === 'activa' || (V.estado === 'borrador' && !V.copiaDe));
+      M.ir(V.ent ? 'rutinas.html#rol=entrenador' : `rutinas.html#estado=${sola ? 'solo' : 'vinculada'}`);
+      break;
+    }
+    case 'menu': U.hoja = 'menu'; repintar(); break;
+    case 'cerrar': cerrar(); break;
+    case 'dia': ctl.dia = b.dataset.v; repintar(); break;
+    case 'aviso': avisarTodos(b.dataset.aviso); break;
+    case 'pedir-cambio': U.hoja = 'cambio'; repintar(); break;
+    case 'pedir-activar': U.hoja = 'activar'; repintar(); break;
+    case 'si-activar':
+      if (V.estado === 'borrador') V.nueva = true;
+      V.estado = 'activa'; V.semana = 1; V.desde = '17 nov'; V.copiaDe = null;
+      U.hoja = null; delete ctl.dia; repintar(true);
+      avisarTodos(`${V.n} quedó activa. Empieza en la semana 1.`);
+      break;
+    case 'pedir-archivar': U.hoja = 'archivar'; repintar(); break;
+    case 'si-archivar':
+      V.estado = 'archivada'; V.fechas = '2 nov a 17 nov'; V.sesiones = 9; V.adherencia = 100; V.volumen = '41,3';
+      U.hoja = null; repintar(true); avisarTodos(`Archivaste ${V.n}. Quedas sin rutina activa.`);
+      break;
+    case 'pedir-eliminar': U.hoja = 'eliminar'; repintar(); break;
+    case 'si-eliminar': M.ir('rutinas.html#estado=solo'); break;
+    case 'duplicar':
+      U.hoja = null; repintar();
+      avisarTodos(V.ent ? `Duplicaste ${V.n}. La copia está en tu biblioteca.` : `Copia guardada como borrador en tus rutinas.`);
+      break;
+    case 'archivar': U.hoja = null; repintar(); avisarTodos(`Archivaste ${V.n}. Sus clientes la siguen usando.`); break;
+    case 'pedir-asignar': U.hoja = 'asignar'; U.sel = []; repintar(); break;
+    case 'marcar': { const i = b.dataset.i; U.sel = U.sel.includes(i) ? U.sel.filter((x) => x !== i) : [...U.sel, i]; repintar(); break; }
+    case 'si-asignar': {
+      const quienes = CLIENTES.filter((c) => U.sel.includes(c.i)).map((c) => c.n.split(' ')[0]);
+      const txt = quienes.length < 2 ? quienes.join('') : `${quienes.slice(0, -1).join(', ')} y ${quienes[quienes.length - 1]}`;
+      U.hoja = null; repintar(); avisarTodos(`Asignaste ${V.n} a ${txt}. Les llega un aviso.`);
+      break;
+    }
+  }
+});
+</script>
+</body>
+</html>

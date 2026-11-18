@@ -1,0 +1,628 @@
+<!doctype html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GymTrack · Ficha del cliente</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="sistema.css">
+<style>
+  /* ── Barra superior y cabeza de la persona ─────────────────────────────── */
+  .barra { flex: 0 0 56px; display: flex; align-items: center; padding: 0 4px; }
+  .persona { display: flex; align-items: center; gap: 14px; margin: 0 0 20px; }
+  .persona .sec { margin-top: 4px; }
+  .avatar { flex: 0 0 40px; height: 40px; border-radius: var(--radio); background: var(--sup-alta);
+    display: flex; align-items: center; justify-content: center; font-size: 14px; color: var(--texto); }
+  .avatar.grande { flex-basis: 56px; height: 56px; font-size: 18px; }
+  .fila-ceja { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .peligro { color: var(--peligro); }
+  .acento { color: var(--acento-texto); }
+  .seccion-cabeza .btn-fantasma { margin: -12px -12px -12px 0; }
+  .seccion-cabeza .h3 .cifra { font-size: 15px; color: var(--texto-2); margin-left: 6px; }
+
+  /* ── Datos del mes (como en Hoy) ───────────────────────────────────────── */
+  .datos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .dato { background: var(--sup); border: 1px solid var(--sup-alta); border-radius: var(--radio); padding: 12px; }
+  .dato .cifra { display: block; font-size: 24px; line-height: 1.1; }
+  .dato .cifra small { font-size: 14px; margin-left: 4px; color: var(--texto-2); }
+  .dato .sec { font-size: 13px; line-height: 1.3; margin-top: 4px; }
+
+  /* ── Alerta abierta ────────────────────────────────────────────────────── */
+  .alerta-fila { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 64px; margin-top: 8px; padding: 12px 12px 12px 16px;
+    text-align: left; color: var(--texto); font: inherit; cursor: pointer; }
+  .alerta-fila:active { background: var(--fantasma-pres); }
+  .alerta-fila:focus-visible { outline: 2px solid var(--foco); outline-offset: 2px; }
+  .alerta-fila .txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .alerta-fila .t { font: 600 15px/1.35 var(--letra); }
+  .ico { flex: 0 0 20px; width: 20px; height: 20px; color: var(--texto-2); }
+  .ico path { stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: square; }
+  .chev { flex: 0 0 20px; width: 20px; height: 20px; color: var(--texto-2); }
+  .chev path { stroke: currentColor; fill: none; stroke-width: 2.5; stroke-linecap: square; }
+
+  /* ── Dolor sin responder: con los rótulos del formulario de dolor ──────── */
+  .dolor-card { border: 2px solid var(--peligro); margin-bottom: 16px; }
+  .dolor-datos { display: grid; grid-template-columns: 1fr auto; gap: 16px; margin-top: 12px; }
+  .dolor-datos .intensidad .sec { white-space: nowrap; }
+  .dolor-datos .h3 { margin-top: 4px; }
+  .intensidad { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+  .intensidad .escala { display: flex; gap: 2px; }
+  .tel { --pendiente: color-mix(in srgb, var(--borde) 45%, transparent); }
+  .intensidad .escala i { width: 14px; height: 8px; border-radius: 1px; background: var(--pendiente); }
+  .intensidad .escala i.si { background: var(--peligro); }
+  .intensidad .sec .cifra { color: var(--texto); font-size: 15px; }
+  .cita-texto { margin: 10px 0 0; font-size: 16px; line-height: 1.45; }
+  .pista { margin: 12px 0 0; padding-top: 10px; border-top: 1px solid var(--sup-alta); font-size: 13px; color: var(--texto-2); }
+
+  /* ── Rutina activa ─────────────────────────────────────────────────────── */
+  .rutina .h2 { margin-top: 4px; }
+  .semana { display: flex; justify-content: space-between; margin-top: 16px; }
+  .dia { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .marca { width: 40px; height: 40px; border-radius: var(--radio); display: flex; align-items: center; justify-content: center; }
+  .marca.hecho { background: var(--hecho-fondo); border: 2px solid var(--hecho-borde); }
+  .marca.hecho svg { width: 22px; height: 22px; }
+  .marca.hecho path { stroke: var(--visto); }
+  .marca.toca { border: 2px solid var(--accion); }
+  .marca.plan { border: 2px solid var(--marcar-borde); }
+  .marca.descanso::before { content: ""; width: 14px; height: 4px; border-radius: 1px; background: var(--borde); }
+  .dia .letra { font: 500 12px/1 var(--mono); color: var(--texto-2); }
+  .dia.hoy .letra { color: var(--texto); font-weight: 700; }
+  .dia.hoy .letra::after { content: ""; display: block; width: 12px; height: 2px; margin: 4px auto 0; background: var(--texto); }
+  .hoy-toca { margin: 14px 0 0; font-size: 14px; color: var(--texto-2); }
+  .hoy-toca b { color: var(--texto); font-weight: 600; }
+  .dos-botones { display: flex; gap: 8px; margin-top: 16px; }
+  .dos-botones .btn { flex: 1; padding: 0 12px; }
+
+  /* ── Últimas sesiones ──────────────────────────────────────────────────── */
+  .tarjeta.lista-filas { padding: 0 16px; }
+  .ses-nombre { display: block; font: 600 16px/1.3 var(--letra); }
+  .ses-dato { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; white-space: nowrap; }
+  .ses-dato .cifra { font-size: 15px; }
+  .ses-dato .marca-txt { font-size: 13px; font-weight: 600; }
+  .ses-rec { display: block; margin-top: 2px; font-size: 13px; font-weight: 600; }
+  .sesiones > li { padding: 10px 0; }
+
+  /* ── Gráfico ───────────────────────────────────────────────────────────── */
+  .grafico-chips { justify-content: flex-start; margin: -4px 0 4px; }
+  .grafico-chips .chip { flex: 0 0 auto; }
+  .grafico svg { display: block; width: 100%; height: auto; margin-top: 8px; }
+  .g-grilla { stroke: var(--sup-alta); stroke-width: 1; }
+  .g-base { stroke: var(--borde); stroke-width: 1; }
+  .g-eje { fill: var(--texto-2); font: 500 11px var(--mono); }
+  .g-barra { fill: var(--hecho-fondo); stroke: var(--hecho-borde); stroke-width: 1.5; }
+  .g-curso { fill: none; stroke: var(--borde); stroke-width: 1.5; stroke-dasharray: 3 3; }
+  .g-linea { fill: none; stroke: var(--acento-texto); stroke-width: 2.5; stroke-linejoin: round; }
+  .g-punto { fill: var(--hecho-fondo); stroke: var(--hecho-borde); stroke-width: 2; }
+  .g-dato { fill: var(--texto); font: 700 12px var(--mono); }
+  .grafico-pie { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-top: 10px; }
+  .grafico-pie .cifra { font-size: 20px; }
+  .grafico-pie .sec .cifra { font-size: 14px; }
+  .grafico-nota { margin-top: 6px; font-size: 13px; }
+  .grafico-nota .cifra { font-weight: 500; }
+
+  /* ── Observaciones y dolores ───────────────────────────────────────────── */
+  .obs-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  .obs { padding: 14px 16px; }
+  .obs .ceja b { font-weight: 700; }
+  .obs .zona { margin: 4px 0 0; font-size: 13px; color: var(--texto-2); }
+  .obs .zona .cifra { color: var(--texto); }
+  .obs-texto { margin: 8px 0 0; font-size: 15px; line-height: 1.45; }
+  .nota { margin: 12px 0 0; padding: 2px 0 2px 12px; border-left: 4px solid var(--hecho-fondo); }
+  .nota .ceja { font-size: 12px; }
+  .nota p:last-child { margin: 2px 0 0; font-size: 15px; line-height: 1.45; }
+  .sin-resp { font: 700 12px/1 var(--letra); color: var(--peligro); }
+
+  /* ── Peso, medidas y encuesta ──────────────────────────────────────────── */
+  .peso-fila { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; }
+  .peso-cifra { margin: 4px 0 0; font-size: 15px; color: var(--texto-2); }
+  .peso-cifra .cifra { font-size: 32px; line-height: 1; color: var(--texto); margin-right: 4px; }
+  .peso .sec { margin-top: 6px; font-size: 13px; }
+  .peso svg { flex: 0 0 120px; width: 120px; height: 48px; }
+  .medidas { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--sup-alta); }
+  .medida .cifra { display: block; font-size: 16px; }
+  .medida .sec { font-size: 12px; margin-top: 2px; }
+  .peso-pie { display: flex; justify-content: space-between; align-items: center; margin: 10px -12px 0 0; }
+  .peso-pie .sec { margin: 0; }
+  .encuesta { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 12px; }
+  .encuesta .ceja { font-size: 12px; }
+  .encuesta p:last-child { margin: 2px 0 0; font-size: 15px; line-height: 1.35; }
+  .encuesta .ancho { grid-column: 1 / -1; padding-top: 12px; border-top: 1px solid var(--sup-alta); }
+  .desvincular { display: flex; margin: 24px auto 0; }
+
+  /* ── Sin rutina y vacíos ───────────────────────────────────────────────── */
+  .sin-rutina .sec { margin-top: 6px; }
+  .sin-rutina .btn { margin-top: 16px; }
+  .vacio-txt { padding: 16px; }
+
+  /* ── Hojas ─────────────────────────────────────────────────────────────── */
+  .cita { margin-top: 12px; padding: 12px 14px; border-radius: var(--radio); background: var(--sup-alta); }
+  .cita p:last-child { margin: 4px 0 0; font-size: 15px; line-height: 1.4; }
+  .hoja .area { margin-top: 12px; }
+  .hoja .chips { justify-content: flex-start; margin-top: 8px; }
+  .hoja .chips .chip { flex: 0 0 auto; }
+  .hoja .rot { margin: 12px 0 0; font-size: 13px; color: var(--texto-2); }
+  .hoja .nota-hoja { margin-top: 8px; font-size: 13px; }
+  /* El aviso flota sobre el botón de abajo, no encima de él. Con una hoja abierta, sale arriba y por encima del velo. */
+  .tel:has(.tel-accion) .aviso { bottom: 113px; }
+  .tel:has(.velo.ver) .aviso { z-index: 7; top: 40px; bottom: auto; }
+
+  /* ── Cargando ──────────────────────────────────────────────────────────── */
+  .esq { display: block; height: 14px; border-radius: 4px; background: var(--sup-alta); }
+
+  .notas-maqueta { max-width: 860px; margin: 32px auto 0; color: var(--p-texto-2); font-size: 14px; }
+  .notas-maqueta h2 { color: var(--p-texto); font-size: 16px; margin: 0 0 8px; }
+  .notas-maqueta ul { margin: 0; padding-left: 18px; }
+  .notas-maqueta li { margin: 4px 0; }
+</style>
+</head>
+<body>
+<main class="maqueta">
+  <header class="maqueta-cabeza">
+    <h1>Pantalla 17 · Ficha del cliente</h1>
+    <p>Dirección Más · 412 × 892 dp · entrenadora · <a href="clientes.html">Clientes</a> · <a href="index.html">todas las pantallas</a></p>
+  </header>
+
+  <div class="controles" role="group" aria-label="Controles de la maqueta">
+    <label class="grupo"><span class="rot">Estado</span>
+      <select class="ctl" data-ctl="estado">
+        <option value="normal">Normal</option>
+        <option value="dolor">Dolor sin responder</option>
+        <option value="respondiendo">Respondiendo el dolor</option>
+        <option value="consejo">Escribiendo un consejo</option>
+        <option value="desvincular">Desvincular (confirmación)</option>
+        <option value="sinrutina">Cliente sin rutina</option>
+        <option value="cargando">Cargando</option>
+      </select></label>
+    <label class="grupo"><span class="rot">Tema</span>
+      <select class="ctl" data-ctl="tema">
+        <option value="gimnasio">Modo gimnasio</option>
+        <option value="clara">Clara</option>
+        <option value="ambos">Las dos</option>
+      </select></label>
+    <label class="grupo"><span class="rot">Tamaño</span>
+      <select class="ctl" data-ctl="zoom">
+        <option value="ajustar">Ajustar al ancho</option>
+        <option value="100">Real (1 dp = 1 px)</option>
+        <option value="150">150 %</option>
+      </select></label>
+    <label class="grupo"><input type="checkbox" data-ctl="medidas"><span>Medidas de toque</span></label>
+  </div>
+
+  <div class="escenario" id="escenario"></div>
+
+  <section class="notas-maqueta">
+    <h2>Qué mirar</h2>
+    <ul>
+      <li>Es la ficha de Martina vista por Camila: los mismos datos que Martina ve en Hoy (noviembre, la semana, la rutina de hoy), más lo que solo le sirve a la entrenadora.</li>
+      <li>La acción de abajo cambia según lo que más importa: «Escribir consejo» en el día normal, «Responder a Martina» si hay un dolor sin responder y «Asignar rutina» si no tiene rutina.</li>
+      <li>Con dolor, la tarjeta roja va primero y recuerda lo que Martina marcó en la encuesta. Responde y mira cómo la respuesta queda en el historial con la barra ámbar, igual que la ve Martina.</li>
+      <li>Bajo las tres cifras va la alerta abierta de Martina, la misma de Alertas (sin avance en el press inclinado); lleva a Ajustar cargas.</li>
+      <li>El gráfico cambia entre volumen por semana (la barra punteada es la semana en curso) y el 1RM estimado de la sentadilla, con las mismas 7 sesiones del Detalle de ejercicio. Los ejes dicen el día y, debajo, el mes cuando cambia.</li>
+      <li>«Ajustar cargas», «Cambiar rutina», «Ver rutina» (la rutina como la ve Camila) y la flecha de volver llevan a sus pantallas. Desvincular pide confirmación y vuelve a Clientes sin Martina.</li>
+      <li>La tarjeta de dolor usa los rótulos del formulario de dolor («Dónde» y «Cuánto molesta»), el mismo de Rutina completada y Detalle de ejercicio.</li>
+      <li>«Cliente sin rutina» muestra a Sebastián Morales, que se vinculó ayer: lo primero es su encuesta y la acción es asignarle una rutina.</li>
+    </ul>
+  </section>
+</main>
+
+<script src="maqueta.js"></script>
+<script>
+// ── Datos de prueba ──────────────────────────────────────────────────────────
+// Martina: cuenta y encuesta el 1 de septiembre (64,0 kg, 164 cm, 28 años); se vincula con Camila el 5 de octubre.
+// Peso y medidas, los mismos de Progreso; la encuesta, la misma de la pantalla 4.
+const MARTINA = {
+  id: 'martina', n: 'Martina Fuentes', corto: 'Martina', ini: 'MF', ella: true,
+  desde: 'Clienta desde el 5 de octubre · 28 años',
+  encuesta: {
+    fecha: '1 de septiembre', objetivo: 'Ganar masa muscular', experiencia: 'De uno a tres años', dias: '4 por semana', minutos: '60 por sesión',
+    lugar: 'Gimnasio completo', cuerpo: '28 años · 164 cm', peso: '64,0 kg',
+    lesion: 'Rodilla', lesionTxt: 'Molestia en la rodilla derecha al bajar en sentadilla profunda.',
+  },
+  peso: { kg: 62.4, fecha: '10 nov', desde: '−1,6 kg desde septiembre', mes: '−0,9 kg en 30 días', serie: [63.6, 63.4, 63.1, 63.3, 62.9, 62.7, 62.4] },
+  medidas: [['71,5', 'cintura'], ['96', 'cadera'], ['88,5', 'pecho'], ['27,5', 'brazo'], ['55', 'muslo']],
+};
+const SEBASTIAN = {
+  id: 'sebastian', n: 'Sebastián Morales', corto: 'Sebastián', ini: 'SM', ella: false,
+  desde: 'Cliente desde ayer · 34 años',
+  encuesta: {
+    fecha: '16 de noviembre', objetivo: 'Bajar grasa corporal', experiencia: 'Menos de un año', dias: '3 por semana', minutos: '45 por sesión',
+    lugar: 'Gimnasio básico', cuerpo: '34 años · 178 cm', peso: '86,0 kg',
+    lesion: 'Espalda baja', lesionTxt: 'Me molesta si paso mucho rato sentado.',
+  },
+};
+// rec: los récords de la sesión, los mismos de Progreso (press de banca el 16 nov; sentadilla y prensa el 10 nov).
+const SESIONES = [
+  { n: 'Empuje A', d: 'lun 16 nov', min: 48, t: '2,6', rec: ['Press de banca'] },
+  { n: 'Tirón A', d: 'vie 13 nov', min: 51, t: '2,4' },
+  { n: 'Empuje B', d: 'jue 12 nov', min: 46, t: '2,2' },
+  { n: 'Pierna A', d: 'mar 10 nov', min: 57, t: '13,0', rec: ['Sentadilla', 'Prensa'] },
+];
+// Volumen por semana (t), de la semana del 28 sep a la del 16 nov. La última va en curso.
+const VOLUMEN = [13.8, 14.6, 15.1, 14.2, 15.9, 18.6, 20.1, 2.6];
+const VOL_FECHAS = ['2026-09-28', '2026-10-05', '2026-10-12', '2026-10-19', '2026-10-26', '2026-11-02', '2026-11-09', '2026-11-16'];
+// Sentadilla: 1RM estimado del mejor set de cada sesión (Epley), las 7 últimas de Detalle de ejercicio.
+const SENTADILLA = [93.3, 96.7, 96.7, 97.5, 100.0, 98.2, 101.3];
+const SEN_FECHAS = ['2026-10-15', '2026-10-19', '2026-10-22', '2026-10-26', '2026-10-29', '2026-11-03', '2026-11-10'];
+const OBS = [
+  { dolor: false, ej: 'Sentadilla', f: '10 nov', txt: 'La última serie me costó harto. La bajada se me hizo lenta.',
+    resp: { f: '15 nov', txt: 'El martes sube a 82,5 en la sentadilla. Si la última serie se pone fea, vuelve a 80.' } },
+  { dolor: true, ej: 'Peso muerto rumano', zona: 'Espalda baja', int: 3, f: '3 nov', txt: 'Tirón leve en la espalda baja en la última serie.',
+    resp: { f: '4 nov', txt: 'Mantén 60 kg y cuida la espalda neutra. Si vuelve, me avisas.' } },
+];
+// La alerta abierta de Martina, la misma de Alertas y de Ajustar cargas.
+const ALERTA = { tipo: 'Sin avance', ej: 'Press inclinado con mancuernas', ses: 3 };
+// Dónde y cuánto, como en el formulario de dolor; el lado va en lo que escribió.
+const DOLOR = { ej: 'Press de banca', ses: 'Empuje A', zona: 'Hombro', int: 7, f: 'ayer 19:20', txt: 'Me molestó el hombro derecho al bajar la barra. En la última serie paré antes.' };
+const BORRADOR = 'Esta semana baja a 37,5 en el press de banca y haz el recorrido hasta donde no duela. Si el jueves sigue igual, lo vemos juntas antes de entrenar.';
+const LETRAS = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+const SEMANA = ['hecho', 'toca', 'descanso', 'plan', 'plan', 'descanso', 'descanso'];
+
+// ── Íconos ───────────────────────────────────────────────────────────────────
+const icoAtras = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H5M11 5l-7 7 7 7"/></svg>';
+const icoX = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+const icoSinAvance = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 19l6-8h12"/></svg>';
+const icoChev = '<svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
+const esc = (s) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+// ── Estado en memoria ────────────────────────────────────────────────────────
+// base: el estado sobre el que se abre una hoja. respondida: el dolor ya tiene respuesta.
+let base = 'normal', vista = 'volumen', respondida = null, nuevos = [], sobre = 'Rutina';
+const HOJAS = ['respondiendo', 'consejo', 'desvincular'];
+const fondoDe = (e) => (e === 'respondiendo' ? 'dolor' : HOJAS.includes(e) ? base : e);
+const dolorAbierto = (fondo) => fondo === 'dolor' && !respondida;
+
+// ── Gráficos ─────────────────────────────────────────────────────────────────
+const W = 346, H = 186, IZQ = 30, ARR = 28, ABA = 40;
+const fmt1 = (n) => n.toFixed(1).replace('.', ',');
+// Eje de fechas como en Progreso: el día y, debajo, el mes solo cuando cambia.
+const MES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+const fecha = (iso) => new Date(`${iso}T12:00:00`);
+function ejeFecha(fechas, i, x) {
+  const d = fecha(fechas[i]);
+  const mes = i === 0 || fecha(fechas[i - 1]).getMonth() !== d.getMonth()
+    ? `<text class="g-eje" x="${x}" y="${H - 6}" text-anchor="middle">${MES[d.getMonth()]}</text>` : '';
+  return `<text class="g-eje" x="${x}" y="${H - 22}" text-anchor="middle">${d.getDate()}</text>${mes}`;
+}
+
+function graficoVolumen() {
+  const max = 25, alto = H - ARR - ABA, y = (v) => ARR + alto * (1 - v / max);
+  const slot = (W - IZQ) / VOLUMEN.length, bw = 22;
+  const grilla = [0, 10, 20].map((v) => `<line class="${v ? 'g-grilla' : 'g-base'}" x1="${IZQ}" x2="${W}" y1="${y(v)}" y2="${y(v)}"/>
+    <text class="g-eje" x="${IZQ - 8}" y="${y(v) + 4}" text-anchor="end">${v}</text>`).join('');
+  const barras = VOLUMEN.map((v, i) => {
+    const x = IZQ + slot * i + (slot - bw) / 2, curso = i === VOLUMEN.length - 1;
+    return `<rect class="${curso ? 'g-curso' : 'g-barra'}" x="${x}" y="${y(v)}" width="${bw}" height="${y(0) - y(v)}" rx="1"/>
+      ${ejeFecha(VOL_FECHAS, i, x + bw / 2)}`;
+  }).join('');
+  const i = VOLUMEN.length - 2, xm = IZQ + slot * i + slot / 2;
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Volumen por semana en toneladas, de 13,8 a 20,1 en las últimas 7 semanas; esta semana va en 2,6.">
+    <text class="g-eje" x="0" y="10">t</text>${grilla}${barras}
+    <text class="g-dato" x="${xm}" y="${y(VOLUMEN[i]) - 6}" text-anchor="middle">${fmt1(VOLUMEN[i])}</text></svg>`;
+}
+
+function graficoSentadilla() {
+  const min = 90, max = 105, alto = H - ARR - ABA, y = (v) => ARR + alto * (1 - (v - min) / (max - min));
+  const paso = (W - IZQ - 40) / (SENTADILLA.length - 1), x = (i) => IZQ + 18 + paso * i;
+  const grilla = [90, 95, 100, 105].map((v) => `<line class="${v === 90 ? 'g-base' : 'g-grilla'}" x1="${IZQ}" x2="${W}" y1="${y(v)}" y2="${y(v)}"/>
+    <text class="g-eje" x="${IZQ - 8}" y="${y(v) + 4}" text-anchor="end">${v}</text>`).join('');
+  const linea = SENTADILLA.map((v, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join(' ');
+  const puntos = SENTADILLA.map((v, i) => `<circle class="g-punto" cx="${x(i)}" cy="${y(v)}" r="${i === SENTADILLA.length - 1 ? 5 : 3.5}"/>
+    ${ejeFecha(SEN_FECHAS, i, x(i))}`).join('');
+  const u = SENTADILLA.length - 1;
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="1RM estimado de la sentadilla: de 93,3 kg el 15 de octubre a 101,3 kg el 10 de noviembre, en 7 sesiones.">
+    <text class="g-eje" x="0" y="10">kg</text>${grilla}<path class="g-linea" d="${linea}"/>${puntos}
+    <text class="g-dato" x="${x(u) - 2}" y="${y(SENTADILLA[u]) - 10}" text-anchor="end">${fmt1(SENTADILLA[u])}</text></svg>`;
+}
+
+function sparkPeso(serie) {
+  const w = 120, h = 48, min = Math.min(...serie) - 0.2, max = Math.max(...serie) + 0.2;
+  const x = (i) => 4 + ((w - 8) * i) / (serie.length - 1), y = (v) => 4 + (h - 8) * (1 - (v - min) / (max - min));
+  const d = serie.map((v, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join(' ');
+  const u = serie.length - 1;
+  return `<svg viewBox="0 0 ${w} ${h}" aria-hidden="true"><line class="g-grilla" x1="0" x2="${w}" y1="${h - 1}" y2="${h - 1}"/>
+    <path class="g-linea" d="${d}" style="stroke-width:2"/><circle class="g-punto" cx="${x(u)}" cy="${y(serie[u])}" r="4"/></svg>`;
+}
+
+// ── Piezas ───────────────────────────────────────────────────────────────────
+function cabeza(p) {
+  return `<div class="persona"><span class="avatar grande cifra" aria-hidden="true">${p.ini}</span>
+    <div><h1 class="titulo">${p.n}</h1><p class="sec">${p.desde}</p></div></div>`;
+}
+
+function escala(n) {
+  return `<span class="escala" aria-hidden="true">${Array.from({ length: 10 }, (_, i) => `<i class="${i < n ? 'si' : ''}"></i>`).join('')}</span>`;
+}
+
+function tarjetaDolor() {
+  return `<section class="tarjeta dolor-card" aria-label="Dolor sin responder">
+    <div class="fila-ceja"><p class="ceja peligro">Dolor sin responder</p><p class="ceja">${DOLOR.f}</p></div>
+    <div class="dolor-datos">
+      <div><p class="ceja">Dónde</p><p class="h3">${DOLOR.zona}</p></div>
+      <div><p class="ceja">Cuánto molesta</p><div class="intensidad">${escala(DOLOR.int)}<span class="sec"><span class="cifra">${DOLOR.int}</span> de 10</span></div></div>
+    </div>
+    <p class="sec" style="margin-top:10px">En ${DOLOR.ej} · sesión ${DOLOR.ses}</p>
+    <p class="cita-texto">«${DOLOR.txt}»</p>
+    <p class="pista">Es una zona nueva: en la encuesta marcó la rodilla derecha, no el hombro.</p>
+  </section>`;
+}
+
+function datosMes() {
+  return `<div class="datos">
+    <div class="dato"><span class="cifra">94<small>%</small></span><p class="sec">adherencia en 4 semanas</p></div>
+    <div class="dato"><span class="cifra">9</span><p class="sec">sesiones en noviembre</p></div>
+    <div class="dato"><span class="cifra">3</span><p class="sec">récords en noviembre</p></div>
+  </div>
+  <button class="tarjeta alerta-fila" data-ir="ajustar-cargas.html" data-toque>${icoSinAvance}
+    <span class="txt"><span class="ceja">Alerta abierta</span><span class="t">${ALERTA.tipo} en ${ALERTA.ej} · <span class="cifra" style="font-weight:600">${ALERTA.ses}</span> sesiones</span></span>${icoChev}
+  </button>`;
+}
+
+function rutina() {
+  const dias = SEMANA.map((tipo, i) => {
+    const hoy = i === 1;
+    const nombre = { hecho: 'entrenado', toca: 'toca entrenar', plan: 'por entrenar', descanso: 'descanso' }[tipo];
+    return `<div class="dia${hoy ? ' hoy' : ''}" aria-label="${LETRAS[i]}${hoy ? ', hoy' : ''}: ${nombre}">
+      <span class="marca ${tipo}">${tipo === 'hecho' ? visto() : ''}</span><span class="letra">${LETRAS[i]}</span></div>`;
+  }).join('');
+  return `<div class="seccion-cabeza"><h2 class="h3">Rutina activa</h2>
+      <button class="btn btn-fantasma" data-ir="rutina.html#estado=plantilla&rol=entrenador" data-toque>Ver rutina</button></div>
+    <section class="tarjeta rutina">
+      <div class="fila-ceja"><p class="ceja">Doble progresión</p><p class="ceja">Semana <span class="cifra">3</span> de <span class="cifra">8</span></p></div>
+      <p class="h2">Fuerza 4 días</p>
+      <div class="semana">${dias}</div>
+      <p class="hoy-toca">Hoy toca <b>Pierna A</b>, 6 ejercicios. La última vez fue el 10 de noviembre.</p>
+      <div class="dos-botones">
+        <button class="btn btn-secundario" data-ir="ajustar-cargas.html" data-toque>Ajustar cargas</button>
+        <button class="btn btn-secundario" data-ir="rutinas.html#rol=entrenador" data-toque>Cambiar rutina</button>
+      </div>
+    </section>`;
+}
+
+function sesiones(fondo) {
+  const filas = SESIONES.map((s, i) => {
+    const conDolor = i === 0 && (fondo === 'dolor' || respondida);
+    const marca = conDolor ? '<span class="marca-txt peligro">1 dolor</span>' : '';
+    const rec = s.rec ? `<span class="ses-rec acento">${s.rec.length === 1 ? 'Récord en' : 'Récords en'} ${s.rec.join(' y ')}</span>` : '';
+    return `<li><span><span class="ses-nombre">${s.n}</span><span class="sec">${s.d} · <span class="cifra" style="font-weight:500">${s.min}</span> min</span>${rec}</span>
+      <span class="ses-dato"><span class="cifra">${s.t} t</span>${marca}</span></li>`;
+  }).join('');
+  return `<div class="seccion-cabeza"><h2 class="h3">Últimas sesiones</h2></div>
+    <ul class="tarjeta lista-filas sesiones">${filas}</ul>`;
+}
+
+function progreso() {
+  const chips = [['volumen', 'Volumen'], ['sentadilla', 'Sentadilla']].map(([v, t]) =>
+    `<button class="chip texto" data-accion="vista" data-v="${v}" aria-pressed="${vista === v}" data-toque><span>${t}</span></button>`).join('');
+  const pie = vista === 'volumen'
+    ? `<div class="grafico-pie"><span class="sec">Última semana completa</span><span><span class="cifra">20,1 t</span> <span class="sec acento"><span class="cifra">+8 %</span></span></span></div>
+      <p class="sec grafico-nota">La barra punteada es esta semana: va en <span class="cifra">2,6</span> t, con <span class="cifra">1</span> de <span class="cifra">4</span> sesiones.</p>`
+    : `<div class="grafico-pie"><span class="sec">1RM estimado · 10 nov</span><span><span class="cifra">101,3 kg</span> <span class="sec acento"><span class="cifra">+8,0</span></span></span></div>
+      <p class="sec grafico-nota">Subió <span class="cifra">8</span> kg en <span class="cifra">7</span> sesiones. Hoy le toca <span class="cifra">82,5</span> kg × <span class="cifra">6</span> a <span class="cifra">8</span>.</p>`;
+  return `<div class="seccion-cabeza"><h2 class="h3">Progreso</h2></div>
+    <section class="tarjeta grafico">
+      <div class="chips grafico-chips" role="group" aria-label="Qué gráfico ver">${chips}</div>
+      ${vista === 'volumen' ? graficoVolumen() : graficoSentadilla()}
+      ${pie}
+    </section>`;
+}
+
+function itemObs(o) {
+  if (o.consejo) {
+    const sobreQue = { Rutina: 'la rutina', Sesión: 'la sesión', Ejercicio: 'un ejercicio' }[o.sobre];
+    return `<li class="tarjeta obs"><div class="nota" style="margin:0"><p class="ceja"><b>Tu consejo</b> · sobre ${sobreQue} · ${o.f}</p><p>${esc(o.txt)}</p></div></li>`;
+  }
+  const tipo = `<b class="${o.dolor ? 'peligro' : ''}">${o.dolor ? 'Dolor' : 'Observación'}</b> · ${o.ej} · ${o.f}`;
+  return `<li class="tarjeta obs"><p class="ceja">${tipo}</p>
+    ${o.dolor ? `<p class="zona">${o.zona} · <span class="cifra">${o.int}</span> de 10</p>` : ''}
+    <p class="obs-texto">«${o.txt}»</p>
+    ${o.resp ? `<div class="nota"><p class="ceja">Tu respuesta · ${o.resp.f}</p><p>${esc(o.resp.txt)}</p></div>` : ''}</li>`;
+}
+
+function observaciones() {
+  const lista = [...nuevos, ...(respondida ? [{ ...DOLOR, dolor: true, f: 'ayer', resp: { f: 'ahora', txt: respondida } }] : []), ...OBS];
+  return `<div class="seccion-cabeza"><h2 class="h3">Observaciones y dolores<span class="cifra">${lista.length}</span></h2></div>
+    <ul class="obs-lista">${lista.map(itemObs).join('')}</ul>`;
+}
+
+function pesoYMedidas(p) {
+  return `<div class="seccion-cabeza"><h2 class="h3">Peso y medidas</h2></div>
+    <section class="tarjeta peso">
+      <div class="peso-fila"><div><p class="ceja">Peso corporal · ${p.peso.fecha}</p>
+        <p class="peso-cifra"><span class="cifra">${fmtKg(p.peso.kg)}</span>kg</p>
+        <p class="sec">${p.peso.desde}<br>${p.peso.mes}</p></div>${sparkPeso(p.peso.serie)}</div>
+      <div class="medidas">${p.medidas.map(([v, t]) => `<div class="medida"><span class="cifra">${v}</span><p class="sec">${t}</p></div>`).join('')}</div>
+      <div class="peso-pie"><p class="sec">Medidas en cm, del 3 nov · 3 fotos</p>
+        <button class="btn btn-fantasma" data-accion="aviso" data-aviso="Aquí se abren las medidas y fotos de Martina. Solo puedes verlas." data-toque>Ver fotos</button></div>
+    </section>`;
+}
+
+function encuesta(p) {
+  const e = p.encuesta;
+  // Las cifras van en mono también dentro del texto (61,0 kg, 165 cm).
+  const mono = (v) => v.replace(/\d+(,\d+)?/g, '<span class="cifra" style="font-weight:500">$&</span>');
+  const c = (t, v, ancho) => `<div${ancho ? ' class="ancho"' : ''}><p class="ceja">${t}</p><p>${ancho ? v : mono(v)}</p></div>`;
+  return `<div class="seccion-cabeza"><h2 class="h3">Punto de partida</h2><span class="sec">encuesta del ${e.fecha}</span></div>
+    <section class="tarjeta encuesta">
+      ${c('Objetivo', e.objetivo)}${c('Experiencia', e.experiencia)}
+      ${c('Días', e.dias)}${c('Tiempo', e.minutos)}
+      ${c('Dónde entrena', e.lugar)}${c('Edad y altura', e.cuerpo)}
+      ${c('Peso al empezar', e.peso)}${c('Lesiones', e.lesion)}
+      ${c('Lo que escribió', `«${e.lesionTxt}»`, true)}
+    </section>`;
+}
+
+function botonDesvincular(p) {
+  return `<button class="btn btn-fantasma peligro desvincular" data-accion="desvincular" data-toque>Desvincular a ${p.corto}</button>`;
+}
+
+function cuerpoMartina(fondo) {
+  return cabeza(MARTINA) + (dolorAbierto(fondo) ? tarjetaDolor() : '') + datosMes() + rutina() + sesiones(fondo)
+    + progreso() + observaciones() + pesoYMedidas(MARTINA) + encuesta(MARTINA) + botonDesvincular(MARTINA);
+}
+
+function cuerpoSebastian() {
+  const p = SEBASTIAN;
+  const obs = nuevos.length ? `<ul class="obs-lista">${nuevos.map(itemObs).join('')}</ul>`
+    : '<div class="tarjeta vacio-txt"><p class="sec">Todavía no hay observaciones. Si le escribes un consejo, lo verá en Hoy.</p></div>';
+  return `${cabeza(p)}
+    <section class="tarjeta sin-rutina" aria-label="Sin rutina">
+      <p class="ceja">Rutina activa</p>
+      <h2 class="h2" style="margin-top:4px">Sebastián todavía no tiene rutina</h2>
+      <p class="sec">Ya respondió la encuesta. Asígnale una de tus rutinas o ármale una desde cero.</p>
+      <button class="btn btn-secundario ancho" data-ir="nueva-rutina.html#rol=entrenador" data-toque>Crear rutina nueva</button>
+    </section>
+    ${encuesta(p)}
+    <div class="seccion-cabeza"><h2 class="h3">Peso</h2></div>
+    <section class="tarjeta peso"><p class="ceja">Peso corporal · 16 nov, de la encuesta</p>
+      <p class="peso-cifra"><span class="cifra">86,0</span>kg</p>
+      <p class="sec">La tendencia aparece desde el tercer registro.</p></section>
+    <div class="seccion-cabeza"><h2 class="h3">Últimas sesiones</h2></div>
+    <div class="tarjeta vacio-txt"><p class="sec">Todavía no registra sesiones. Aparecen aquí apenas entrene.</p></div>
+    <div class="seccion-cabeza"><h2 class="h3">Observaciones y dolores</h2>
+      <button class="btn btn-fantasma" data-accion="consejo" data-toque>Escribir consejo</button></div>
+    ${obs}
+    ${botonDesvincular(p)}`;
+}
+
+function cuerpoCargando() {
+  const b = (w, h, mt) => `<span class="esq" style="width:${w};height:${h}px${mt ? `;margin-top:${mt}px` : ''}"></span>`;
+  return `<div aria-busy="true" aria-label="Cargando la ficha de Martina">${cabeza(MARTINA)}
+    <div class="datos">${'<div class="dato">' + b('50%', 26) + b('80%', 10, 8) + '</div>'}${'<div class="dato">' + b('30%', 26) + b('80%', 10, 8) + '</div>'}${'<div class="dato">' + b('30%', 26) + b('80%', 10, 8) + '</div>'}</div>
+    <div class="seccion-cabeza">${b('120px', 18)}</div>
+    <section class="tarjeta">${b('40%', 12)}${b('62%', 26, 10)}${b('100%', 40, 16)}${b('70%', 12, 14)}</section>
+    <div class="seccion-cabeza">${b('140px', 18)}</div>
+    <section class="tarjeta">${b('55%', 14)}${b('35%', 10, 8)}${b('60%', 14, 20)}${b('30%', 10, 8)}</section></div>`;
+}
+
+// ── Hojas ────────────────────────────────────────────────────────────────────
+function hojaResponder(tema, ver) {
+  return `<div class="velo${ver ? ' ver' : ''}" data-hoja="respondiendo"><div class="hoja" role="dialog" aria-modal="true" aria-labelledby="t-resp-${tema}">
+    <h2 class="h2" id="t-resp-${tema}">Responder a Martina</h2>
+    <div class="cita"><p class="ceja"><b class="peligro">Dolor</b> · ${DOLOR.zona} · <span class="cifra">${DOLOR.int}</span> de 10 · ${DOLOR.ej}</p><p>«${DOLOR.txt}»</p></div>
+    <textarea class="area" data-texto aria-label="Tu respuesta">${BORRADOR}</textarea>
+    <p class="sec nota-hoja">Le llega como consejo. Lo ve en Hoy y en el Press de banca.</p>
+    <div class="acciones"><button class="btn btn-secundario" data-accion="cerrar-hoja" data-toque>Cancelar</button>
+      <button class="btn btn-primario" data-accion="enviar-respuesta" data-toque>Enviar</button></div>
+  </div></div>`;
+}
+
+function hojaConsejo(tema, ver, p) {
+  const chips = ['Rutina', 'Sesión', 'Ejercicio'].map((t) =>
+    `<button class="chip texto" data-accion="sobre" data-v="${t}" aria-pressed="${sobre === t}" data-toque><span>${t}</span></button>`).join('');
+  return `<div class="velo${ver ? ' ver' : ''}" data-hoja="consejo"><div class="hoja" role="dialog" aria-modal="true" aria-labelledby="t-cons-${tema}">
+    <h2 class="h2" id="t-cons-${tema}">Consejo para ${p.corto}</h2>
+    <p class="rot">Sobre</p>
+    <div class="chips" role="group" aria-label="Sobre qué es el consejo">${chips}</div>
+    <textarea class="area" data-texto aria-label="Tu consejo" placeholder="Por ejemplo: esta semana duerme 8 horas antes de los días de pierna."></textarea>
+    <p class="sec nota-hoja">Lo ve en Hoy, en la tarjeta de su entrenadora.</p>
+    <div class="acciones"><button class="btn btn-secundario" data-accion="cerrar-hoja" data-toque>Cancelar</button>
+      <button class="btn btn-primario" data-accion="enviar-consejo" data-toque>Enviar</button></div>
+  </div></div>`;
+}
+
+function hojaDesvincular(tema, ver, p) {
+  return `<div class="velo${ver ? ' ver' : ''}" data-hoja="desvincular"><div class="hoja" role="dialog" aria-modal="true" aria-labelledby="t-desv-${tema}">
+    <h2 class="h2" id="t-desv-${tema}">¿Desvincular a ${p.corto}?</h2>
+    <p class="sec" style="margin-top:8px">Dejas de ver sus sesiones, medidas y fotos desde ya. ${p.ella ? 'Ella' : 'Él'} conserva todo su historial; tú, solo las rutinas que escribiste.</p>
+    <p class="sec" style="margin-top:8px">Para volver a trabajar ${p.ella ? 'juntas' : 'juntos'} necesitará un código nuevo.</p>
+    <div class="acciones"><button class="btn btn-secundario" data-accion="cerrar-hoja" data-toque>Cancelar</button>
+      <button class="btn btn-peligro" data-accion="si-desvincular" data-toque>Desvincular</button></div>
+  </div></div>`;
+}
+
+// ── Teléfono ─────────────────────────────────────────────────────────────────
+function telefono(tema, ctl) {
+  const e = ctl.estado, fondo = fondoDe(e);
+  const p = fondo === 'sinrutina' ? SEBASTIAN : MARTINA;
+  let cuerpo, accion;
+  if (fondo === 'cargando') { cuerpo = cuerpoCargando(); accion = ''; }
+  else if (fondo === 'sinrutina') {
+    cuerpo = cuerpoSebastian();
+    accion = '<button class="btn btn-primario ancho alto" data-ir="rutinas.html#rol=entrenador" data-toque>Asignar rutina</button>';
+  } else {
+    cuerpo = cuerpoMartina(fondo);
+    accion = dolorAbierto(fondo)
+      ? '<button class="btn btn-primario ancho alto" data-accion="responder" data-toque>Responder a Martina</button>'
+      : '<button class="btn btn-primario ancho alto" data-accion="consejo" data-toque>Escribir consejo</button>';
+  }
+  return `<div class="tel" data-tema="${tema}">
+    <div class="tel-estado"><span class="cifra" style="font-weight:600">9:41</span><span>5G · 82 %</span></div>
+    <div class="barra"><button class="btn-icono" data-ir="clientes.html" aria-label="Volver a Clientes" data-toque>${icoAtras}</button></div>
+    <div class="tel-contenido">${cuerpo}</div>
+    ${accion ? `<div class="tel-accion">${accion}</div>` : ''}
+    <div class="tel-gesto"></div>
+    <div class="aviso" role="status"></div>
+    ${hojaResponder(tema, e === 'respondiendo')}${hojaConsejo(tema, e === 'consejo', p)}${hojaDesvincular(tema, e === 'desvincular', p)}
+  </div>`;
+}
+
+// ── Maqueta ──────────────────────────────────────────────────────────────────
+function alCambiarEstado() { base = 'normal'; respondida = null; nuevos = []; sobre = 'Rutina'; }
+const m = iniciarMaqueta({
+  telefono, porDefecto: { estado: 'normal' }, alCambiarEstado,
+  alPintar: () => {
+    // Solo para revisar: #bajar=800 o #bajar=fin deja el contenido desplazado.
+    const b = new URLSearchParams(location.hash.slice(1)).get('bajar');
+    if (b) document.querySelectorAll('#escenario .tel-contenido').forEach((c) => { c.scrollTop = b === 'fin' ? c.scrollHeight : +b; });
+  },
+});
+const { ctl, escenario } = m;
+const todos = (sel) => escenario.querySelectorAll(sel);
+const avisarTodos = (t) => todos('.tel').forEach((tel) => avisar(tel, t));
+
+function repintar() {
+  const scroll = [...todos('.tel-contenido')].map((c) => c.scrollTop);
+  m.pintar();
+  todos('.tel-contenido').forEach((c, i) => { c.scrollTop = scroll[i] || 0; });
+}
+function abrir(hoja, tel) {
+  if (!HOJAS.includes(ctl.estado)) base = ctl.estado;
+  const tema = tel.dataset.tema;
+  ctl.estado = hoja; repintar();
+  const f = escenario.querySelector(`.tel[data-tema="${tema}"] .velo.ver [data-accion="cerrar-hoja"]`);
+  if (f) f.focus();
+}
+function cerrar(estado) { ctl.estado = estado || fondoDe(ctl.estado); repintar(); }
+
+escenario.addEventListener('click', (ev) => {
+  if (ev.target.classList.contains('velo')) { cerrar(); return; }
+  const b = ev.target.closest('[data-accion]'); if (!b) return;
+  const tel = b.closest('.tel');
+  switch (b.dataset.accion) {
+    case 'vista': vista = b.dataset.v; repintar(); break;
+    case 'aviso': avisar(tel, b.dataset.aviso); break;
+    case 'responder': abrir('respondiendo', tel); break;
+    case 'consejo': abrir('consejo', tel); break;
+    case 'desvincular': abrir('desvincular', tel); break;
+    case 'cerrar-hoja': cerrar(); break;
+    case 'sobre':
+      sobre = b.dataset.v;
+      todos('[data-accion="sobre"]').forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.v === sobre)));
+      break;
+    case 'enviar-respuesta': {
+      const t = tel.querySelector('.velo.ver [data-texto]').value.trim();
+      if (!t) { avisar(tel, 'Escribe la respuesta antes de enviarla.'); break; }
+      respondida = t; cerrar('normal');
+      avisarTodos('Enviado. Martina lo ve en Hoy y en el Press de banca.');
+      break;
+    }
+    case 'enviar-consejo': {
+      const t = tel.querySelector('.velo.ver [data-texto]').value.trim();
+      if (!t) { avisar(tel, 'Escribe el consejo antes de enviarlo.'); break; }
+      const quien = fondoDe(ctl.estado) === 'sinrutina' ? SEBASTIAN : MARTINA;
+      nuevos.unshift({ consejo: true, sobre, f: 'ahora', txt: t }); cerrar();
+      avisarTodos(`Enviado. ${quien.corto} lo ve en Hoy.`);
+      break;
+    }
+    case 'si-desvincular': {
+      const quien = fondoDe(ctl.estado) === 'sinrutina' ? SEBASTIAN : MARTINA;
+      m.ir(`clientes.html#desvinculado=${quien.id}`);
+      break;
+    }
+  }
+});
+document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && HOJAS.includes(ctl.estado)) cerrar(); });
+</script>
+</body>
+</html>

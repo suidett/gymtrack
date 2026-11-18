@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none" style="color:#131A17">
+  <!-- 07 G de renglones: una G armada solo con renglones -->
+  <rect x="12" y="12" width="36" height="7" rx="3.5" fill="currentColor"/>
+  <rect x="12" y="23" width="12" height="7" rx="3.5" fill="currentColor"/>
+  <rect x="12" y="34" width="12" height="7" rx="3.5" fill="currentColor"/>
+  <rect class="acento" x="32" y="34" width="20" height="7" rx="3.5" fill="#45B392"/>
+  <rect x="12" y="45" width="40" height="7" rx="3.5" fill="currentColor"/>
+</svg>

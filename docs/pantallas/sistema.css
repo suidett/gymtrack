@@ -1,0 +1,256 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   GymTrack · sistema de las maquetas (dirección «Más»)
+
+   Tokens y piezas compartidas por todas las pantallas de docs/pantallas/.
+   Los valores salen de docs/marca/v2/mas/tokens.json. 1 dp = 1 px CSS.
+   El tema va en el marco del teléfono (data-tema), no en la página, para poder
+   ver modo gimnasio y clara lado a lado.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* ── Tokens del teléfono ─────────────────────────────────────────────────── */
+[data-tema="gimnasio"] {
+  color-scheme: dark;
+  --fondo: #0F1113; --sup: #1A1D20; --sup-alta: #24282C;
+  --texto: #F2F3F4; --texto-2: #A0A6AD;
+  --accion: #F5B83D; --accion-texto: #0F1113; --accion-pres: #D99A1F;
+  --acento-texto: #F5B83D;
+  --fila-hecha: #3A2F14; --borde: #767D85;
+  --peligro: #FF6B5E; --peligro-sobre: #0F1113; --peligro-pres: #D95D52;
+  --desh-fondo: #24282C; --desh-texto: #767D85; --foco: #F2F3F4;
+  --sec-fondo: #24282C; --sec-borde: #767D85; --sec-pres-fondo: #2B3035;
+  --fantasma-pres: #24282C;
+  --hecho-fondo: #F5B83D; --hecho-borde: #F5B83D; --visto: #0F1113;
+  --marcar-borde: #767D85;
+  --simb-v: #F5B83D; --simb-h: #F2F3F4;
+  --campo-fondo: #0F1113; --campo-borde: #767D85; --hecho-pres: #D99A1F;
+}
+[data-tema="clara"] {
+  color-scheme: light;
+  --fondo: #F3F4F5; --sup: #FFFFFF; --sup-alta: #E4E6E8;
+  --texto: #0F1113; --texto-2: #555B62;
+  --accion: #0F1113; --accion-texto: #FFFFFF; --accion-pres: #2B3035;
+  --acento-texto: #8A5A00;
+  --fila-hecha: #FCEFC9; --borde: #6F767E;
+  --peligro: #B42318; --peligro-sobre: #FFFFFF; --peligro-pres: #9A2017;
+  --desh-fondo: #E4E6E8; --desh-texto: #6F767E; --foco: #0F1113;
+  --sec-fondo: #FFFFFF; --sec-borde: #0F1113; --sec-pres-fondo: #E4E6E8;
+  --fantasma-pres: #E4E6E8;
+  --hecho-fondo: #F5B83D; --hecho-borde: #8A5A00; --visto: #0F1113;
+  --marcar-borde: #6F767E;
+  /* Bajo 48 px, sobre claro, el símbolo va en un color. */
+  --simb-v: #0F1113; --simb-h: #0F1113;
+  --campo-fondo: #FFFFFF; --campo-borde: #6F767E; --hecho-pres: #D99A1F;
+}
+
+:root {
+  --letra: 'Archivo', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, monospace;
+  --radio: 8px;
+  --t-soltar: 100ms;
+  --curva: cubic-bezier(0, 0, 0.2, 1);
+}
+@media (prefers-reduced-motion: reduce) { :root { --t-soltar: 0ms; } }
+
+/* ── Página de la maqueta (fuera del teléfono) ───────────────────────────── */
+:root {
+  --p-fondo: #E9EAEC; --p-sup: #FFFFFF; --p-texto: #16181A; --p-texto-2: #555B62; --p-borde: #D3D6D9;
+  --p-sel: #16181A; --p-sel-texto: #FFFFFF;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-pagina="clara"]) {
+    --p-fondo: #08090A; --p-sup: #16181A; --p-texto: #ECEEF0; --p-texto-2: #A0A6AD; --p-borde: #2C3035;
+    --p-sel: #ECEEF0; --p-sel-texto: #08090A;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--p-fondo); color: var(--p-texto);
+  font: 500 15px/1.45 var(--letra);
+  -webkit-font-smoothing: antialiased;
+}
+.maqueta { max-width: 1240px; margin: 0 auto; padding: 24px 16px 64px; }
+.maqueta-cabeza { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; margin-bottom: 16px; }
+.maqueta-cabeza h1 { margin: 0; font-size: 22px; font-weight: 700; }
+.maqueta-cabeza p { margin: 0; color: var(--p-texto-2); font-size: 14px; }
+.maqueta-cabeza a { color: inherit; }
+
+.controles { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin-bottom: 20px;
+  padding: 10px 12px; background: var(--p-sup); border: 1px solid var(--p-borde); border-radius: 10px; }
+.grupo { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.grupo .rot { color: var(--p-texto-2); font-weight: 500; }
+.grupo input[type="checkbox"] { width: 18px; height: 18px; accent-color: #F5B83D; margin: 0; }
+.ctl {
+  font: 600 13px/1 var(--letra); color: var(--p-texto); background: transparent;
+  border: 1px solid var(--p-borde); border-radius: 6px; min-height: 34px; padding: 0 8px; cursor: pointer;
+}
+.ctl:focus-visible, .grupo input:focus-visible { outline: 2px solid #F5B83D; outline-offset: 2px; }
+
+.escenario { display: flex; flex-wrap: wrap; justify-content: safe center; gap: 32px; align-items: flex-start; }
+.marco-rotulo { font-size: 13px; color: var(--p-texto-2); margin: 0 0 8px; }
+
+/* ── Teléfono 412 × 892 ──────────────────────────────────────────────────── */
+.tel {
+  position: relative; width: 412px; height: 892px; overflow: hidden;
+  display: flex; flex-direction: column;
+  background: var(--fondo); color: var(--texto);
+  font: 500 16px/1.4 var(--letra);
+  border-radius: 24px; outline: 1px solid var(--p-borde); outline-offset: 0;
+}
+.tel button { font-family: inherit; }
+.tel-estado { flex: 0 0 28px; display: flex; justify-content: space-between; align-items: center;
+  padding: 2px 24px 0; font: 600 13px/1 var(--letra); color: var(--texto-2); }
+.tel-contenido { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 0 16px 24px; scrollbar-width: none; }
+.tel-contenido::-webkit-scrollbar { display: none; }
+.tel-accion { flex: 0 0 auto; padding: 12px 16px; background: var(--fondo); border-top: 1px solid var(--sup-alta); }
+.tel-gesto { flex: 0 0 20px; display: flex; align-items: center; justify-content: center; background: var(--sup); }
+.tel-gesto::before { content: ""; width: 108px; height: 4px; border-radius: 2px; background: var(--texto-2); }
+
+/* Barra de pestañas: texto, sin íconos. La activa lleva el trazo ámbar del símbolo encima. */
+.pestanas { flex: 0 0 64px; display: flex; background: var(--sup); border-top: 1px solid var(--sup-alta); }
+.pestana {
+  position: relative; flex: 1; min-width: 0; border: 0; background: transparent; cursor: pointer;
+  font: 600 13px/1 var(--letra); color: var(--texto-2);
+}
+.pestana[aria-selected="true"] { color: var(--texto); font-weight: 700; }
+.pestana[aria-selected="true"]::before {
+  content: ""; position: absolute; top: 0; left: 50%; width: 24px; height: 4px; margin-left: -12px;
+  border-radius: 0 0 1px 1px; background: var(--simb-v);
+}
+[data-tema="clara"] .pestana[aria-selected="true"]::before { background: #F5B83D; }
+.pestana:active { background: var(--fantasma-pres); }
+.pestana:focus-visible { outline: 2px solid var(--foco); outline-offset: -4px; }
+
+/* ── Texto ───────────────────────────────────────────────────────────────── */
+.ceja { margin: 0; font: 600 13px/1.3 var(--letra); color: var(--texto-2); }
+.ceja.acento { color: var(--acento-texto); }
+.titulo { margin: 0; font: 700 28px/1.15 var(--letra); letter-spacing: -0.01em; }
+.h2 { margin: 0; font: 700 24px/1.2 var(--letra); letter-spacing: -0.01em; }
+.h3 { margin: 0; font: 700 17px/1.3 var(--letra); }
+.sec { margin: 0; font-size: 14px; line-height: 1.45; color: var(--texto-2); }
+.cifra { font-family: var(--mono); font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: 0; }
+.seccion-cabeza { display: flex; align-items: baseline; justify-content: space-between; margin: 24px 0 8px; }
+.seccion-cabeza .h3 { font-size: 16px; }
+
+/* ── Superficies ─────────────────────────────────────────────────────────── */
+.tarjeta { background: var(--sup); border: 1px solid var(--sup-alta); border-radius: var(--radio); padding: 16px; }
+.lista-filas { list-style: none; margin: 0; padding: 0; }
+.lista-filas > li { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  min-height: 56px; border-top: 1px solid var(--sup-alta); }
+.lista-filas > li:first-child { border-top: 0; }
+
+/* ── Botones ─────────────────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 48px; padding: 0 20px; border-radius: var(--radio); border: 2px solid transparent;
+  font: 600 16px/1 var(--letra); cursor: pointer; text-decoration: none;
+  transition: background-color var(--t-soltar) var(--curva), border-color var(--t-soltar) var(--curva);
+}
+.btn:active { transition-duration: 0ms; }
+.btn:focus-visible { outline: 2px solid var(--foco); outline-offset: 2px; }
+.btn.ancho { width: 100%; }
+.btn.alto { min-height: 56px; font-size: 17px; }
+.btn-primario { background: var(--accion); color: var(--accion-texto); }
+.btn-primario:active { background: var(--accion-pres); }
+.btn-secundario { background: var(--sec-fondo); color: var(--texto); border-color: var(--sec-borde); }
+.btn-secundario:active { background: var(--sec-pres-fondo); border-color: var(--texto); }
+.btn-fantasma { background: transparent; color: var(--texto); padding: 0 12px; }
+.btn-fantasma:active { background: var(--fantasma-pres); }
+.btn-fantasma.peligro { color: var(--peligro); }
+.btn-peligro { background: var(--peligro); color: var(--peligro-sobre); }
+.btn-peligro:active { background: var(--peligro-pres); }
+
+/* ── Aviso flotante y hoja inferior ──────────────────────────────────────── */
+.aviso {
+  position: absolute; left: 16px; right: 16px; bottom: 100px; z-index: 5;
+  padding: 14px 16px; border-radius: var(--radio); background: var(--texto); color: var(--fondo);
+  font: 600 14px/1.35 var(--letra); opacity: 0; transform: translateY(8px); pointer-events: none;
+  transition: opacity 120ms var(--curva), transform 120ms var(--curva);
+}
+.aviso.ver { opacity: 1; transform: none; }
+.velo { position: absolute; inset: 0; z-index: 6; background: rgba(0,0,0,.55); display: none; align-items: flex-end; }
+.velo.ver { display: flex; }
+.hoja { width: 100%; background: var(--sup); border-top: 1px solid var(--sup-alta); border-radius: 12px 12px 0 0; padding: 20px 16px 28px; }
+.hoja .acciones { display: flex; gap: 8px; margin-top: 20px; }
+.hoja .acciones .btn { flex: 1; min-height: 56px; }
+
+/* ── Medidas (para revisar toques de 48 y 56 dp) ─────────────────────────── */
+.ver-medidas .tel [data-toque] { outline: 1px dashed #FF4FD8; outline-offset: -1px; position: relative; }
+.ver-medidas .tel [data-toque]::after {
+  content: attr(data-medida); position: absolute; right: 0; top: 0; z-index: 4;
+  font: 700 10px/1 var(--mono); padding: 2px 3px; background: #FF4FD8; color: #000; pointer-events: none;
+}
+
+/* ── Símbolo y visto ─────────────────────────────────────────────────────── */
+.simbolo { display: block; width: 24px; height: 24px; }
+.simbolo .h { fill: var(--simb-h); }
+.simbolo .v { fill: var(--simb-v); }
+
+/* ── Botón de ícono ──────────────────────────────────────────────────────── */
+.btn-icono {
+  flex: 0 0 48px; width: 48px; height: 48px; padding: 0; border-radius: var(--radio); border: 0;
+  background: transparent; color: var(--texto); display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+}
+.btn-icono svg { width: 24px; height: 24px; }
+.btn-icono path { stroke: currentColor; fill: none; stroke-width: 2.5; stroke-linecap: square; }
+.btn-icono:active { background: var(--fantasma-pres); }
+.btn-icono:disabled { color: var(--desh-texto); cursor: not-allowed; background: transparent; }
+.btn-icono:focus-visible { outline: 2px solid var(--foco); outline-offset: 2px; }
+
+/* ── Más y menos (56 dp): tres piezas separadas, cifra grande al medio ───── */
+.paso { display: flex; gap: 4px; height: 56px; }
+.btn-paso {
+  flex: 0 0 56px; height: 56px; padding: 0; border-radius: var(--radio);
+  border: 2px solid var(--sec-borde); background: var(--sec-fondo);
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+  touch-action: manipulation; user-select: none; -webkit-user-select: none;
+  transition: background-color var(--t-soltar) var(--curva), border-color var(--t-soltar) var(--curva);
+}
+.btn-paso:active { transition-duration: 0ms; background: var(--sec-pres-fondo); border-color: var(--texto); }
+.btn-paso:focus-visible { outline: 2px solid var(--foco); outline-offset: 2px; }
+.btn-paso .barra-menos { display: block; width: 18px; height: 4px; border-radius: 1px; background: var(--texto); }
+.btn-paso .simbolo .h { fill: var(--texto); }
+.btn-paso.limite { border-color: var(--desh-desh, var(--sup-alta)); }
+.btn-paso.limite .barra-menos, .btn-paso.limite .simbolo rect { fill: var(--desh-texto); background: var(--desh-texto); }
+.campo {
+  position: relative; flex: 1; min-width: 0; height: 56px; border-radius: var(--radio);
+  border: 2px solid var(--campo-borde); background: var(--campo-fondo);
+  display: flex; align-items: center; justify-content: center; gap: 6px; overflow: hidden;
+}
+.campo .valor { display: inline-block; font: 700 30px/1 var(--mono); font-variant-numeric: tabular-nums; }
+.campo .unidad { font: 500 13px/1 var(--letra); color: var(--texto-2); margin-top: 10px; }
+.campo .valor.sube { animation: cifra-sube 100ms var(--curva); }
+.campo .valor.baja { animation: cifra-baja 100ms var(--curva); }
+@keyframes cifra-sube { from { transform: translateY(45%); opacity: .2; } }
+@keyframes cifra-baja { from { transform: translateY(-45%); opacity: .2; } }
+@media (prefers-reduced-motion: reduce) { .campo .valor.sube, .campo .valor.baja { animation: none; } }
+
+/* ── Chips (48 dp de toque, 40 dp visibles) ──────────────────────────────── */
+.chips { display: flex; gap: 6px; }
+.chip { flex: 1; height: 48px; padding: 4px 0; border: 0; background: transparent; color: var(--texto); cursor: pointer; font: inherit; }
+.chip > span {
+  display: flex; align-items: center; justify-content: center; height: 40px; border-radius: var(--radio);
+  border: 2px solid var(--borde); font: 700 16px/1 var(--mono);
+}
+.chip:active > span { background: var(--fantasma-pres); }
+.chip[aria-pressed="true"] > span { background: var(--texto); border-color: var(--texto); color: var(--fondo); }
+.chip:focus-visible > span { outline: 2px solid var(--foco); outline-offset: 2px; }
+.chip.texto > span { font: 600 15px/1 var(--letra); padding: 0 14px; }
+
+/* ── Barra de avance por segmentos ───────────────────────────────────────── */
+.avance { display: flex; gap: 3px; }
+.avance i { flex: 1; height: 6px; border-radius: 1px; background: var(--sup-alta); }
+.avance i.si { background: var(--hecho-fondo); }
+.avance i.ahora { background: var(--texto); }
+
+/* ── Campo de texto ──────────────────────────────────────────────────────── */
+.area {
+  width: 100%; min-height: 104px; padding: 12px; border-radius: var(--radio); resize: none;
+  border: 2px solid var(--campo-borde); background: var(--campo-fondo); color: var(--texto);
+  font: 500 16px/1.4 var(--letra);
+}
+.area:focus { outline: none; border-color: var(--accion); }
+[data-tema="clara"] .area:focus { border-color: var(--texto); }
+
+/* Insignia de una pestaña (por ejemplo «3» en Alertas): nunca bajo 12 px. */
+.tel .pestana .insignia { font-size: 12px; min-width: 20px; height: 20px; }

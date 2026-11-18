@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none" style="color:#131A17">
+  <!-- 07D Abertura amplia -->
+  <path fill="currentColor" d="M14 12H38A2 2 0 0 1 40 14V17A2 2 0 0 1 38 19H14A2 2 0 0 1 12 17V14A2 2 0 0 1 14 12Z"/>
+  <path fill="currentColor" d="M14 23H22A2 2 0 0 1 24 25V28A2 2 0 0 1 22 30H14A2 2 0 0 1 12 28V25A2 2 0 0 1 14 23Z"/>
+  <path fill="currentColor" d="M14 34H22A2 2 0 0 1 24 36V39A2 2 0 0 1 22 41H14A2 2 0 0 1 12 39V36A2 2 0 0 1 14 34Z"/>
+  <path class="acento" fill="#45B392" d="M31 34H50A2 2 0 0 1 52 36V39A2 2 0 0 1 50 41H31A2 2 0 0 1 29 39V36A2 2 0 0 1 31 34Z"/>
+  <path fill="currentColor" d="M14 45H50A2 2 0 0 1 52 47V50A2 2 0 0 1 50 52H14A2 2 0 0 1 12 50V47A2 2 0 0 1 14 45Z"/>
+</svg>

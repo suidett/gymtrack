@@ -1,0 +1,61 @@
+{
+  "boards": {
+    "MColores.dc.html": {
+      "x": 0,
+      "y": 4020,
+      "w": 1680,
+      "h": 3080,
+      "title": "Colores",
+      "page": "marca"
+    },
+    "MTipoEscala.dc.html": {
+      "x": 1760,
+      "y": 4020,
+      "w": 1200,
+      "h": 1620,
+      "title": "Escala tipográfica",
+      "page": "marca"
+    },
+    "MBotones.dc.html": {
+      "x": 0,
+      "y": 7460,
+      "w": 1680,
+      "h": 2200,
+      "title": "Botones y controles",
+      "page": "marca"
+    },
+    "MComponentes.dc.html": {
+      "x": 1760,
+      "y": 7460,
+      "w": 1680,
+      "h": 1280,
+      "title": "Componentes",
+      "page": "marca"
+    },
+    "MAnimaciones.dc.html": {
+      "x": 0,
+      "y": 10020,
+      "w": 1680,
+      "h": 1680,
+      "title": "Animaciones",
+      "page": "marca"
+    }
+  },
+  "order": [
+    "MColores.dc.html",
+    "MTipoEscala.dc.html",
+    "MBotones.dc.html",
+    "MComponentes.dc.html",
+    "MAnimaciones.dc.html"
+  ],
+  "notes": {
+    "msi0": {
+      "x": 0,
+      "y": 3720,
+      "text": "Sistema: colores, botones, componentes y movimiento",
+      "kind": "title1",
+      "maxW": 3440,
+      "page": "marca"
+    }
+  }
+}

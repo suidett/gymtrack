@@ -1,0 +1,58 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Caddyfile de GymTrack · BORRADOR
+#
+# HTTPS automático con Let's Encrypt; http:// redirige solo a https:// (SEG-022).
+# DOMINIO y CORREO_ACME llegan como variables de entorno desde compose.borde.yml.
+# Caddy redacta por defecto los encabezados Authorization y Cookie en sus logs;
+# aun así, la API no debe poner correos ni nombres en la URL (§Seguridad).
+# ─────────────────────────────────────────────────────────────────────────────
+{
+	email {$CORREO_ACME}
+}
+
+(comun) {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "no-referrer"
+		-Server
+	}
+
+	# Las fotos y videos suben directo a Cloud Storage con URL firmada; a la API
+	# solo llega JSON. 2 MB alcanza para un lote de sincronización grande.
+	# PENDIENTE: confirmar con el tamaño real de POST /sync/sessions con 10 sesiones.
+	request_body {
+		max_size 2MB
+	}
+
+	# Defensa en profundidad para SEG-025: las rutas de prueba solo existen con
+	# NODE_ENV=test, y además el borde las corta en staging y producción.
+	@prueba path /test /test/*
+	respond @prueba 404
+
+	log {
+		output stdout
+		format json
+	}
+}
+
+api.{$DOMINIO} {
+	import comun
+	# lb_try_duration: mientras desplegar.sh recrea el contenedor, Caddy reintenta
+	# hasta 15 s en vez de responder 502 al primer intento.
+	reverse_proxy api-produccion:3000 {
+		lb_try_duration 15s
+		lb_try_interval 500ms
+	}
+}
+
+api-staging.{$DOMINIO} {
+	import comun
+	header X-Robots-Tag "noindex, nofollow"
+	reverse_proxy api-staging:3000 {
+		lb_try_duration 15s
+		lb_try_interval 500ms
+	}
+}

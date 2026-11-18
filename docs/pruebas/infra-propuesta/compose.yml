@@ -1,0 +1,101 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Compose base de GymTrack en el VPS · BORRADOR, todavía no se usa
+#
+# Un solo archivo base para los dos entornos. Cada entorno es un proyecto de
+# Compose aparte, con su override, su .env, su base y su volumen:
+#   gymtrack-staging     compose.yml + compose.staging.yml
+#   gymtrack-produccion  compose.yml + compose.produccion.yml
+# Caddy vive en otro proyecto (compose.borde.yml) y llega a cada API por la red
+# externa «borde», con un alias distinto por entorno (api-staging, api-produccion).
+#
+# No lo uses a mano para cambiar de versión: usa /opt/gymtrack/bin/desplegar.sh,
+# que fija IMAGEN y VERSION, migra, levanta, revisa /health y vuelve atrás.
+# Para mirar:
+#   VERSION=$(cat /opt/gymtrack/produccion/.version) docker compose \
+#     -p gymtrack-produccion -f compose.yml -f compose.produccion.yml ps
+#
+# En el servidor va en /opt/gymtrack/app/compose.yml.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Lo que comparten la API y el worker: la misma imagen, distinto comando.
+x-app: &app
+  image: ${IMAGEN:?falta IMAGEN}:${VERSION:?falta VERSION}
+  restart: unless-stopped        # §Disponibilidad: reinicio automático
+  user: "node"                   # nunca root dentro del contenedor
+  read_only: true                # el sistema de archivos de la imagen no se escribe
+  tmpfs:
+    - /tmp:size=32m
+  cap_drop: [ALL]
+  security_opt:
+    - no-new-privileges:true
+  environment:
+    VERSION: ${VERSION}          # /health la devuelve; desplegar.sh la compara
+    TZ: UTC                      # §Datos: fechas en UTC; la zona del usuario va en los datos
+    HOME: /tmp                   # con read_only, npx y prisma escriben su caché en el tmpfs
+    CHECKPOINT_DISABLE: "1"      # que el CLI de Prisma no intente avisar de versiones nuevas
+  logging: &logs
+    driver: local                # rotación: 3 archivos de 10 MB por contenedor
+    options:
+      max-size: "10m"
+      max-file: "3"
+  depends_on:
+    db:
+      condition: service_healthy
+
+services:
+  api:
+    <<: *app
+    # PENDIENTE: confirmar la ruta de entrada cuando exista apps/api/Dockerfile
+    # (api.yml ya usa «node dist/servidor.js»).
+    command: ["node", "dist/servidor.js"]
+    # La imagen node no trae curl; se usa el fetch de Node 22.
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    networks:
+      datos: {}
+      salida: {}
+      borde: {}                  # el alias de cada entorno va en su override
+
+  worker:
+    <<: *app
+    # Proceso largo con su propio programador de tareas (detección nocturna,
+    # recordatorios cada pocos minutos, purga a 30 días). Recibe el «ahora» por
+    # parámetro en las pruebas (WRK). PENDIENTE: ruta real de entrada.
+    command: ["node", "dist/worker.js"]
+    networks:
+      datos: {}
+      salida: {}
+
+  db:
+    image: postgres:16-alpine    # PENDIENTE: fijar 16.x exacta y su digest
+    restart: unless-stopped
+    shm_size: 128m
+    # Sin «ports»: Postgres nunca se publica. Ojo: Docker se salta ufw con los
+    # puertos publicados, así que lo único que protege a la base es no publicarla.
+    volumes:
+      - db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging: *logs
+    networks:
+      datos: {}
+
+networks:
+  # Solo la base, la API y el worker. «internal» la deja sin salida a internet.
+  datos:
+    internal: true
+  # Salida a internet para Resend, Expo Push, Sentry y Cloud Storage.
+  salida: {}
+  # Compartida con Caddy. Se crea una vez: docker network create borde
+  borde:
+    external: true
+
+volumes:
+  db: {}

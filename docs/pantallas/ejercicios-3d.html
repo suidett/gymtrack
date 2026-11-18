@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GymTrack · Ejercicios en 3D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="sistema.css">
+<style>
+  .barra { flex: 0 0 56px; display: flex; align-items: center; padding: 0 4px; }
+  .barra .ceja { margin-left: 4px; }
+  .cabeza-ej { margin: 4px 0 12px; }
+  .cabeza-ej .titulo { margin-top: 2px; }
+
+  /* El visor: la figura gira con el dedo. */
+  .visor { position: relative; height: 300px; border-radius: var(--radio); overflow: hidden;
+    background: var(--sup); border: 1px solid var(--sup-alta); touch-action: none; }
+  .visor canvas { display: block; width: 100%; height: 100%; cursor: grab; }
+  .visor canvas:active { cursor: grabbing; }
+  .visor .pista { position: absolute; left: 12px; bottom: 10px; margin: 0; font-size: 12px; color: var(--texto-2); pointer-events: none; }
+  .visor .fase { position: absolute; left: 12px; top: 10px; margin: 0; font: 700 12px/1 var(--mono); color: var(--texto-2); pointer-events: none; }
+  .visor.vacio { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; text-align: center; padding: 24px; }
+  .visor.vacio .estado { margin: 0; font: 700 16px/1.2 var(--mono); color: var(--texto); }
+  .visor.vacio .sec { max-width: 260px; }
+
+  .mandos { display: flex; align-items: center; gap: 4px; margin-top: 8px; }
+  .mandos .vistas { display: flex; gap: 6px; flex: 1; }
+  .mandos .chip { flex: 1; }
+  .btn-icono.reproducir { background: var(--sec-fondo); border: 2px solid var(--sec-borde); }
+  .btn-icono.reproducir path { fill: currentColor; stroke: none; }
+  .vel { flex: 0 0 64px; }
+
+  .musculos { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 4px; }
+  .musculo { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; }
+  .musculo::before { content: ""; width: 12px; height: 12px; border-radius: 2px; background: var(--hecho-fondo); }
+  .musculo.ayuda { color: var(--texto-2); }
+  /* Los que ayudan: el mismo ámbar apagado de la figura (35 % de ámbar sobre su gris). */
+  .tel { --figura: var(--texto-2); }
+  .tel[data-tema="clara"] { --figura: color-mix(in srgb, var(--texto-2) 70%, #FFFFFF); }
+  .musculo.ayuda::before { background: color-mix(in srgb, #F5B83D 35%, var(--figura)); }
+
+  .pasos { list-style: none; margin: 0; padding: 0; }
+  .pasos li { display: flex; gap: 12px; padding: 10px 0 10px 12px; border-left: 4px solid var(--sup-alta); color: var(--texto-2); font-size: 15px; line-height: 1.4; }
+  .pasos li b { font: 700 13px/1.6 var(--mono); }
+  .pasos li.ahora { border-left-color: var(--hecho-fondo); color: var(--texto); }
+
+  .notas-maqueta { max-width: 860px; margin: 32px auto 0; color: var(--p-texto-2); font-size: 14px; }
+  .notas-maqueta h2 { color: var(--p-texto); font-size: 16px; margin: 0 0 8px; }
+  .notas-maqueta ul { margin: 0 0 16px; padding-left: 18px; }
+  .notas-maqueta li { margin: 4px 0; }
+  .notas-maqueta code { font: 500 13px/1 var(--mono); }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<main class="maqueta">
+  <header class="maqueta-cabeza">
+    <h1>Prueba · Ejercicios en 3D</h1>
+    <p>Dirección Más · <span data-total>los</span> ejercicios de la biblioteca, cada uno con su movimiento · <a href="3d/revision.html">hoja de revisión</a> · <a href="index.html">todas las pantallas</a></p>
+  </header>
+
+  <div class="controles" role="group" aria-label="Controles de la maqueta">
+    <label class="grupo"><span class="rot">Ejercicio</span>
+      <select class="ctl" data-ctl="estado"></select></label>
+    <label class="grupo"><span class="rot">Tema</span>
+      <select class="ctl" data-ctl="tema">
+        <option value="gimnasio">Modo gimnasio</option>
+        <option value="clara">Clara</option>
+        <option value="ambos">Las dos</option>
+      </select></label>
+    <label class="grupo"><span class="rot">Tamaño</span>
+      <select class="ctl" data-ctl="zoom">
+        <option value="ajustar">Ajustar al ancho</option>
+        <option value="100">Real (1 dp = 1 px)</option>
+        <option value="150">150 %</option>
+      </select></label>
+    <label class="grupo"><input type="checkbox" data-ctl="medidas"><span>Medidas de toque</span></label>
+  </div>
+
+  <div class="escenario" id="escenario"></div>
+
+  <section class="notas-maqueta">
+    <h2>Qué es esto</h2>
+    <ul>
+      <li>La prueba con 10 ejercicios antes de decidir los 67. Cada uno tiene su propio movimiento en 3D y se puede girar con el dedo (o el mouse) o cambiar a frente, lado y tres cuartos.</li>
+      <li>Son datos de movimiento, no videos: pesan poco y funcionan sin conexión en el gimnasio.</li>
+      <li>La figura se arma por puntos (cada hueso es una pieza entre dos articulaciones), así sirve de pie, acostado en la banca, sentado, colgado o en el suelo. Los músculos que trabajan van en ámbar.</li>
+      <li>Parte en pausa si el teléfono tiene «reducir movimiento» activado.</li>
+      <li>Para capturar una pose exacta: <code>#estado=press-de-banca&amp;t=0.47&amp;vista=lado&amp;jugar=no</code>. La <a href="3d/revision.html">hoja de revisión</a> muestra todos en tres momentos y dos vistas.</li>
+      <li>En «Trabajan», el cuadrado ámbar es lo que trabaja y el ámbar apagado lo que ayuda; la figura los pinta igual.</li>
+    </ul>
+  </section>
+</main>
+
+<script src="maqueta.js"></script>
+<script type="module">
+import { crearVisor, cargarEjercicio } from './3d/motor.js';
+import IDS, { NOMBRES } from './3d/ejercicios/indice.js';
+
+// El select se llena con la lista del índice; los que no tienen archivo salen como «Pendiente».
+document.querySelector('[data-ctl="estado"]').innerHTML =
+  IDS.map((id) => `<option value="${id}">${NOMBRES[id] || id}</option>`).join('');
+document.querySelectorAll('[data-total]').forEach((el) => { el.textContent = String(IDS.length); });
+
+// ── Reproducción ─────────────────────────────────────────────────────────────
+// En la dirección: t (0 a 1), vista (frente, lado, tres) y jugar=no, que posa ese instante y
+// dibuja una sola vez, sin requestAnimationFrame, para capturar una pose exacta.
+const VISTAS_OK = ['frente', 'lado', 'tres'];
+const h = new URLSearchParams(location.hash.slice(1));
+const tInicial = parseFloat(String(h.get('t') ?? '0').replace(',', '.'));
+const reproduccion = {
+  quieto: h.get('jugar') === 'no',
+  jugando: h.get('jugar') !== 'no' && !matchMedia('(prefers-reduced-motion: reduce)').matches,
+  velocidad: 1,
+  t: Number.isFinite(tInicial) ? Math.min(1, Math.max(0, tInicial)) : 0,
+  vista: VISTAS_OK.includes(h.get('vista')) ? h.get('vista') : null,
+};
+window.reproduccion3d = reproduccion; // para revisar poses desde la consola
+
+// id -> 'cargando' | null (pendiente) | ejercicio
+const ejercicios = {};
+const listo = (e) => e && typeof e === 'object';
+function pedir(id) {
+  if (id in ejercicios) return;
+  ejercicios[id] = 'cargando';
+  cargarEjercicio(id).then((e) => { ejercicios[id] = e; if (m && m.ctl.estado === id) m.pintar(); });
+}
+const vistaDe = (ej) => reproduccion.vista || (VISTAS_OK.includes(ej.vista) ? ej.vista : 'tres');
+
+// ── Teléfono ─────────────────────────────────────────────────────────────────
+const icoVolver = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>';
+const icoPlay = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>';
+const icoPausa = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>';
+
+function telefono(tema, ctl) {
+  const id = ctl.estado, ej = ejercicios[id];
+  const cabeza = (ceja, nombre) => `<div class="tel-estado"><span class="cifra" style="font-weight:600">9:41</span><span>5G · 82 %</span></div>
+    <div class="barra"><button class="btn-icono" data-ir="ejercicios.html" aria-label="Volver a Ejercicios" data-toque>${icoVolver}</button>
+      <span class="ceja">Ejercicios</span></div>
+    <div class="tel-contenido">
+      <div class="cabeza-ej"><p class="ceja">${ceja}</p><h1 class="titulo">${nombre}</h1></div>`;
+  if (!listo(ej)) {
+    const pendiente = ej === null;
+    return `<div class="tel" data-tema="${tema}">${cabeza(pendiente ? 'Sin animación' : '&nbsp;', NOMBRES[id] || id)}
+      <div class="visor vacio" role="status"><p class="estado">${pendiente ? 'Pendiente' : 'Cargando'}</p>
+        ${pendiente ? '<p class="sec">Este ejercicio todavía no tiene su movimiento en 3D.</p>' : ''}</div>
+    </div><div class="tel-gesto"></div><div class="aviso" role="status"></div></div>`;
+  }
+  const actual = vistaDe(ej);
+  const vista = (k, t) => `<button class="chip texto" data-accion="vista" data-v="${k}" aria-pressed="${actual === k}" data-toque><span>${t}</span></button>`;
+  return `<div class="tel" data-tema="${tema}">${cabeza(ej.ceja, ej.nombre)}
+      <div class="visor" data-visor aria-label="Figura en 3D de ${ej.nombre}. Arrastra para girarla.">
+        <p class="fase cifra" data-fase>1 / ${(ej.pasos || []).length || 1}</p><p class="pista">Arrastra para girar</p></div>
+      <div class="mandos">
+        <button class="btn-icono reproducir" data-accion="jugar" aria-label="${reproduccion.jugando ? 'Pausar' : 'Reproducir'}" data-toque>${reproduccion.jugando ? icoPausa : icoPlay}</button>
+        <div class="vistas" role="group" aria-label="Vista">${vista('frente', 'Frente')}${vista('lado', 'Lado')}${vista('tres', '3/4')}</div>
+        <button class="chip texto vel" data-accion="velocidad" aria-label="Velocidad" data-toque><span>${reproduccion.velocidad === 1 ? '1×' : '0,5×'}</span></button>
+      </div>
+      <div class="seccion-cabeza"><h3 class="h3">Trabajan</h3></div>
+      <div class="musculos">${(ej.trabajan || []).map((x) => `<span class="musculo">${x}</span>`).join('')}${(ej.ayudan || []).map((x) => `<span class="musculo ayuda">${x}</span>`).join('')}</div>
+      <div class="seccion-cabeza"><h3 class="h3">Cómo se hace</h3></div>
+      <ol class="pasos">${(ej.pasos || []).map(([, txt], i) => `<li data-paso="${i}"><b>${i + 1}</b><span>${txt}</span></li>`).join('')}</ol>
+    </div>
+    <div class="tel-gesto"></div>
+    <div class="aviso" role="status"></div>
+  </div>`;
+}
+
+// ── Visores ──────────────────────────────────────────────────────────────────
+let visores = [];
+let m = null;
+
+function marcarPaso(v, t) {
+  const pasos = v.ej.pasos || [];
+  let idx = 0; pasos.forEach(([tp], i) => { if (t >= tp) idx = i; });
+  v.tel.querySelectorAll('.pasos li').forEach((li, i) => li.classList.toggle('ahora', i === idx));
+  const f = v.tel.querySelector('[data-fase]'); if (f) f.textContent = pasos.length ? `${idx + 1} / ${pasos.length}` : '';
+}
+function dibujarUno(v) { v.posar(reproduccion.t); v.dibujar(); marcarPaso(v, reproduccion.t); }
+
+function montar() {
+  visores.forEach((v) => v.destruir());
+  visores = [];
+  const ej = ejercicios[m.ctl.estado];
+  if (!listo(ej)) return;
+  for (const tel of document.querySelectorAll('#escenario .tel')) {
+    let v = null;
+    v = crearVisor(tel.querySelector('[data-visor]'), {
+      tel, ejercicio: ej, vista: vistaDe(ej), amortiguar: !reproduccion.quieto,
+      alMover: () => { if (v && reproduccion.quieto) dibujarUno(v); },
+    });
+    v.tel = tel;
+    visores.push(v);
+  }
+  if (reproduccion.quieto) visores.forEach(dibujarUno);
+}
+
+m = iniciarMaqueta({
+  telefono,
+  porDefecto: { estado: IDS[0] },
+  alCambiarEstado: pedir,
+  alPintar: () => { if (m) montar(); },
+});
+montar();
+
+// ── Bucle (solo si no está en jugar=no) ──────────────────────────────────────
+let antes = performance.now(), corriendo = false;
+function bucle(ahora) {
+  if (reproduccion.quieto) { corriendo = false; return; }
+  const dt = Math.min(0.05, (ahora - antes) / 1000); antes = ahora;
+  if (reproduccion.jugando && visores.length) {
+    reproduccion.t = (reproduccion.t + (dt * reproduccion.velocidad) / (visores[0].ej.periodo || 3)) % 1;
+  }
+  visores.forEach(dibujarUno);
+  requestAnimationFrame(bucle);
+}
+function arrancar() { if (!corriendo) { corriendo = true; antes = performance.now(); requestAnimationFrame(bucle); } }
+if (!reproduccion.quieto) arrancar();
+addEventListener('resize', () => visores.forEach((v) => { v.medir(); if (reproduccion.quieto) dibujarUno(v); }));
+
+const guardarVista = () => { m.ctl.vista = reproduccion.vista; history.replaceState(null, '', '#' + new URLSearchParams(m.ctl).toString()); };
+
+m.escenario.addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-accion]'); if (!b) return;
+  // Se actualiza en el lugar, sin repintar, para no perder el giro que hizo la persona.
+  const todos = (sel) => m.escenario.querySelectorAll(sel);
+  if (b.dataset.accion === 'jugar') {
+    reproduccion.jugando = !reproduccion.jugando;
+    if (reproduccion.jugando && reproduccion.quieto) { reproduccion.quieto = false; arrancar(); }
+    todos('[data-accion="jugar"]').forEach((x) => {
+      x.innerHTML = reproduccion.jugando ? icoPausa : icoPlay;
+      x.setAttribute('aria-label', reproduccion.jugando ? 'Pausar' : 'Reproducir');
+    });
+  }
+  if (b.dataset.accion === 'velocidad') {
+    reproduccion.velocidad = reproduccion.velocidad === 1 ? 0.5 : 1;
+    todos('[data-accion="velocidad"] span').forEach((x) => { x.textContent = reproduccion.velocidad === 1 ? '1×' : '0,5×'; });
+  }
+  if (b.dataset.accion === 'vista') {
+    reproduccion.vista = b.dataset.v;
+    visores.forEach((v) => { v.vista(reproduccion.vista); if (reproduccion.quieto) dibujarUno(v); });
+    todos('[data-accion="vista"]').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.v === reproduccion.vista)));
+    guardarVista();
+  }
+});
+</script>
+</body>
+</html>

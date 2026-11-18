@@ -1,0 +1,125 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Respaldos del VPS (Vultr) · borrador
+#
+# Hace lo que antes era a mano en Railway: la restauración de prueba. mensual.yml
+# queda con la revisión humana de las restauraciones del mes (MAN-024).
+#   respaldo-de-anoche      todos los días: el diario de producción existe en el bucket
+#                           de respaldos, tiene menos de 26 horas y no está vacío (INF-16, INF-18)
+#   restauracion-de-prueba  los lunes: restaura el último diario en una base temporal
+#                           del servidor, cuenta filas y compara con producción (INF-19; MAN-024)
+#
+# El respaldo nunca baja al runner: trae datos de salud reales. Todo corre en el
+# servidor por SSH, con la llave del alcance «respaldo» (puerta-ssh.sh), que solo
+# puede pedir «revisar» y «restaurar-prueba». La llave privada de age, que es la
+# única que descifra, viaja por stdin desde el entorno «respaldo» de GitHub y en
+# el servidor queda en memoria (/dev/shm) mientras dura la prueba.
+#
+# El entorno «respaldo» no lleva aprobación (bloquearía las corridas programadas);
+# se protege con la regla de ramas: solo main.
+# Healthchecks.io avisa por su lado si el timer del servidor no mandó el latido.
+# ─────────────────────────────────────────────────────────────────────────────
+name: Respaldos del VPS
+
+on:
+  schedule:
+    - cron: "30 11 * * *"   # todos los días, 08:30 de Chile en verano (el respaldo corre a las 07:00 UTC)
+    - cron: "0 9 * * 1"     # los lunes, 06:00 de Chile en verano: restauración de prueba
+  workflow_dispatch:
+    inputs:
+      tarea:
+        type: choice
+        options: [revisar, restaurar-prueba]
+        default: revisar
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: respaldo-vps
+  cancel-in-progress: false
+
+jobs:
+  respaldo-de-anoche:
+    if: github.event.schedule == '30 11 * * *' || inputs.tarea == 'revisar'
+    runs-on: ubuntu-latest
+    environment: respaldo
+    timeout-minutes: 5
+    steps:
+      - name: Preparar SSH
+        env:
+          VULTR_SSH_KEY: ${{ secrets.VULTR_SSH_KEY }}
+          VULTR_HOST: ${{ vars.VULTR_HOST }}
+          VULTR_SSH_HOST_KEY: ${{ vars.VULTR_SSH_HOST_KEY }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$VULTR_SSH_KEY" > ~/.ssh/respaldo && chmod 600 ~/.ssh/respaldo
+          printf '%s %s\n' "$VULTR_HOST" "$VULTR_SSH_HOST_KEY" > ~/.ssh/known_hosts
+          printf 'Host vps\n  HostName %s\n  User %s\n  IdentityFile ~/.ssh/respaldo\n  BatchMode yes\n' \
+            "$VULTR_HOST" "${{ vars.VULTR_SSH_USER }}" > ~/.ssh/config
+
+      # respaldar.sh revisar: falla si no hay diario, si tiene más de 26 horas o si pesa
+      # menos de MINIMO_BYTES.
+      - name: ¿Existe el respaldo de anoche?
+        run: |
+          ssh vps "revisar" </dev/null | tee revision.txt
+          {
+            echo "### Respaldo de anoche"
+            echo '```'
+            cat revision.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Avisar
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh issue create --label respaldo \
+            --title "Falta el respaldo de producción del $(date -u +%F)" \
+            --body "La revisión falló: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}. Revisa «systemctl status gymtrack-respaldo» en el servidor y el panel de Healthchecks.io."
+
+  restauracion-de-prueba:
+    if: github.event.schedule == '0 9 * * 1' || inputs.tarea == 'restaurar-prueba'
+    runs-on: ubuntu-latest
+    environment: respaldo
+    timeout-minutes: 45
+    steps:
+      - name: Preparar SSH
+        env:
+          VULTR_SSH_KEY: ${{ secrets.VULTR_SSH_KEY }}
+          VULTR_HOST: ${{ vars.VULTR_HOST }}
+          VULTR_SSH_HOST_KEY: ${{ vars.VULTR_SSH_HOST_KEY }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$VULTR_SSH_KEY" > ~/.ssh/respaldo && chmod 600 ~/.ssh/respaldo
+          printf '%s %s\n' "$VULTR_HOST" "$VULTR_SSH_HOST_KEY" > ~/.ssh/known_hosts
+          printf 'Host vps\n  HostName %s\n  User %s\n  IdentityFile ~/.ssh/respaldo\n  BatchMode yes\n  ServerAliveInterval 30\n' \
+            "$VULTR_HOST" "${{ vars.VULTR_SSH_USER }}" > ~/.ssh/config
+
+      # La salida son conteos por tabla y la duración: nada de datos de personas.
+      - name: Restaurar en una base temporal
+        env:
+          AGE_CLAVE_PRIVADA: ${{ secrets.AGE_CLAVE_PRIVADA }}
+        run: |
+          printf '%s\n' "$AGE_CLAVE_PRIVADA" | ssh vps "restaurar-prueba" | tee restauracion.md
+          cat restauracion.md >> "$GITHUB_STEP_SUMMARY"
+
+      # Queda como registro de MAN-024: fecha, duración y conteo de filas.
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: restauracion-${{ github.run_id }}
+          path: restauracion.md
+          retention-days: 90
+
+      - name: Avisar
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh issue create --label respaldo \
+            --title "Falló la restauración de prueba del $(date -u +%F)" \
+            --body "Un respaldo que no se puede restaurar no es un respaldo. Corrida: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}. Registro en el servidor: /var/log/gymtrack/restauraciones.log."

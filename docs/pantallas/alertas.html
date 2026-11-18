@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GymTrack · Alertas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="sistema.css">
+<style>
+  [hidden] { display: none !important; }
+
+  /* ── Cabeza y filtros ──────────────────────────────────────────────────── */
+  /* Cabecera de las pestañas que no son el inicio: una fila de 56 dp con el título y una acción fantasma. */
+  .cabeza { display: flex; align-items: center; justify-content: space-between; gap: 8px; height: 56px; margin-bottom: 8px; }
+  .cabeza .btn-fantasma { margin-right: -12px; font-size: 15px; }
+  .filtros .chip > span { gap: 8px; }
+  .filtros .chip .cifra { font-size: 14px; }
+  .subfila { display: flex; align-items: center; justify-content: space-between; min-height: 48px; margin: 4px -12px 4px 0; }
+  .subfila .sec { font-size: 14px; }
+  .subfila .sec .cifra { color: var(--texto); }
+
+  /* Insignia de nuevas sobre la pestaña Alertas. */
+  .pestana .insignia { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px;
+    padding: 0 4px; margin-left: 4px; border-radius: 4px; background: var(--hecho-fondo); color: var(--visto);
+    font: 700 12px/1 var(--mono); vertical-align: 1px; }
+
+  /* ── Íconos de trazo ───────────────────────────────────────────────────── */
+  .ico { width: 20px; height: 20px; flex: 0 0 20px; }
+  .ico path { stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: square; stroke-linejoin: miter; }
+  .chev { width: 20px; height: 20px; flex: 0 0 20px; }
+  .chev path { stroke: currentColor; fill: none; stroke-width: 2.5; stroke-linecap: square; }
+
+  /* ── Tarjeta de alerta ─────────────────────────────────────────────────── */
+  .lista-al { display: flex; flex-direction: column; gap: 12px; margin-top: 4px; }
+  .alerta { padding: 0; overflow: hidden; }
+  .al-cabeza { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 14px 16px 0; }
+  .al-tipo { display: inline-flex; align-items: center; gap: 8px; font: 600 13px/1 var(--letra); color: var(--texto-2); }
+  .al-tipo.dolor .ico { color: var(--peligro); }
+  .al-cuando { display: inline-flex; align-items: center; gap: 10px; font: 500 12px/1 var(--mono); color: var(--texto-2); white-space: nowrap; }
+  .nueva { display: inline-flex; align-items: center; gap: 6px; font: 600 13px/1 var(--letra); color: var(--acento-texto); }
+  .nueva::before { content: ""; width: 8px; height: 8px; border-radius: 1px; background: var(--hecho-fondo); }
+
+  .al-cliente { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 64px; padding: 8px 12px 8px 16px;
+    border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+  .al-cliente:active { background: var(--fantasma-pres); }
+  .al-cliente:focus-visible { outline: 2px solid var(--foco); outline-offset: -2px; }
+  .avatar { flex: 0 0 40px; height: 40px; border-radius: var(--radio); background: var(--sup-alta);
+    display: flex; align-items: center; justify-content: center; font-size: 14px; }
+  .quien { flex: 1; min-width: 0; }
+  .quien .nombre { display: block; font: 700 16px/1.3 var(--letra); }
+  .quien .que { display: block; font-size: 14px; line-height: 1.35; color: var(--texto-2); }
+  .ver-ficha { display: inline-flex; align-items: center; gap: 2px; font: 600 14px/1 var(--letra); color: var(--texto); }
+
+  .al-dato { margin: 0 16px; padding: 12px; border-radius: var(--radio); background: var(--fondo); border: 1px solid var(--sup-alta); }
+  .al-dato .txt { margin: 0 0 10px; font-size: 14px; line-height: 1.45; }
+  .al-dato .txt b { font-weight: 700; }
+  .graf { display: block; width: 100%; height: auto; overflow: visible; }
+  .graf text { font: 500 12px var(--mono); fill: var(--texto-2); }
+  .graf .val { font-weight: 700; fill: var(--texto); }
+  .graf .rot { font: 600 12px var(--letra); fill: var(--texto-2); }
+  .graf .banda { fill: var(--sup-alta); }
+  .graf .linea { fill: none; stroke: var(--acento-texto); stroke-width: 2.5; stroke-linejoin: round; }
+  .graf .punto { fill: var(--hecho-fondo); stroke: var(--hecho-borde); stroke-width: 1.5; }
+  .graf .gris { fill: var(--borde); }
+  .graf .dato { fill: var(--hecho-fondo); stroke: var(--hecho-borde); stroke-width: 1.5; }
+
+  .escala { display: flex; gap: 3px; }
+  .escala i { flex: 1; height: 8px; border-radius: 1px; background: var(--sup-alta); }
+  .escala i.si { background: var(--peligro); }
+  .escala-pie { display: flex; justify-content: space-between; margin-top: 6px; font: 500 12px/1 var(--mono); color: var(--texto-2); }
+  .cita { margin: 12px 0 0; padding: 2px 0 2px 12px; border-left: 4px solid var(--borde); font-size: 15px; line-height: 1.45; }
+
+  .dias14 { display: grid; grid-template-columns: repeat(14, 1fr); gap: 4px; }
+  .dias14 i { aspect-ratio: 1; border-radius: 2px; border: 1.5px solid var(--marcar-borde); }
+  .dias14 i.si { background: var(--hecho-fondo); border-color: var(--hecho-borde); }
+  .dias14 i.hoy { border-width: 2.5px; border-color: var(--texto); }
+
+  .al-motivos { margin: 14px 16px 0; }
+  .al-motivos .sec { margin-top: 6px; font-size: 13px; }
+  .al-motivos .cita { margin-top: 10px; }
+  .etiquetas { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  /* Etiqueta chica común: 24 dp, radio 4, 600 12 px. Los motivos van en la variante neutra. */
+  .etiqueta { display: inline-flex; align-items: center; height: 24px; padding: 0 8px; border-radius: 4px;
+    border: 1px solid var(--borde); color: var(--texto-2); font: 600 12px/1 var(--letra); white-space: nowrap; }
+
+  .al-pie { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px; padding: 12px 16px 14px 4px; }
+  .al-pie .izq { margin-right: auto; }
+  .al-enlace { padding: 6px 4px 0; }
+  .al-enlace .btn { gap: 2px; }
+  .al-pie .btn-secundario { padding: 0 16px; }
+
+  /* ── Resueltas ─────────────────────────────────────────────────────────── */
+  .res { padding: 0; }
+  .res > li { display: block; min-height: 0; }
+  .fila-res { display: flex; align-items: flex-start; gap: 12px; width: 100%; min-height: 72px; padding: 14px 12px 14px 16px;
+    border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+  .fila-res:active { background: var(--fantasma-pres); }
+  .fila-res:focus-visible { outline: 2px solid var(--foco); outline-offset: -2px; }
+  .fila-res .ico { color: var(--texto-2); margin-top: 1px; }
+  .fila-res .txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+  .fila-res .nom { font: 700 16px/1.3 var(--letra); }
+  .fila-res .que { font-size: 14px; line-height: 1.35; color: var(--texto-2); }
+  .fila-res .como { font-size: 14px; line-height: 1.35; }
+  .fila-res .fecha { font-size: 13px; color: var(--texto-2); margin-top: 3px; white-space: nowrap; }
+  .fila-res .chev { color: var(--texto-2); margin-top: 1px; }
+
+  /* ── Vacío, cargando y error ───────────────────────────────────────────── */
+  .vacio { margin-top: 8px; padding: 24px 16px 16px; }
+  .vacio .h2 { margin-top: 16px; }
+  .vacio .sec { margin-top: 8px; font-size: 15px; }
+  .vacio .btn { margin-top: 20px; }
+  .ok { width: 48px; height: 48px; border-radius: var(--radio); background: var(--hecho-fondo); border: 2px solid var(--hecho-borde);
+    display: flex; align-items: center; justify-content: center; }
+  .ok svg { width: 28px; height: 28px; }
+  .ok path { stroke: var(--visto); }
+  .esqueleto i { display: block; height: 12px; border-radius: 4px; background: var(--sup-alta); margin-top: 12px; }
+  .esqueleto i:first-child { margin-top: 0; }
+  .esqueleto .bloque { height: 72px; }
+  .cargando-txt { margin: 12px 0 0; font-size: 13px; color: var(--texto-2); }
+  .error-caja .sec { margin-top: 6px; }
+  .error-caja .btn { margin-top: 16px; }
+  .error-caja .ico { color: var(--peligro); width: 24px; height: 24px; margin-bottom: 10px; }
+
+  /* ── Hojas ─────────────────────────────────────────────────────────────── */
+  .hoja .rot { margin: 16px 0 4px; font: 600 13px/1.3 var(--letra); color: var(--texto-2); }
+  .opciones { list-style: none; margin: 0; padding: 0; }
+  .opcion { display: flex; align-items: center; gap: 14px; width: 100%; min-height: 56px; padding: 0 4px;
+    border: 0; border-top: 1px solid var(--sup-alta); background: transparent; color: var(--texto);
+    font: 500 16px/1.3 var(--letra); text-align: left; cursor: pointer; }
+  .opciones li:first-child .opcion { border-top: 0; }
+  .opcion:active { background: var(--fantasma-pres); }
+  .opcion:focus-visible { outline: 2px solid var(--foco); outline-offset: -2px; }
+  /* Casilla común para elegir en una lista: 32 dp, radio 8, marcada en el ámbar de lo hecho (como en Motivos). */
+  .caja { flex: 0 0 32px; height: 32px; border-radius: var(--radio); border: 2px solid var(--marcar-borde);
+    display: flex; align-items: center; justify-content: center; }
+  .caja svg { width: 20px; height: 20px; display: none; }
+  .caja path { stroke: var(--visto); }
+  .opcion[aria-checked="true"] .caja { background: var(--hecho-fondo); border-color: var(--hecho-borde); }
+  .opcion[aria-checked="true"] .caja svg { display: block; }
+  .reglas { list-style: none; margin: 12px 0 0; padding: 0; }
+  .reglas li { display: flex; gap: 12px; padding: 12px 0; border-top: 1px solid var(--sup-alta); }
+  .reglas li:first-child { border-top: 0; }
+  .reglas .ico { margin-top: 1px; color: var(--texto-2); }
+  .reglas .h3 { font-size: 16px; }
+  .reglas .sec { margin-top: 2px; }
+
+  .notas-maqueta { max-width: 860px; margin: 32px auto 0; color: var(--p-texto-2); font-size: 14px; }
+  .notas-maqueta h2 { color: var(--p-texto); font-size: 16px; margin: 0 0 8px; }
+  .notas-maqueta ul { margin: 0; padding-left: 18px; }
+  .notas-maqueta li { margin: 4px 0; }
+  .notas-maqueta a { color: inherit; }
+</style>
+</head>
+<body>
+<main class="maqueta">
+  <header class="maqueta-cabeza">
+    <h1>Pantalla 18 · Alertas</h1>
+    <p>Dirección Más · 412 × 892 dp · <a href="ajustar-cargas.html">Ajustar cargas</a> · <a href="index.html">todas las pantallas</a></p>
+  </header>
+
+  <div class="controles" role="group" aria-label="Controles de la maqueta">
+    <label class="grupo"><span class="rot">Estado</span>
+      <select class="ctl" data-ctl="estado">
+        <option value="revisar">Por revisar (con alertas)</option>
+        <option value="vacio">Sin alertas (vacío)</option>
+        <option value="resueltas">Resueltas</option>
+        <option value="cargando">Cargando</option>
+        <option value="error">Sin conexión</option>
+      </select></label>
+    <label class="grupo"><span class="rot">Tema</span>
+      <select class="ctl" data-ctl="tema">
+        <option value="gimnasio">Modo gimnasio</option>
+        <option value="clara">Clara</option>
+        <option value="ambos">Las dos</option>
+      </select></label>
+    <label class="grupo"><span class="rot">Tamaño</span>
+      <select class="ctl" data-ctl="zoom">
+        <option value="ajustar">Ajustar al ancho</option>
+        <option value="100">Real (1 dp = 1 px)</option>
+        <option value="150">150 %</option>
+      </select></label>
+    <label class="grupo"><input type="checkbox" data-ctl="medidas"><span>Medidas de toque</span></label>
+  </div>
+
+  <div class="escenario" id="escenario"></div>
+
+  <section class="notas-maqueta">
+    <h2>Qué mirar</h2>
+    <ul>
+      <li>Cada alerta dice quién, en qué ejercicio y el dato que la disparó, con un gráfico corto: la línea del 1RM estimado en «Sin avance», la barra contra su promedio en la baja, los últimos 14 días en sin sesiones y la escala de 0 a 10 en el dolor.</li>
+      <li>En la baja de rendimiento se ven los motivos que mandó el cliente desde la <a href="motivos.html">pantalla 20</a>, o que todavía no responde.</li>
+      <li>Toca a Martina para abrir su ficha; las demás personas avisan, porque su ficha no está maquetada. «Marcar vista» quita la marca de nueva y baja el número de la pestaña. «Resolver» abre una hoja para anotar qué hiciste (opcional, se puede marcar más de una cosa, con la casilla de 32 dp de Motivos) y la alerta pasa a Resueltas.</li>
+      <li>«Por revisar» son las 6 abiertas, igual que en Clientes: las 3 nuevas (Josefa, Diego e Ignacio) y las 3 ya vistas (Fernanda, Antonia y Martina). La insignia de la pestaña cuenta las nuevas en todas las pantallas de la entrenadora.</li>
+      <li>En «Sin avance», «Ajustar sus cargas» va junto al gráfico. El de Martina lleva a <a href="ajustar-cargas.html">Ajustar cargas</a>; el de Diego solo avisa, porque esa maqueta está armada con Martina.</li>
+      <li>Resuélvelas todas para ver el estado vacío. «Cómo funcionan» explica las cuatro reglas que disparan una alerta. «Sin conexión» tiene Reintentar, que pasa por Cargando.</li>
+    </ul>
+  </section>
+</main>
+
+<script src="maqueta.js"></script>
+<script>
+// ── Datos de prueba: clientes de Camila Rojas, martes 17 de noviembre ────────
+const CLIENTES = {
+  martina: { n: 'Martina Fuentes', i: 'MF' },
+  diego: { n: 'Diego Araya', i: 'DA' },
+  josefa: { n: 'Josefa Muñoz', i: 'JM' },
+  catalina: { n: 'Catalina Pérez', i: 'CP' },
+  ignacio: { n: 'Ignacio Soto', i: 'IS' },
+  valentina: { n: 'Valentina Díaz', i: 'VD' },
+  matias: { n: 'Matías Contreras', i: 'MC' },
+  fernanda: { n: 'Fernanda Silva', i: 'FS' },
+  antonia: { n: 'Antonia Herrera', i: 'AH' },
+  joaquin: { n: 'Joaquín Reyes', i: 'JR' },
+};
+// Los cuatro tipos, con el mismo nombre en Clientes, la Ficha y Ajustar cargas. (La clave interna sigue siendo «estancamiento».)
+const TIPOS = { estancamiento: 'Sin avance', baja: 'Baja de rendimiento', sin: 'Sin sesiones', dolor: 'Dolor' };
+
+// Las tres nuevas son las mismas que Clientes (pantalla 16) muestra «por revisar».
+const POR_REVISAR = [
+  { id: 'a1', tipo: 'dolor', c: 'josefa', que: 'Zancadas con mancuernas', cuando: 'ayer 19:20', nueva: true,
+    dato: { nivel: 7, zona: 'rodilla izquierda', donde: 'Serie 2 de 3', nota: 'Me molestó la rodilla al bajar en la segunda serie. Terminé con menos peso.' } },
+  { id: 'a2', tipo: 'estancamiento', c: 'diego', que: 'Press de banca', cuando: 'hoy 3:00', nueva: true,
+    dato: { serie: [['2 nov', 81.7], ['5 nov', 84], ['9 nov', 84], ['12 nov', 84], ['16 nov', 84]], mejor: 84, desde: '5 nov' },
+    ajustar: { aviso: 'En las maquetas, Ajustar cargas está armada con Martina.' } },
+  { id: 'a3', tipo: 'sin', c: 'ignacio', que: 'Rutina Hipertrofia 5 días', cuando: 'hoy 3:00', nueva: true,
+    dato: { dias: 8, ultima: 'lun&nbsp;9&nbsp;nov', hechos: [0, 2, 5] } },
+  { id: 'a4', tipo: 'baja', c: 'fernanda', que: 'Sesión Pierna', cuando: 'ayer 20:40', nueva: false,
+    dato: { medida: 'El volumen de la sesión', unidad: 't', ahora: 6.2, prom: 7.6, fecha: 'lun 16 nov' },
+    motivos: { lista: ['Sueño', 'Estrés'], cuando: 'ayer 21:15', nota: 'Semana de cierre en el trabajo. Estoy durmiendo 5 horas.', consejos: 'Vio 3 consejos sobre sueño y estrés.' } },
+  { id: 'a5', tipo: 'baja', c: 'antonia', que: 'Hip thrust', cuando: 'sáb 14 nov', nueva: false,
+    dato: { medida: 'Su 1RM estimado', unidad: 'kg', ahora: 84, prom: 95.5, fecha: 'sáb 14 nov' },
+    motivos: null, pedidos: 'el sáb 14 nov' },
+  { id: 'a6', tipo: 'estancamiento', c: 'martina', que: 'Press inclinado con mancuernas', cuando: 'jue 12 nov', nueva: false,
+    dato: { serie: [['15 oct', 27.1], ['22 oct', 28.6], ['29 oct', 28.6], ['5 nov', 28.6], ['12 nov', 27.9]], mejor: 28.6, desde: '22 oct' },
+    ajustar: { ir: 'ajustar-cargas.html' } },
+];
+const RESUELTAS = [
+  { tipo: 'sin', c: 'valentina', que: 'Rutina Cuerpo completo 3 días', fecha: '13 nov', mes: 'Noviembre', como: 'Le escribiste un consejo' },
+  { tipo: 'dolor', c: 'matias', que: 'Press de banca · hombro izquierdo', fecha: '11 nov', mes: 'Noviembre', como: 'Cambiaste su rutina' },
+  { tipo: 'baja', c: 'joaquin', que: 'Sesión Empuje A · motivo: alimentación', fecha: '9 nov', mes: 'Noviembre', como: 'Le escribiste un consejo' },
+  { tipo: 'estancamiento', c: 'catalina', que: 'Dominadas', fecha: '5 nov', mes: 'Noviembre', como: 'Ajustaste las cargas' },
+  { tipo: 'estancamiento', c: 'diego', que: 'Remo con barra', fecha: '2 nov', mes: 'Noviembre', como: 'Sin cambios' },
+  { tipo: 'estancamiento', c: 'martina', que: 'Sentadilla', fecha: '27 oct', mes: 'Octubre', como: 'Ajustaste las cargas' },
+];
+// Qué hizo la entrenadora al resolver: [valor, en la hoja, en la lista de resueltas].
+const SALIDAS = [
+  ['cargas', 'Ajusté sus cargas', 'Ajustaste las cargas'],
+  ['consejo', 'Le escribí un consejo', 'Le escribiste un consejo'],
+  ['rutina', 'Cambié su rutina', 'Cambiaste su rutina'],
+  ['nada', 'Nada, fue algo puntual', 'Sin cambios'],
+];
+
+let D;
+function cargar(estado) {
+  D = {
+    revisar: estado === 'vacio' ? [] : POR_REVISAR.map((a) => ({ ...a })),
+    resueltas: RESUELTAS.map((r) => ({ ...r })),
+  };
+}
+
+// ── Íconos de trazo simple ───────────────────────────────────────────────────
+const ICO = {
+  estancamiento: '<path d="M3 19l6-8h12"/>',
+  baja: '<path d="M3 7l7 7 4-4 7 7"/><path d="M21 11v6h-6"/>',
+  sin: '<path d="M4 6h16v14H4z"/><path d="M4 11h16"/><path d="M9 3v5"/><path d="M15 3v5"/>',
+  dolor: '<path d="M12 4v10"/><path d="M12 18v2"/>',
+};
+const ico = (t) => `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${ICO[t]}</svg>`;
+const chev = '<svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
+
+// ── El dato que disparó cada alerta ──────────────────────────────────────────
+function datoEstancamiento(d) {
+  const W = 320, H = 100, x0 = 24, x1 = 296, yTop = 34, yBot = 70, n = d.serie.length;
+  const vals = d.serie.map(([, v]) => v), lo = Math.min(...vals), hi = Math.max(...vals);
+  const pad = Math.max(0.6, (hi - lo) * 0.25), min = lo - pad, max = hi + pad;
+  const X = (i) => x0 + (i * (x1 - x0)) / (n - 1);
+  const Y = (v) => yBot - ((v - min) / (max - min)) * (yBot - yTop);
+  const bx = X(n - 3) - 20, bw = X(n - 1) - X(n - 3) + 40;
+  const puntos = d.serie.map(([f, v], i) => `<circle class="punto" cx="${X(i)}" cy="${Y(v)}" r="4.5"/>
+    <text class="val" x="${X(i)}" y="${Y(v) - 10}" text-anchor="middle">${f1(v)}</text>
+    <text x="${X(i)}" y="${H - 4}" text-anchor="middle">${f}</text>`).join('');
+  return `<p class="txt">Su mejor 1RM estimado es <b class="cifra">${f1(d.mejor)}</b> kg, del ${d.desde}. No lo supera en sus 3 últimas sesiones.</p>
+    <svg class="graf" viewBox="0 0 ${W} ${H}" role="img" aria-label="1RM estimado por sesión: ${d.serie.map(([f, v]) => `${f}, ${f1(v)} kilos`).join('; ')}">
+      <rect class="banda" x="${bx}" y="2" width="${bw}" height="${H - 22}" rx="4"/>
+      <text x="${bx + bw / 2}" y="16" text-anchor="middle">3 sesiones sin subir</text>
+      <polyline class="linea" points="${d.serie.map(([, v], i) => `${X(i)},${Y(v)}`).join(' ')}"/>
+      ${puntos}
+    </svg>`;
+}
+
+function datoBaja(d) {
+  const pct = Math.round(((d.prom - d.ahora) / d.prom) * 100);
+  const L = 140, x = 116, top = Math.max(d.prom, d.ahora);
+  const w1 = (L * d.prom) / top, w2 = (L * d.ahora) / top;
+  const f = (v) => `${d.unidad === 't' ? fmtKg(v) : f1(v)} ${d.unidad}`;
+  return `<p class="txt">${d.medida} cayó <b class="cifra">${pct}</b> % frente a su promedio de las 4 semanas anteriores.</p>
+    <svg class="graf" viewBox="0 0 320 60" role="img" aria-label="Promedio de 4 semanas ${f(d.prom)}; ${d.fecha} ${f(d.ahora)}">
+      <text class="rot" x="0" y="19">Promedio 4 sem.</text>
+      <rect class="gris" x="${x}" y="6" width="${w1}" height="18" rx="2"/>
+      <text class="val" x="${x + w1 + 8}" y="19">${f(d.prom)}</text>
+      <text class="rot" x="0" y="51">${d.fecha}</text>
+      <rect class="dato" x="${x}" y="38" width="${w2}" height="18" rx="2"/>
+      <text class="val" x="${x + w2 + 8}" y="51">${f(d.ahora)}</text>
+    </svg>`;
+}
+
+function datoSin(d) {
+  const celdas = Array.from({ length: 14 }, (_, i) => `<i class="${d.hechos.includes(i) ? 'si' : ''}${i === 13 ? ' hoy' : ''}"></i>`).join('');
+  return `<p class="txt"><b class="cifra">${d.dias}</b> días sin entrenar. Su última sesión fue el ${d.ultima} y tiene una rutina activa.</p>
+    <div class="dias14" role="img" aria-label="Entrenó ${d.hechos.length} de los últimos 14 días, el último el ${d.ultima}">${celdas}</div>
+    <div class="escala-pie"><span>4 nov</span><span>hoy</span></div>`;
+}
+
+function datoDolor(d) {
+  const seg = Array.from({ length: 10 }, (_, i) => `<i class="${i < d.nivel ? 'si' : ''}"></i>`).join('');
+  return `<p class="txt">Dolor <b class="cifra">${d.nivel}</b> de <b class="cifra">10</b> en la ${d.zona}. ${d.donde}.</p>
+    <div class="escala" role="img" aria-label="Dolor ${d.nivel} de 10">${seg}</div>
+    <div class="escala-pie"><span>0</span><span>10</span></div>
+    <p class="cita">${d.nota}</p>`;
+}
+
+const f1 = (v) => v.toFixed(1).replace('.', ',');
+const DATOS = { estancamiento: datoEstancamiento, baja: datoBaja, sin: datoSin, dolor: datoDolor };
+
+function motivos(a) {
+  if (a.tipo !== 'baja') return '';
+  if (!a.motivos) {
+    return `<div class="al-motivos"><p class="ceja">Sus motivos</p>
+      <p class="sec">Todavía no responde. La app se los pidió ${a.pedidos}.</p></div>`;
+  }
+  const m = a.motivos;
+  return `<div class="al-motivos"><p class="ceja">Sus motivos · respondió ${m.cuando}</p>
+    <div class="etiquetas">${m.lista.map((x) => `<span class="etiqueta">${x}</span>`).join('')}</div>
+    <p class="cita">${m.nota}</p>
+    <p class="sec">${m.consejos}</p></div>`;
+}
+
+// Solo la ficha de Martina está maquetada; las demás personas avisan en vez de abrir la de otra.
+const irFicha = (id) => (id === 'martina' ? 'data-ir="ficha.html"' : `data-accion="sin-ficha" data-nombre="${CLIENTES[id].n}"`);
+
+function tarjetaAlerta(a) {
+  const c = CLIENTES[a.c];
+  const pie = [
+    a.nueva ? `<button class="btn btn-fantasma izq" data-accion="vista" data-id="${a.id}" data-toque>Marcar vista</button>` : '',
+    `<button class="btn btn-secundario" data-accion="resolver" data-id="${a.id}" data-toque>Resolver</button>`,
+  ].join('');
+  // «Sin avance» se arregla ajustando la carga: el atajo va junto al dato.
+  const enlace = a.ajustar
+    ? `<div class="al-enlace"><button class="btn btn-fantasma" ${a.ajustar.ir ? `data-ir="${a.ajustar.ir}"` : `data-accion="aviso" data-aviso="${a.ajustar.aviso}"`} data-toque>Ajustar sus cargas${chev}</button></div>` : '';
+  return `<article class="tarjeta alerta" aria-label="${TIPOS[a.tipo]}, ${c.n}">
+    <div class="al-cabeza">
+      <span class="al-tipo ${a.tipo}">${ico(a.tipo)}${TIPOS[a.tipo]}</span>
+      <span class="al-cuando">${a.nueva ? '<span class="nueva">Nueva</span>' : ''}${a.cuando}</span>
+    </div>
+    <button class="al-cliente" ${irFicha(a.c)} aria-label="Abrir la ficha de ${c.n}" data-toque>
+      <span class="avatar cifra">${c.i}</span>
+      <span class="quien"><span class="nombre">${c.n}</span><span class="que">${a.que}</span></span>
+      <span class="ver-ficha">Ficha${chev}</span>
+    </button>
+    <div class="al-dato">${DATOS[a.tipo](a.dato)}</div>
+    ${enlace}${motivos(a)}
+    <div class="al-pie">${pie}</div>
+  </article>`;
+}
+
+function filaResuelta(r) {
+  const c = CLIENTES[r.c];
+  return `<li><button class="fila-res" ${irFicha(r.c)} data-toque>
+    ${ico(r.tipo)}
+    <span class="txt"><span class="nom">${c.n}</span><span class="que">${TIPOS[r.tipo]} · ${r.que}</span><span class="como">${r.como}</span></span>
+    <span class="fecha cifra">${r.fecha}</span>${chev}
+  </button></li>`;
+}
+
+// ── Vistas de la lista ───────────────────────────────────────────────────────
+function filtros(estado) {
+  const cuenta = (n) => (estado === 'cargando' || estado === 'error' ? '' : `<span class="cifra">${n}</span>`);
+  const enRes = estado === 'resueltas';
+  return `<div class="chips filtros" role="group" aria-label="Filtrar alertas">
+    <button class="chip texto" data-accion="filtro" data-v="revisar" aria-pressed="${!enRes}" data-toque><span>Por revisar${cuenta(D.revisar.length)}</span></button>
+    <button class="chip texto" data-accion="filtro" data-v="resueltas" aria-pressed="${enRes}" data-toque><span>Resueltas${cuenta(D.resueltas.length)}</span></button>
+  </div>`;
+}
+
+function vistaRevisar() {
+  if (!D.revisar.length) {
+    return `<section class="tarjeta vacio" aria-label="Sin alertas">
+      <span class="ok">${visto()}</span>
+      <h2 class="h2">Todo al día</h2>
+      <p class="sec">No tienes alertas por revisar. Te avisamos cuando alguien no avance, baje su rendimiento, pase 7 días sin entrenar o anote un dolor fuerte.</p>
+      <button class="btn btn-secundario ancho" data-accion="filtro" data-v="resueltas" data-toque>Ver las ${D.resueltas.length} resueltas</button>
+    </section>`;
+  }
+  const nuevas = D.revisar.filter((a) => a.nueva).length;
+  const sub = `<div class="subfila"><span class="sec">${nuevas ? `<span class="cifra">${nuevas}</span> ${nuevas === 1 ? 'nueva, va primero' : 'nuevas, van primero'}` : 'Todas vistas'}</span>
+    ${nuevas ? '<button class="btn btn-fantasma" data-accion="todas-vistas" data-toque>Marcar todas vistas</button>' : ''}</div>`;
+  const orden = [...D.revisar].sort((a, b) => b.nueva - a.nueva);
+  return `${sub}<div class="lista-al">${orden.map(tarjetaAlerta).join('')}</div>`;
+}
+
+function vistaResueltas() {
+  const meses = [...new Set(D.resueltas.map((r) => r.mes))];
+  return meses.map((mes, k) => {
+    const filas = D.resueltas.filter((r) => r.mes === mes);
+    return `<div class="seccion-cabeza"${k === 0 ? ' style="margin-top:16px"' : ''}><h3 class="h3">${mes}</h3><span class="sec"><span class="cifra">${filas.length}</span> ${filas.length === 1 ? 'resuelta' : 'resueltas'}</span></div>
+      <ul class="lista-filas tarjeta res">${filas.map(filaResuelta).join('')}</ul>`;
+  }).join('');
+}
+
+function vistaCargando() {
+  const una = (w) => `<div class="tarjeta esqueleto"><i style="width:${w}%"></i><i style="width:55%;height:16px"></i><i class="bloque"></i><i style="width:35%;margin-left:auto"></i></div>`;
+  return `<div class="lista-al" aria-busy="true" style="margin-top:16px">${una(40)}${una(30)}${una(45)}</div>
+    <p class="cargando-txt" role="status">Cargando alertas…</p>`;
+}
+
+function vistaError() {
+  return `<section class="tarjeta error-caja" style="margin-top:16px" role="alert">
+    ${ico('dolor')}
+    <p class="h3">No pudimos cargar tus alertas</p>
+    <p class="sec">Revisa tu conexión e intenta de nuevo. Las alertas nuevas igual te llegan como notificación.</p>
+    <button class="btn btn-secundario ancho" data-accion="reintentar" data-toque>Reintentar</button>
+  </section>`;
+}
+
+function hojas(tema) {
+  const opciones = SALIDAS.map(([v, t]) => `<li><button class="opcion" role="checkbox" aria-checked="false" data-accion="opcion" data-v="${v}" data-toque>
+    <span class="caja">${visto()}</span>${t}</button></li>`).join('');
+  const reglas = [
+    ['estancamiento', 'Sin avance', 'Un ejercicio pasa 3 sesiones seguidas sin superar su mejor 1RM estimado.'],
+    ['baja', 'Baja de rendimiento', 'El volumen de una sesión o el 1RM estimado cae 10 % o más frente al promedio de las 4 semanas anteriores. Le pedimos sus motivos al cliente.'],
+    ['sin', 'Sin sesiones', 'Pasan 7 días sin entrenar teniendo una rutina activa.'],
+    ['dolor', 'Dolor', 'El cliente anota un dolor de 7 o más de 10. Te llega al momento.'],
+  ].map(([t, h, s]) => `<li>${ico(t)}<div><p class="h3">${h}</p><p class="sec">${s}</p></div></li>`).join('');
+  return `<div class="velo" data-hoja="resolver"><div class="hoja" role="dialog" aria-modal="true" aria-labelledby="t-res-${tema}">
+      <h2 class="h2" id="t-res-${tema}">Resolver alerta</h2>
+      <p class="sec" style="margin-top:4px" data-sub></p>
+      <p class="rot">¿Qué hiciste? Opcional, puedes marcar varias</p>
+      <ul class="opciones" role="group" aria-label="Qué hiciste">${opciones}</ul>
+      <div class="acciones"><button class="btn btn-secundario" data-accion="cerrar-hoja" data-toque>Cancelar</button>
+        <button class="btn btn-primario" data-accion="si-resolver" data-toque>Resolver</button></div>
+    </div></div>
+    <div class="velo" data-hoja="reglas"><div class="hoja" role="dialog" aria-modal="true" aria-labelledby="t-reg-${tema}">
+      <h2 class="h2" id="t-reg-${tema}">Cómo funcionan</h2>
+      <ul class="reglas">${reglas}</ul>
+      <p class="sec" style="font-size:13px">Mientras una alerta siga abierta no se repite para el mismo ejercicio.</p>
+      <div class="acciones"><button class="btn btn-primario" data-accion="cerrar-hoja" data-toque>Entendido</button></div>
+    </div></div>`;
+}
+
+function telefono(tema, ctl) {
+  const estado = ctl.estado;
+  const vista = { revisar: vistaRevisar, vacio: vistaRevisar, resueltas: vistaResueltas, cargando: vistaCargando, error: vistaError }[estado];
+  const nuevas = estado === 'cargando' || estado === 'error' ? 0 : D.revisar.filter((a) => a.nueva).length;
+  const tabs = pestanas(PESTANAS_ENTRENADOR, 'Alertas')
+    .replace('>Alertas</button>', `>Alertas${nuevas ? `<span class="insignia" aria-label="${nuevas} nuevas">${nuevas}</span>` : ''}</button>`);
+  return `<div class="tel" data-tema="${tema}">
+    <div class="tel-estado"><span class="cifra" style="font-weight:600">9:41</span><span>5G · 82 %</span></div>
+    <div class="tel-contenido">
+      <div class="cabeza">
+        <h1 class="titulo">Alertas</h1>
+        <button class="btn btn-fantasma" data-accion="reglas" data-toque>Cómo funcionan</button>
+      </div>
+      ${filtros(estado)}
+      ${vista()}
+    </div>
+    ${tabs}
+    <div class="tel-gesto"></div>
+    <div class="aviso" role="status"></div>
+    ${hojas(tema)}
+  </div>`;
+}
+
+// ── Maqueta ──────────────────────────────────────────────────────────────────
+// #bajar=si (o un número de px) baja el contenido, para revisar la parte de abajo.
+const BAJAR = new URLSearchParams(location.hash.slice(1)).get('bajar');
+const m = iniciarMaqueta({
+  telefono, porDefecto: { estado: 'revisar' }, alCambiarEstado: cargar,
+  alPintar: () => {
+    if (!BAJAR) return;
+    document.querySelectorAll('#escenario .tel-contenido').forEach((c) => { c.scrollTop = BAJAR === 'si' ? c.scrollHeight : +BAJAR; });
+  },
+});
+const { ctl, escenario } = m;
+
+function repintar() {
+  const sc = [...escenario.querySelectorAll('.tel-contenido')].map((c) => c.scrollTop);
+  m.pintar();
+  escenario.querySelectorAll('.tel-contenido').forEach((c, k) => { c.scrollTop = sc[k] || 0; });
+}
+const avisarTodos = (t) => escenario.querySelectorAll('.tel').forEach((tel) => avisar(tel, t));
+const buscar = (id) => D.revisar.find((a) => a.id === id);
+
+function abrirHoja(tel, nombre, id) {
+  const v = tel.querySelector(`[data-hoja="${nombre}"]`);
+  if (nombre === 'resolver') {
+    const a = buscar(id);
+    v.dataset.id = id;
+    v.querySelector('[data-sub]').textContent = `${CLIENTES[a.c].n} · ${TIPOS[a.tipo]} · ${a.que}`;
+    v.querySelectorAll('.opcion').forEach((o) => o.setAttribute('aria-checked', 'false'));
+  }
+  v.classList.add('ver');
+  v.querySelector('.btn').focus();
+}
+
+escenario.addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-accion]'); if (!b || b.disabled) return;
+  const tel = b.closest('.tel');
+  switch (b.dataset.accion) {
+    case 'filtro':
+      ctl.estado = b.dataset.v === 'resueltas' ? 'resueltas' : (D.revisar.length ? 'revisar' : 'vacio');
+      m.pintar();
+      break;
+    case 'vista': {
+      const a = buscar(b.dataset.id); a.nueva = false; repintar();
+      avisarTodos(`Marcaste como vista la alerta de ${CLIENTES[a.c].n.split(' ')[0]}.`);
+      break;
+    }
+    case 'todas-vistas':
+      D.revisar.forEach((a) => { a.nueva = false; }); repintar();
+      avisarTodos('Marcaste todas como vistas.');
+      break;
+    case 'resolver': abrirHoja(tel, 'resolver', b.dataset.id); break;
+    case 'opcion': {
+      // Se pueden marcar varias; «Nada» excluye a las demás.
+      const marcar = b.getAttribute('aria-checked') !== 'true';
+      b.setAttribute('aria-checked', String(marcar));
+      if (marcar) b.closest('.opciones').querySelectorAll('.opcion').forEach((o) => {
+        if (o !== b && (b.dataset.v === 'nada' || o.dataset.v === 'nada')) o.setAttribute('aria-checked', 'false');
+      });
+      break;
+    }
+    case 'si-resolver': {
+      const v = b.closest('.velo'), a = buscar(v.dataset.id);
+      const elegidas = [...v.querySelectorAll('.opcion[aria-checked="true"]')].map((o) => SALIDAS.find(([x]) => x === o.dataset.v)[2]);
+      const partes = elegidas.map((t, k) => (k ? t.charAt(0).toLowerCase() + t.slice(1) : t));
+      const como = partes.length ? (partes.length > 1 ? `${partes.slice(0, -1).join(', ')} y ${partes[partes.length - 1]}` : partes[0]) : 'Resuelta sin nota';
+      D.revisar = D.revisar.filter((x) => x !== a);
+      D.resueltas.unshift({ tipo: a.tipo, c: a.c, que: a.que, fecha: 'hoy', mes: 'Noviembre', como });
+      if (!D.revisar.length) ctl.estado = 'vacio';
+      repintar();
+      avisarTodos(`Resolviste la alerta de ${CLIENTES[a.c].n.split(' ')[0]}. Queda en Resueltas.`);
+      break;
+    }
+    case 'reglas': abrirHoja(tel, 'reglas'); break;
+    case 'aviso': avisar(tel, b.dataset.aviso); break;
+    case 'sin-ficha': avisar(tel, `Aquí se abre la ficha de ${b.dataset.nombre}. En la maqueta, prueba con Martina.`); break;
+    case 'cerrar-hoja': b.closest('.velo').classList.remove('ver'); break;
+    case 'reintentar':
+      ctl.estado = 'cargando'; m.pintar();
+      setTimeout(() => { if (ctl.estado === 'cargando') { cargar('revisar'); ctl.estado = 'revisar'; m.pintar(); } }, 900);
+      break;
+  }
+});
+</script>
+</body>
+</html>
