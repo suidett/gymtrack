@@ -10,7 +10,8 @@ App móvil para que un personal trainer arme, siga y ajuste las rutinas de sus a
 - Bitácora de sesión: tabla serie / kg / reps / RIR editable, marcar serie o fallo, añadir y quitar series, descanso automático con +30 s y saltar, observación por ejercicio, salir y retomar.
 - Cierre de sesión: volumen, tiempo, kcal (si hay peso corporal), récords y la sugerencia de la próxima sesión por ejercicio (doble progresión y lineal; el resto se calcula como doble progresión y lo dice).
 - Progreso: volumen por semana, récords por ejercicio e historial de sesiones.
-- Los datos se guardan en el teléfono (AsyncStorage). No hay cuentas, servidor, entrenador, fotos ni notificaciones todavía: eso viene en las fases 1, 3 y 4 del PRD.
+- Los datos se guardan en el teléfono (AsyncStorage). La app todavía no usa cuentas ni servidor; entrenador, fotos y notificaciones vienen en las fases 1, 3 y 4 del PRD.
+- API (`apps/api`, primera parte): registro por rol, ingreso, refresh rotativo con detección de reuso, cierre de sesión, recuperación de contraseña por correo (Resend), `GET /v1/me` y `GET /health`. Las pantallas de la app aún no la llaman. Ver [apps/api/README.md](apps/api/README.md).
 
 ## Para el equipo
 
@@ -26,8 +27,14 @@ apps/
     src/components/  kit de interfaz (ui/) y componentes compartidos
     src/store/       estado persistido (zustand) y selectores
     src/lib/         ids, tiempo, formato
+  api/           Fastify 5 + Zod + Prisma 7 sobre PostgreSQL 16 (cuentas, sesiones y correos).
+    src/cuentas/     rutas, servicio y autenticación de cuentas
+    src/correo/      adaptadores Resend, consola y memoria; plantillas
+    src/seguridad/   Argon2id, tokens y límites de intentos
+    src/worker.ts    punto de entrada del worker (sin tareas todavía)
+    prisma/          esquema y migraciones
 packages/
-  shared/        Tipos, biblioteca de ejercicios, fórmulas, motor de progresión, cierre de sesión. Con pruebas.
+  shared/        Tipos, biblioteca de ejercicios, fórmulas, motor de progresión, cierre de sesión y el contrato de la API (esquemas Zod, códigos de error, cliente tipado en src/api/). Con pruebas.
   tokens/        Colores, fuentes y radios: objeto JS y preset de Tailwind.
 ```
 
@@ -46,9 +53,11 @@ Otros comandos:
 
 | Comando | Qué hace |
 | --- | --- |
-| `pnpm typecheck` | TypeScript en la app y en shared |
-| `pnpm test` | Pruebas de fórmulas y progresión (vitest) |
-| `pnpm lint` | ESLint con la configuración de Expo |
+| `pnpm typecheck` | TypeScript en la app, en shared y en la API |
+| `pnpm test` | Pruebas de shared y de la API (vitest). Sin `DATABASE_URL` las de integración de la API se saltan con un aviso |
+| `pnpm lint` | ESLint con la configuración de Expo en la app y typescript-eslint en la API |
+| `pnpm --filter api dev` | La API en `localhost:3000` (antes: `pnpm --filter api db:levantar` y `db:migrar`) |
+| `pnpm --filter api test:int` | Levanta PostgreSQL 16 con Docker y corre toda la suite de la API |
 | `pnpm export:android` | Compila el bundle de Android con Metro, sin emulador; sirve como prueba de humo |
 
 ## Publicar con EAS
@@ -77,3 +86,5 @@ Tres colores (menta `#45B392` para acción, violeta `#8B7BE8` para celebración 
 | La regla de progresión o el 1RM | `packages/shared/src/progression.ts` y `formulas.ts` (con sus pruebas al lado) |
 | La biblioteca de ejercicios | `packages/shared/src/exercises.seed.ts` |
 | Colores o fuentes | `packages/tokens/index.js` |
+| Una ruta de la API o su forma | `apps/api/src/cuentas/` y `packages/shared/src/api/` |
+| Un correo | `apps/api/src/correo/plantillas.ts` |

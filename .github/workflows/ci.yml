@@ -9,6 +9,22 @@ jobs:
   verificar:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # PostgreSQL 16 para las pruebas de integración de apps/api (INT, SEG y CON con base).
+    # Las claves son de esta corrida y de este contenedor, no un secreto.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: gymtrack
+          POSTGRES_PASSWORD: gymtrack
+          POSTGRES_DB: gymtrack_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U gymtrack"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -25,6 +41,8 @@ jobs:
         run: pnpm lint
       - name: Pruebas
         run: pnpm test
+        env:
+          DATABASE_URL: postgresql://gymtrack:gymtrack@localhost:5432/gymtrack_test
       - name: Bundle de Android (prueba de humo)
         run: pnpm export:android
         env:

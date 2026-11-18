@@ -1,0 +1,13 @@
+# El contexto es la raíz del monorepo: solo entra lo que la API necesita.
+**/node_modules
+**/dist
+**/.env
+**/.env.*
+!**/.env.ejemplo
+.git
+apps/mobile
+docs
+gymtrack-main
+apps/api/src/generado
+apps/api/tmp
+apps/api/coverage

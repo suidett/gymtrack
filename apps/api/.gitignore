@@ -1,0 +1,9 @@
+# Cliente de Prisma: se genera con `prisma generate` (lo corren dev, build, typecheck y test).
+src/generado/
+dist/
+tmp/
+coverage/
+reportes/
+
+# La raíz ignora .env.*; el ejemplo sí se commitea (no trae secretos).
+!.env.ejemplo

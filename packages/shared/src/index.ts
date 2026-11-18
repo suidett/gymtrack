@@ -10,7 +10,8 @@
 // este archivo: la solución es renombrar en el módulo, no tocar esta lista.
 // No lo toques para: cambiar qué hace una fórmula, una regla o un tipo; eso va en su archivo.
 // Depende de: types.ts, formulas.ts, format.ts, progression.ts, historial.ts, cierre.ts,
-// exercises.seed.ts y rutina-ejemplo.ts (todos de esta misma carpeta).
+// exercises.seed.ts y rutina-ejemplo.ts (todos de esta misma carpeta), más el contrato de la API
+// en api/ (esquemas Zod, códigos de error y cliente tipado; usa zod).
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Tipos del dominio: ejercicio, rutina, sesión, serie, récord, sugerencia y las listas cerradas.
@@ -29,3 +30,5 @@ export * from './cierre';
 export * from './exercises.seed';
 // La rutina de cuatro días que se siembra la primera vez que se abre la app.
 export * from './rutina-ejemplo';
+// Contrato de la API: esquemas Zod de entrada y salida, códigos de error y el cliente tipado.
+export * from './api';

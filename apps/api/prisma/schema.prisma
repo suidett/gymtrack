@@ -1,0 +1,112 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// Esquema de la base · Zona: Datos (API)
+//
+// Qué hace: las tablas de cuentas del PRD (§Datos): users, refresh_tokens, password_resets y
+// push_tokens. Ids UUID v7, fechas en UTC (timestamptz) y tokens guardados solo con hash.
+// Los nombres de tablas y columnas en la base van en snake_case como el PRD (@@map / @map);
+// en el código de la API se usan los nombres del modelo.
+// Tócalo cuando: agregues una tabla o un campo. Después corre `pnpm --filter api db:nueva-migracion`
+// para crear la migración y commitéala junto con este archivo (el CI compara los dos).
+// No lo toques para: reglas que no son de la base (vencimientos, límites): esas viven en src/.
+// Depende de: prisma.config.ts (de ahí sale DATABASE_URL).
+// ─────────────────────────────────────────────────────────────────────────────
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generado/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ── Cuentas ──────────────────────────────────────────────────────────────────
+
+enum Rol {
+  trainer
+  client
+
+  @@map("rol")
+}
+
+enum Unidades {
+  kg
+  lb
+
+  @@map("unidades")
+}
+
+/// El rol no cambia después del registro. Borrar la cuenta marca deleted_at y el worker purga a
+/// los 30 días (P-24). email_verified_at queda nulo en la versión 1 (P-55).
+model Usuario {
+  id               String    @id @default(uuid(7)) @db.Uuid
+  email            String    @unique
+  passwordHash     String    @map("password_hash")
+  rol              Rol
+  nombre           String
+  apellido         String
+  timezone         String    @default("America/Santiago")
+  unidades         Unidades  @default(kg)
+  descansoDefaultS Int       @default(90) @map("descanso_default_s")
+  modoGimnasio     Boolean   @default(false) @map("modo_gimnasio")
+  emailVerifiedAt  DateTime? @map("email_verified_at") @db.Timestamptz(3)
+  deletedAt        DateTime? @map("deleted_at") @db.Timestamptz(3)
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  refreshTokens  RefreshToken[]
+  passwordResets PasswordReset[]
+  pushTokens     PushToken[]
+
+  @@map("users")
+}
+
+/// Un refresh por dispositivo. Rotar crea uno nuevo en la misma familia y revoca el usado.
+/// Reutilizar uno revocado revoca todos los del usuario (§Seguridad).
+model RefreshToken {
+  id            String    @id @default(uuid(7)) @db.Uuid
+  usuarioId     String    @map("user_id") @db.Uuid
+  tokenHash     String    @unique @map("token_hash")
+  familiaId     String    @map("familia_id") @db.Uuid
+  expiresAt     DateTime  @map("expires_at") @db.Timestamptz(3)
+  revocadoAt    DateTime? @map("revocado_at") @db.Timestamptz(3)
+  reemplazadoPor String?  @map("reemplazado_por") @db.Uuid
+  createdAt     DateTime  @map("created_at") @db.Timestamptz(3)
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId])
+  @@index([familiaId])
+  @@map("refresh_tokens")
+}
+
+/// Enlace de recuperación: vale 1 hora y se usa una sola vez (usado_at).
+model PasswordReset {
+  id        String    @id @default(uuid(7)) @db.Uuid
+  usuarioId String    @map("user_id") @db.Uuid
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz(3)
+  usadoAt   DateTime? @map("usado_at") @db.Timestamptz(3)
+  createdAt DateTime  @map("created_at") @db.Timestamptz(3)
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId])
+  @@map("password_resets")
+}
+
+/// Token de Expo del dispositivo, guardado con hash. La ruta POST /me/push-tokens llega después.
+model PushToken {
+  id         String    @id @default(uuid(7)) @db.Uuid
+  usuarioId  String    @map("user_id") @db.Uuid
+  tokenHash  String    @unique @map("token_hash")
+  plataforma String
+  revocadoAt DateTime? @map("revocado_at") @db.Timestamptz(3)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId])
+  @@map("push_tokens")
+}

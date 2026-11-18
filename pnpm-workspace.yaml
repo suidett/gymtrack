@@ -6,4 +6,11 @@ packages:
 nodeLinker: hoisted
 autoInstallPeers: true
 allowBuilds:
-  unrs-resolver: set this to true or false
+  # Antes decía «set this to true or false» y pnpm 12 fallaba con ERR_PNPM_IGNORED_BUILDS.
+  # false: el resolver de ESLint trae su binario precompilado y no necesita su script.
+  unrs-resolver: false
+  # La API: binario de Argon2, motores de Prisma (migraciones) y esbuild (build).
+  argon2: true
+  '@prisma/engines': true
+  prisma: true
+  esbuild: true

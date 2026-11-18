@@ -1,0 +1,55 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Compose de desarrollo · Zona: Configuración (API)
+#
+# Qué hace: levanta PostgreSQL 16 en tu computador para correr la API y las pruebas de
+# integración. Crea dos bases: gymtrack (para `pnpm --filter api dev`) y gymtrack_test (para las
+# pruebas, que la vacían antes de cada caso). Con el perfil «completo» también levanta la API
+# desde su Dockerfile, para probar la imagen igual que en el VPS.
+#   pnpm --filter api db:levantar          # solo la base
+#   docker compose -f apps/api/compose.dev.yml --profile completo up --build
+# Tócalo cuando: cambie la versión de PostgreSQL o el puerto local.
+# No lo toques para: staging o producción (docs/pruebas/infra-propuesta/compose*.yml).
+# Depende de: Docker. Las claves de aquí son solo locales; nunca las uses fuera de tu máquina.
+# ─────────────────────────────────────────────────────────────────────────────
+name: gymtrack-dev
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: gymtrack
+      POSTGRES_PASSWORD: gymtrack
+      POSTGRES_DB: gymtrack
+      TZ: UTC
+    # Solo en 127.0.0.1: la base local no queda abierta a la red del café.
+    ports:
+      - "127.0.0.1:5442:5432"
+    volumes:
+      - datos-db:/var/lib/postgresql/data
+      - ./docker/initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gymtrack -d gymtrack"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+  api:
+    profiles: [completo]
+    build:
+      context: ../..
+      dockerfile: apps/api/Dockerfile
+      args:
+        COMMIT_SHA: local
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://gymtrack:gymtrack@db:5432/gymtrack
+      CORREO_DRIVER: consola
+      VERSION: local
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  datos-db:

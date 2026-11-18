@@ -38,7 +38,12 @@ Qué se hizo, dónde está y qué queda abierto. Si vas a revisar, parte por aqu
 
 ## 6. API: ingreso, sesiones y correos · `apps/api/`
 
-<!-- API -->
+- Primera parte real del backend: Fastify 5, Zod, Prisma 7 y PostgreSQL 16, en `apps/api/`, con Dockerfile y compose de desarrollo.
+- **Endpoints listos:** registro por rol, ingreso, renovación de sesión con rotación y detección de reuso, cierre de sesión, olvidé mi contraseña (siempre responde igual), restablecer contraseña con enlace de un solo uso que vence en 1 hora, `GET /v1/me` y `GET /health` (con versión y commit, para el despliegue). Contraseñas con Argon2id, JWT de 15 minutos, límites de intentos del PRD y errores con el formato del PRD.
+- **Correos:** módulo con dos adaptadores, Resend para staging y producción y uno de desarrollo que no envía nada. Plantillas de bienvenida y recuperación en español, con la marca. Qué configurar en Resend (dominio, DNS SPF, DKIM y DMARC, claves por entorno) está en `apps/api/README.md`.
+- **Cliente compartido:** esquemas Zod y un cliente tipado de las rutas de cuentas en `packages/shared/src/api/`, para que la app y la API no se desincronicen. Las pantallas de la app todavía no lo usan.
+- **Pruebas:** 52 en la API contra un PostgreSQL 16 real (INT-001 a 018, INT-140, 142 y 143, SEG-001 a 012, SEG-018, 025 y 032, CON-001, 002, 004, 012 y 014), todas pasan; sin base, las de integración se saltan con un aviso. 44 en el paquete compartido. El CI suma un servicio PostgreSQL 16 para correrlas.
+- **Falta:** editar el perfil, tokens de push, borrar la cuenta y exportar; la documentación OpenAPI; el worker con tareas; y achicar la imagen de Docker, que hoy pesa unos 2 GB.
 
 ## Decisiones tomadas
 
