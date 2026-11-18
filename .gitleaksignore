@@ -1,0 +1,4 @@
+# Hallazgos revisados a mano: valores inventados de pruebas, no son secretos reales.
+# apps/api/test/notificaciones.int.test.ts: tokens de mentira que la prueba busca en la base para comprobar que no quedan en claro.
+3b8883cbd410ca9662ce360f9488afe3dd01d8fb:apps/api/test/notificaciones.int.test.ts:generic-api-key:96
+2027980a5e74ed7fc741b84b00233311c18f0242:apps/api/test/notificaciones.int.test.ts:generic-api-key:96

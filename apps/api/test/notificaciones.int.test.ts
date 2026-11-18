@@ -93,7 +93,8 @@ describeConBase('Notificaciones', () => {
     const filas = await e.prisma.pushToken.findMany();
     expect(filas).toHaveLength(2);
     const volcado = JSON.stringify(filas);
-    for (const secreto of [TOKEN_MARTINA, 'martina-telefono-1', s.endpoint, 'QGuQyavXutnMH7BPzA', s.keys.p256dh, s.keys.auth]) {
+    // Valores inventados de la prueba, no son secretos reales.
+    for (const secreto of [TOKEN_MARTINA, 'martina-telefono-1', s.endpoint, 'QGuQyavXutnMH7BPzA', s.keys.p256dh, s.keys.auth]) { // gitleaks:allow
       expect(volcado).not.toContain(secreto);
     }
   });
