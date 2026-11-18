@@ -20,3 +20,6 @@ apps/mobile/.expo-shared/
 # Llave de cuenta de servicio de Firebase (FCM V1): es secreta y va solo a EAS
 # (docs/CONFIGURAR-SERVICIOS.md, paso 3). google-services.json sí puede ir al repo.
 *-firebase-adminsdk-*.json
+
+# Caché local de firebase deploy
+.firebase/
