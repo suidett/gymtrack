@@ -16,6 +16,8 @@
 #
 # El entorno «respaldo» no lleva aprobación (bloquearía las corridas programadas);
 # se protege con la regla de ramas: solo main.
+# Los pasos corren con bash y pipefail (defaults, abajo): si ssh falla, el «| tee»
+# no lo tapa y el job falla y avisa.
 # Healthchecks.io avisa por su lado si el timer del servidor no mandó el latido.
 # ─────────────────────────────────────────────────────────────────────────────
 name: Respaldos del VPS
@@ -38,6 +40,11 @@ permissions:
 concurrency:
   group: respaldo-vps
   cancel-in-progress: false
+
+# bash con pipefail en todos los pasos (un «a | tee» que falla en «a» no pasa como bueno).
+defaults:
+  run:
+    shell: bash
 
 jobs:
   respaldo-de-anoche:

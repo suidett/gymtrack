@@ -1,28 +1,21 @@
 {
-  "_borrador": "BORRADOR de GymTrack. Al activarlo: copia este archivo a la raíz del repo, copia storage.rules a infra/firebase/storage.rules, copia firebaserc.ejemplo a .firebaserc con los ids reales y borra esta clave _borrador. Hosting sirve solo docs/pantallas; Storage niega todo acceso directo desde el cliente.",
-  "hosting": [
-    {
-      "target": "maquetas",
-      "public": "docs/pantallas",
-      "ignore": ["**/.*", "**/*.md", "**/node_modules/**"],
-      "cleanUrls": false,
-      "trailingSlash": false,
-      "headers": [
-        {
-          "source": "**",
-          "headers": [
-            { "key": "X-Robots-Tag", "value": "noindex, nofollow" },
-            { "key": "X-Content-Type-Options", "value": "nosniff" },
-            { "key": "Referrer-Policy", "value": "no-referrer" }
-          ]
-        },
-        {
-          "source": "**/*.@(css|js|svg|html)",
-          "headers": [{ "key": "Cache-Control", "value": "public, max-age=300" }]
-        }
-      ]
-    }
-  ],
+  "_borrador": "BORRADOR de GymTrack. No se copia encima del firebase.json de la raíz: se mezcla con él (docs/pruebas/infraestructura-vps-firebase.md, «Hosting»). Frente al real, lo único nuevo en hosting es \"target\": \"maquetas\"; public, ignore y headers son los mismos del real. Los bloques storage y emulators se agregan recién cuando la API use Storage (con storage.rules copiado a infra/firebase/). Esta clave _borrador no se copia.",
+  "hosting": {
+    "target": "maquetas",
+    "public": "docs/pantallas",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**", "**/*.md"],
+    "cleanUrls": false,
+    "headers": [
+      {
+        "source": "**",
+        "headers": [{ "key": "X-Robots-Tag", "value": "noindex" }]
+      },
+      {
+        "source": "**/*.@(html|css|js)",
+        "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+      }
+    ]
+  },
   "storage": {
     "rules": "infra/firebase/storage.rules"
   },

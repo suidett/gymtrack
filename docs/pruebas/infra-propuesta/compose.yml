@@ -20,7 +20,10 @@
 # Lo que comparten la API y el worker: la misma imagen, distinto comando.
 x-app: &app
   image: ${IMAGEN:?falta IMAGEN}:${VERSION:?falta VERSION}
-  restart: unless-stopped        # §Disponibilidad: reinicio automático
+  # §Disponibilidad: reinicio automático cuando el proceso TERMINA (se cae, lo mata el
+  # OOM). Docker no reinicia un contenedor vivo pero «unhealthy»: de eso se encarga
+  # vigilar-recursos.sh, cada 5 minutos.
+  restart: unless-stopped
   user: "node"                   # nunca root dentro del contenedor
   read_only: true                # el sistema de archivos de la imagen no se escribe
   tmpfs:
@@ -30,6 +33,7 @@ x-app: &app
     - no-new-privileges:true
   environment:
     VERSION: ${VERSION}          # /health la devuelve; desplegar.sh la compara
+    # COMMIT_SHA no se fija aquí ni en app.env: viene en la imagen (ARG/ENV del Dockerfile).
     TZ: UTC                      # §Datos: fechas en UTC; la zona del usuario va en los datos
     HOME: /tmp                   # con read_only, npx y prisma escriben su caché en el tmpfs
     CHECKPOINT_DISABLE: "1"      # que el CLI de Prisma no intente avisar de versiones nuevas
@@ -45,8 +49,7 @@ x-app: &app
 services:
   api:
     <<: *app
-    # PENDIENTE: confirmar la ruta de entrada cuando exista apps/api/Dockerfile
-    # (api.yml ya usa «node dist/servidor.js»).
+    # El mismo CMD de apps/api/Dockerfile (WORKDIR /repo/apps/api): «pnpm start».
     command: ["node", "dist/servidor.js"]
     # La imagen node no trae curl; se usa el fetch de Node 22.
     healthcheck:
@@ -64,7 +67,8 @@ services:
     <<: *app
     # Proceso largo con su propio programador de tareas (detección nocturna,
     # recordatorios cada pocos minutos, purga a 30 días). Recibe el «ahora» por
-    # parámetro en las pruebas (WRK). PENDIENTE: ruta real de entrada.
+    # parámetro en las pruebas (WRK). Es el script «worker» de apps/api/package.json;
+    # hoy no tiene tareas y queda vivo hasta SIGTERM.
     command: ["node", "dist/worker.js"]
     networks:
       datos: {}

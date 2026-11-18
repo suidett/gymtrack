@@ -7,6 +7,7 @@
 #   desplegar.sh volver    <staging|produccion>
 #   desplegar.sh estado    <staging|produccion>
 #   desplegar.sh purgar    staging <2026-12-17T13:00:00Z>   purga del worker con el reloj adelantado
+#                                                           (APAGADO: ver «purgar» abajo)
 #
 # Desplegar:
 #   1. baja la imagen nueva de GHCR con el token de un solo uso del job de GitHub
@@ -53,8 +54,9 @@ flock -w 600 9 || { echo "hay otro despliegue de $ENTORNO en curso" >&2; exit 1;
 ACTUAL=$(cat "$DIR/.version" 2>/dev/null || true)
 ANTERIOR=$(cat "$DIR/.version-anterior" 2>/dev/null || true)
 
-# /health por Caddy y con el certificado real, sin salir del servidor.
-# PENDIENTE (propuesta de INF-01): que /health responda {"estado":"ok","version":"<VERSION>"}.
+# /health por Caddy y con el certificado real, sin salir del servidor. La API ya responde
+# {"estado":"ok","version":"<VERSION>","commit":"<COMMIT_SHA>","base":"ok"}
+# (apps/api/src/salud/rutas.ts); aquí basta con la versión.
 salud() {
   local esperada=$1 cuerpo
   for _ in $(seq 1 24); do
@@ -86,11 +88,15 @@ case "$ACCION" in
     fi
 
     # 1. Imagen. El token llega por stdin, vale solo mientras dura el job y no se guarda.
+    #    DOCKER_CONFIG temporal: el login no queda en ~/.docker/config.json de «despliegue»
+    #    ni lo pisa otro despliegue (staging y producción) que corra al mismo tiempo.
     TOKEN=$(cat)
-    trap 'docker logout ghcr.io >/dev/null 2>&1 || true' EXIT
-    printf '%s' "$TOKEN" | docker login ghcr.io -u gymtrack-ci --password-stdin >/dev/null
-    docker pull --quiet "$IMAGEN:$VERSION_NUEVA"
-    docker logout ghcr.io >/dev/null
+    CONFIG_DOCKER=$(mktemp -d)
+    trap 'rm -rf "$CONFIG_DOCKER"' EXIT
+    printf '%s' "$TOKEN" | DOCKER_CONFIG="$CONFIG_DOCKER" docker login ghcr.io -u gymtrack-ci --password-stdin >/dev/null
+    DOCKER_CONFIG="$CONFIG_DOCKER" docker pull --quiet "$IMAGEN:$VERSION_NUEVA"
+    DOCKER_CONFIG="$CONFIG_DOCKER" docker logout ghcr.io >/dev/null || true
+    rm -rf "$CONFIG_DOCKER"; unset TOKEN
 
     # La base tiene que estar arriba antes de migrar (también en la primera instalación).
     VERSION="$VERSION_NUEVA" compose up -d --wait db
@@ -148,8 +154,14 @@ case "$ACCION" in
     AHORA=$VERSION_NUEVA
     [[ "$AHORA" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$ ]] \
       || { echo "fecha inválida, usa 2026-12-17T13:00:00Z" >&2; exit 2; }
-    # PENDIENTE: confirmar el subcomando real del worker.
-    VERSION="$ACTUAL" compose run --rm --no-deps worker node dist/worker.js purga --ahora="$AHORA"
+    # APAGADO: hoy dist/worker.js no tiene el subcomando «purga»; ignora los argumentos y
+    # queda vivo hasta SIGTERM, así que este comando no terminaría nunca. Cuando el worker
+    # tenga «purga --ahora=<ISO>» y termine al acabar, borra estas dos líneas (y el
+    # «if: false» de fotos-staging en version.yml). El timeout es por si igual se cuelga.
+    echo "PENDIENTE: el worker todavía no tiene «purga --ahora»; no se corre nada" >&2
+    exit 3
+    # shellcheck disable=SC2317
+    VERSION="$ACTUAL" compose run --rm --no-deps worker timeout 600 node dist/worker.js purga --ahora="$AHORA"
     ;;
 
   estado)

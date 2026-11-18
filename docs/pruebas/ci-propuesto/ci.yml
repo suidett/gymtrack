@@ -22,6 +22,11 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+# bash con pipefail en todos los pasos (un «a | tee» que falla en «a» no pasa como bueno).
+defaults:
+  run:
+    shell: bash
+
 jobs:
   calidad:
     runs-on: ubuntu-latest

@@ -15,10 +15,14 @@ services:
     env_file: /opt/gymtrack/staging/app.env
     environment:
       APP_ENTORNO: staging
-      NODE_OPTIONS: --max-old-space-size=144
-      GOOGLE_APPLICATION_CREDENTIALS: /run/secretos/storage-api.json
-    volumes:
-      - /opt/gymtrack/staging/secretos/storage-api.json:/run/secretos/storage-api.json:ro
+      # Heap de V8 cerca del 55 % del límite (224 MB): el resto es código, buffers y Prisma.
+      NODE_OPTIONS: --max-old-space-size=124
+      # Storage: descomenta las dos líneas cuando la API use el Admin SDK. La llave va
+      # con dueño root, grupo 1000 (el de «node» en la imagen) y permisos 640; si no
+      # existe, Docker crea una carpeta con ese nombre en su lugar (env.ejemplo).
+      # GOOGLE_APPLICATION_CREDENTIALS: /run/secretos/storage-api.json
+    # volumes:
+    #   - /opt/gymtrack/staging/secretos/storage-api.json:/run/secretos/storage-api.json:ro
     networks:
       borde:
         aliases: [api-staging]
@@ -30,10 +34,13 @@ services:
     env_file: /opt/gymtrack/staging/app.env
     environment:
       APP_ENTORNO: staging
-      NODE_OPTIONS: --max-old-space-size=96
-      GOOGLE_APPLICATION_CREDENTIALS: /run/secretos/storage-api.json
-    volumes:
-      - /opt/gymtrack/staging/secretos/storage-api.json:/run/secretos/storage-api.json:ro
+      NODE_OPTIONS: --max-old-space-size=72   # cerca del 55 % de 128 MB
+      # Storage: descomenta las dos líneas cuando la API use el Admin SDK. La llave va
+      # con dueño root, grupo 1000 (el de «node» en la imagen) y permisos 640; si no
+      # existe, Docker crea una carpeta con ese nombre en su lugar (env.ejemplo).
+      # GOOGLE_APPLICATION_CREDENTIALS: /run/secretos/storage-api.json
+    # volumes:
+    #   - /opt/gymtrack/staging/secretos/storage-api.json:/run/secretos/storage-api.json:ro
     mem_limit: 128m
     memswap_limit: 128m
     cpus: 0.25

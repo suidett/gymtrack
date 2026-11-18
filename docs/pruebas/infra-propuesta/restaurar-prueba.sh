@@ -33,9 +33,6 @@ REMOTO="gcs:$BUCKET_RESPALDOS"
 REGISTRO=/var/log/gymtrack/restauraciones.log
 mkdir -p "$(dirname "$REGISTRO")"
 
-# PENDIENTE: nombres reales de las tablas de §Datos cuando exista el esquema de Prisma.
-TABLAS="users routines workout_sessions workout_sets personal_records body_metrics progress_photos alerts _prisma_migrations"
-
 INICIO=$(date -u +%s)
 TEMPORAL=$(mktemp -d /dev/shm/restauracion.XXXXXX)
 CONTENEDOR="gymtrack-restauracion-$$"
@@ -72,20 +69,33 @@ fi
 docker run -d --name "$CONTENEDOR" --network none --memory 256m --memory-swap 256m \
   -e POSTGRES_PASSWORD=temporal -e POSTGRES_DB=restaurada \
   postgres:16-alpine -c shared_buffers=32MB -c fsync=off >/dev/null   # PENDIENTE: misma etiqueta exacta que compose.yml
+# -h 127.0.0.1: durante la inicialización la imagen levanta un servidor temporal solo por
+# socket; por TCP responde recién el servidor definitivo. (--network none deja el loopback.)
+LISTA=0
 for _ in $(seq 1 30); do
-  docker exec "$CONTENEDOR" pg_isready -U postgres -d restaurada >/dev/null 2>&1 && break
+  if docker exec "$CONTENEDOR" pg_isready -h 127.0.0.1 -U postgres -d restaurada >/dev/null 2>&1; then LISTA=1; break; fi
   sleep 2
 done
+[ "$LISTA" -eq 1 ] || { echo "la base temporal no quedó lista en 60 s" >&2; exit 1; }
 
 # 4. Bajar, descifrar y restaurar.
 rclone cat "$REMOTO/produccion/diario/$ULTIMO" \
   | age -d -i "$TEMPORAL/llave.txt" \
   | docker exec -i "$CONTENEDOR" pg_restore -U postgres -d restaurada --no-owner --exit-on-error
 
-# 5. Conteos.
+# 5. Conteos. Las tablas salen de la base restaurada (todas las de «public», con
+# _prisma_migrations), así la lista sigue al esquema de Prisma sin tocar este script.
 PRODUCCION=$(docker ps -q -f label=com.docker.compose.project=gymtrack-produccion -f label=com.docker.compose.service=db)
-contar_restaurada() { docker exec "$CONTENEDOR" psql -U postgres -d restaurada -Atc "select count(*) from \"$1\""; }
-contar_produccion() { docker exec "$PRODUCCION" sh -c "psql -U \"\$POSTGRES_USER\" -d \"\$POSTGRES_DB\" -Atc 'select count(*) from \"$1\"'"; }
+[ -n "$PRODUCCION" ] || { echo "la base de producción no está corriendo" >&2; exit 1; }
+TABLAS=$(docker exec "$CONTENEDOR" psql -U postgres -d restaurada -Atc \
+  "select tablename from pg_tables where schemaname = 'public' order by tablename")
+[ -n "$TABLAS" ] || { echo "la base restaurada no tiene tablas en public" >&2; exit 1; }
+contar_restaurada() { docker exec "$CONTENEDOR" psql -U postgres -d restaurada -Atc "select count(*) from public.\"$1\""; }
+# Una tabla nueva de una migración posterior al respaldo puede no estar en uno de los dos lados.
+contar_produccion() {
+  docker exec "$PRODUCCION" sh -c "psql -U \"\$POSTGRES_USER\" -d \"\$POSTGRES_DB\" -Atc 'select count(*) from public.\"$1\"'" 2>/dev/null \
+    || echo "-"
+}
 
 AVISOS=0
 echo "### Restauración de prueba"
@@ -97,16 +107,24 @@ echo "| --- | ---: | ---: | ---: |"
 for t in $TABLAS; do
   r=$(contar_restaurada "$t")
   p=$(contar_produccion "$t")
+  if [ "$p" = "-" ]; then
+    echo "| $t | $r | no existe | - |"; AVISOS=$((AVISOS + 1)); continue
+  fi
   d=$(( p - r ))
   echo "| $t | $r | $p | $d |"
   # Más de 10 % de diferencia con producción es raro para un respaldo de menos de un día.
   if [ "$p" -gt 0 ] && [ $(( (d < 0 ? -d : d) * 100 / p )) -gt 10 ]; then AVISOS=$((AVISOS + 1)); fi
 done
 
-USUARIOS=$(contar_restaurada users)
-[ "$USUARIOS" -gt 0 ] || { echo "la base restaurada no tiene usuarios" >&2; exit 1; }
+# «users» es la tabla de Usuario (@@map("users") en apps/api/prisma/schema.prisma).
+if grep -qx users <<<"$TABLAS"; then
+  USUARIOS=$(contar_restaurada users)
+  [ "$USUARIOS" -gt 0 ] || { echo "la base restaurada no tiene usuarios" >&2; exit 1; }
+else
+  echo "la base restaurada no tiene la tabla users" >&2; exit 1
+fi
 
 DURACION=$(( $(date -u +%s) - INICIO ))
 echo
-echo "Duración: ${DURACION} s. Tablas con más de 10 % de diferencia: $AVISOS."
+echo "Duración: ${DURACION} s. Tablas con aviso (más de 10 % de diferencia, o que faltan en producción): $AVISOS."
 RESULTADO=$([ "$AVISOS" -eq 0 ] && echo ok || echo ok-con-avisos)

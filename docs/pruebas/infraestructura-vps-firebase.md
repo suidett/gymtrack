@@ -2,7 +2,7 @@
 
 El PRD ponía todo en Railway (§Arquitectura, fila «Infraestructura»). La decisión ahora es otra: la API, el worker y PostgreSQL van en un VPS propio en **Vultr**, y Firebase se usa para lo que hace mejor que un servidor solo: Cloud Messaging, Storage, App Distribution y Hosting. Este documento dice qué va dónde y por qué, cómo se despliega, cómo se respalda, cómo se protege y cómo se prueba. Los borradores están en [`infra-propuesta/`](infra-propuesta/) y en [`ci-propuesto/`](ci-propuesto/) (`desplegar-vps.yml`, `respaldo-vps.yml`, `distribuir-apk.yml`, `hosting-maquetas.yml`); los escenarios de prueba, en [`escenarios-infra.md`](escenarios-infra.md).
 
-Todo es borrador: no hay servidor, no hay proyecto de Firebase y nada de esto corre todavía.
+Todo es borrador: no hay servidor y nada de `ci-propuesto/` ni de `infra-propuesta/` corre todavía. Lo que sí existe es el proyecto de Firebase **`gymtrack-5dd46`** (alias `default` en el `.firebaserc` de la raíz), que hoy publica `docs/pantallas` con el `firebase.json` de la raíz. Ese proyecto es el de las maquetas y hace de proyecto de staging; el de producción todavía no existe.
 
 ## Supuestos que tienes que confirmar
 
@@ -18,7 +18,7 @@ El usuario todavía no dio los detalles del servidor. El diseño los usa como va
 | Acceso | SSH con llave, sin contraseña | Nada |
 | Dominio | Propio, con `api.<dominio>` y `api-staging.<dominio>` apuntando a la IP de la instancia | El Caddyfile y las variables `*_API_URL` |
 | Repositorio | Privado en GitHub, con GHCR para las imágenes | Si es público, GHCR no cobra y la imagen puede ser pública |
-| Proyectos de Firebase | Dos: `<proyecto-staging>` y `<proyecto-produccion>`, en el plan Blaze | Ver «Firebase» |
+| Proyectos de Firebase | Dos: `gymtrack-5dd46` (ya existe: maquetas y staging) y `<proyecto-produccion>` (por crear), en el plan Blaze cuando usen Storage (no verificado en qué plan está hoy `gymtrack-5dd46`) | Ver «Firebase» |
 | Región de Storage | `southamerica-west1` (Santiago) para fotos y respaldos | Ver «Costos y límites»: solo tres regiones de EE. UU. tienen cuota sin costo |
 
 ## Qué cambia frente al PRD
@@ -29,7 +29,7 @@ El usuario todavía no dio los detalles del servidor. El diseño los usa como va
 | PostgreSQL de Railway con respaldo diario | PostgreSQL 16 en un contenedor sin puerto público; `pg_dump` diario cifrado a Cloud Storage, más los respaldos de la instancia de Vultr como segunda capa | El respaldo tiene que vivir fuera del servidor y fuera del proveedor del servidor |
 | Bucket S3 de Railway o Cloudflare R2 | Cloud Storage para Firebase, con URLs firmadas V4 desde el Admin SDK | Lo pidió el reparto; las reglas niegan todo acceso directo y el bucket queda en Santiago |
 | Cron de Railway para el worker | Worker como proceso largo con su propio programador | Los recordatorios corren cada pocos minutos, no solo de noche |
-| Chequeo de salud y reinicio de Railway | `restart: unless-stopped`, healthcheck de Docker, Caddy y un monitor externo | §Disponibilidad pide reinicio automático y chequeo de salud |
+| Chequeo de salud y reinicio de Railway | `restart: unless-stopped` (reinicia cuando el proceso termina), healthcheck de Docker, `vigilar-recursos.sh` (reinicia los contenedores que siguen *unhealthy*), Caddy y un monitor externo | §Disponibilidad pide reinicio automático y chequeo de salud. Docker no reinicia por sí solo un contenedor vivo que falla su healthcheck |
 | Secretos en variables de Railway (§Seguridad) | Archivos `.env` en el servidor (dueño root, permisos 640) y entornos de GitHub | Ningún secreto en el repo ni en la imagen |
 | Expo Push «sin Firebase a mano» | Expo Push sigue igual, pero en Android necesita la llave de cuenta de servicio FCM V1 cargada en EAS | Expo usa FCM por debajo; la API no cambia su código de push |
 
@@ -204,7 +204,7 @@ Tres proyectos de Compose separados. Cada entorno tiene su base, su volumen, sus
 - `datos` es una red `internal`: sin salida a internet. Solo la base, la API y el worker la ven. La base no está en `borde` ni en `salida`, así que ni Caddy llega a ella.
 - `borde` es externa y la comparten las dos API con Caddy. Las dos se llaman `api` dentro de su proyecto: en `borde` ese nombre resuelve a las dos. Por eso Caddy usa los alias `api-produccion` y `api-staging`.
 - Los límites son techos, no consumo. Lo esperado en reposo es cerca de 900 MB a 1,1 GB en total (no verificado hasta medir). Ubuntu, Docker, sshd y fail2ban usan cerca de 300 MB. Con 2 GB queda poco margen: por eso hay un swap de 2 GB solo para el sistema (`vm.swappiness=10`) y los contenedores tienen `memswap_limit` igual a su límite, para que uno que se pase muera y se reinicie en vez de arrastrar al servidor.
-- Staging tiene límites más bajos y se puede apagar entero sin tocar producción. `restaurar-prueba.sh` lo pausa si quedan menos de 450 MB libres.
+- Staging tiene límites más bajos y se puede apagar entero sin tocar producción. Su heap de V8 (`--max-old-space-size`) va cerca del 55 % del límite del contenedor (124 MB de 224 en la API, 72 de 128 en el worker), para que el resto del proceso quepa sin que lo mate el OOM. `restaurar-prueba.sh` lo pausa si quedan menos de 450 MB libres.
 - La API y el worker corren como el usuario `node`, con el sistema de archivos de solo lectura, sin capacidades y con `no-new-privileges`.
 
 ### Tareas programadas del servidor
@@ -246,8 +246,8 @@ Staging no se respalda: se recarga con la semilla cada domingo y sus datos son f
 | API y worker | `pnpm --filter api dev` | Contenedor del job con `NODE_ENV=test` | Vultr, proyecto `gymtrack-staging`, imagen `sha-<commit>` | Vultr, proyecto `gymtrack-produccion`, imagen `v1.2.3` |
 | URL | `localhost:3000` | `localhost:3000` | `https://api-staging.<dominio>` | `https://api.<dominio>` |
 | Base | PostgreSQL 16 en `docker compose` | Servicio PostgreSQL 16 del job | Contenedor `db` de staging | Contenedor `db` de producción, `pg_dump` diario cifrado con 14 días de retención (§Disponibilidad) |
-| Archivos | MinIO hoy; emulador de Storage cuando la API use el Admin SDK (P-57) | Igual que local (P-57) | Bucket de Storage de `<proyecto-staging>` | Bucket de Storage de `<proyecto-produccion>`, con versionado |
-| Push | Buzón de prueba | Buzón de prueba | Expo Push, por FCM de `<proyecto-staging>`, a los teléfonos del equipo | Expo Push por FCM de `<proyecto-produccion>` |
+| Archivos | MinIO hoy; emulador de Storage cuando la API use el Admin SDK (P-57) | Igual que local (P-57) | Bucket de Storage de `gymtrack-5dd46` | Bucket de Storage de `<proyecto-produccion>`, con versionado |
+| Push | Buzón de prueba | Buzón de prueba | Expo Push, por FCM de `gymtrack-5dd46`, a los teléfonos del equipo | Expo Push por FCM de `<proyecto-produccion>` |
 | App | Expo Go o build de desarrollo | Variante `e2e` | APK `preview` por EAS, repartido por App Distribution | AAB `production` por EAS a Google Play |
 | `NODE_ENV` | `development` | `test` | `production` (con `APP_ENTORNO=staging`) | `production` |
 | Rutas `/test/*` | Sí | Sí | No, y además Caddy responde 404 | No, y además Caddy responde 404 |
@@ -262,8 +262,8 @@ Formato completo en [`infra-propuesta/env.ejemplo`](infra-propuesta/env.ejemplo)
 | --- | --- | --- |
 | `/opt/gymtrack/vps.env` | `DOMINIO`, `IMAGEN` | root:despliegue 640 |
 | `/opt/gymtrack/<entorno>/db.env` | `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` | root:despliegue 640 |
-| `/opt/gymtrack/<entorno>/app.env` | `DATABASE_URL`, `JWT_SECRET`, `JWT_REFRESH_SECRET`, `RESEND_API_KEY`, `CORREO_REMITENTE`, `EXPO_ACCESS_TOKEN`, `SENTRY_DSN`, `SENTRY_ENVIRONMENT`, `FIREBASE_PROJECT_ID`, `STORAGE_BUCKET`, `URL_FIRMADA_MINUTOS`, umbrales de detección (P-34), `HC_WORKER_URL` | root:despliegue 640 |
-| `/opt/gymtrack/<entorno>/secretos/storage-api.json` | Llave de la cuenta de servicio `api-medios` de ese proyecto | root:despliegue 640, montada de solo lectura |
+| `/opt/gymtrack/<entorno>/app.env` | Las que lee la API hoy (`apps/api/src/config.ts`): `NODE_ENV`, `PORT`, `LOG_LEVEL`, `DATABASE_URL`, `JWT_SECRET`, `CONFIAR_PROXY=1` (detrás de Caddy: un salto), `CORREO_DRIVER=resend`, `RESEND_API_KEY`, `CORREO_REMITENTE`, `CORREO_RESPONDER_A`, `ENLACE_RESTABLECER_URL`. Comentadas hasta que la API las lea: `EXPO_ACCESS_TOKEN`, `SENTRY_DSN`, `SENTRY_ENVIRONMENT`, `FIREBASE_PROJECT_ID`, `STORAGE_BUCKET`, `URL_FIRMADA_MINUTOS`, umbrales de detección (P-34), `HC_WORKER_URL`. Sin `VERSION` ni `COMMIT_SHA` (los ponen compose y la imagen) ni `RELOJ_FIJO` | root:despliegue 640 |
+| `/opt/gymtrack/<entorno>/secretos/storage-api.json` | Llave de la cuenta de servicio `api-medios` de ese proyecto, cuando la API use Storage (el montaje está comentado en los overrides hasta entonces) | **root:1000 640** (1000 es el grupo de `node` en la imagen; con `root:despliegue` el contenedor no la puede leer), montada de solo lectura |
 | `/etc/gymtrack/respaldo/*` | Llave de `vps-respaldos`, `rclone.conf`, llave pública de age, URL de Healthchecks.io | root 600 |
 | `/etc/gymtrack/vigilancia.env` | URL de Healthchecks.io y umbrales | root 600 |
 
@@ -293,7 +293,7 @@ Se borran `RAILWAY_TOKEN_STAGING` y `RAILWAY_TOKEN_PRODUCCION`. Las imágenes se
 
 | Entorno | Protección | Por qué |
 | --- | --- | --- |
-| `staging` | Solo la rama `main` | Cada push a `main` despliega |
+| `staging` | Rama `main` y etiquetas `v*.*.*` (regla de despliegue «Selected branches and tags») | Cada push a `main` despliega. Las etiquetas hacen falta porque `version.yml` corre en la etiqueta y sus jobs `comprobar` y `fotos-staging` usan el entorno `staging` para leer `STAGING_API_URL` y la llave de staging; con «solo `main`», GitHub los rechazaría |
 | `produccion` | Revisores: una persona de cada frente; **Prevent self-review** activado; solo etiquetas `v*.*.*` | En GitHub basta **una** aprobación de la lista (documentación de GitHub). Con «Prevent self-review», quien empujó la etiqueta no puede aprobar su propio despliegue |
 | `respaldo` | Solo la rama `main`, sin revisores | Las corridas programadas no pueden esperar aprobación |
 
@@ -321,7 +321,7 @@ Se borran `RAILWAY_TOKEN_STAGING` y `RAILWAY_TOKEN_PRODUCCION`. Las imágenes se
 
 `staging.yml` llama a `desplegar-vps.yml` con `entorno: staging` y `version: sha-<commit>`:
 
-1. **`imagen`.** Construye `apps/api/Dockerfile` (el mismo de `api-build` en `api.yml`) y lo publica en GHCR como `sha-<commit>`, con la caché de capas de GitHub. El commit queda dentro de la imagen (`build-arg COMMIT`), y `/health` responde `{"estado":"ok","version":"sha-<commit>","commit":"<commit>"}` (PENDIENTE en la API): `desplegar.sh` revisa la versión y `version.yml` revisa el commit.
+1. **`imagen`.** Construye `apps/api/Dockerfile` (el mismo de `api-build` en `api.yml`) y lo publica en GHCR como `sha-<commit>`, con la caché de capas de GitHub. El commit queda dentro de la imagen con `build-arg COMMIT_SHA=${{ github.sha }}` (el Dockerfile lo lee con `ARG COMMIT_SHA` y lo deja en `ENV COMMIT_SHA`), siempre el SHA completo de 40 caracteres. `/health` ya responde `{"estado":"ok","version":"sha-<commit>","commit":"<commit completo>","base":"ok"}`: `desplegar.sh` revisa la versión y `version.yml` («comprobar») compara el commit completo con `GITHUB_SHA`.
 2. **`desplegar`**, entorno `staging`. Entra por SSH como `despliegue` con la llave de staging. En el servidor, `puerta-ssh.sh` acepta solo `desplegar staging <version>` y llama a `desplegar.sh`, que:
    1. baja la imagen con el `GITHUB_TOKEN` del job, que llega por stdin, sirve solo para leer paquetes y vence con el job;
    2. levanta la base si no estaba;
@@ -329,15 +329,19 @@ Se borran `RAILWAY_TOKEN_STAGING` y `RAILWAY_TOKEN_PRODUCCION`. Las imágenes se
    4. levanta la API y el worker con la versión nueva. Caddy aguanta hasta 15 s las peticiones mientras se recrea el contenedor;
    5. espera hasta 2 minutos a que `/health`, pedido por Caddy con el certificado real, responda 200 **con la versión nueva**;
    6. si no responde, vuelve solo a la versión anterior y termina con error.
-3. Desde GitHub: `/health` por internet con la versión, `http://` redirige con 308 (SEG-022), `/test/reset` da 404 (SEG-025) y el humo de siempre (`humo:staging`). Si el humo falla, pide `volver staging` y abre un issue `staging-roto`.
+3. Desde GitHub: `/health` por internet con la versión, `http://` redirige con 308 (SEG-022), `/test/reset` da 404 (SEG-025) y el humo de siempre (`humo:staging`). Si el humo falla, pide `volver staging` y abre un issue `staging-roto`. **Mientras `apps/api/package.json` no tenga el script `humo:<entorno>`, el humo se salta con un aviso y no hay vuelta atrás por humo** (fase 0: la API solo tiene `/health`, que ya se revisó en los pasos anteriores).
+
+Todos los workflows de `ci-propuesto/` corren sus pasos con `bash` y `pipefail` (`defaults: run: shell: bash`): un `ssh ... | tee` que falla en `ssh` hace fallar el paso.
 
 La app de prueba sale aparte, en `distribuir-apk.yml` (ver «App Distribution»).
 
 ### Producción, con una etiqueta
 
-Empujar `v1.2.3` dispara `version.yml`, que ya tiene el orden: `comprobar` (la etiqueta está en `main` y staging corre ese mismo commit), `suite-completa`, `fotos-staging` y luego `produccion`, que ahora llama a `desplegar-vps.yml` como workflow reutilizable:
+Empujar `v1.2.3` dispara `version.yml`, que ya tiene el orden: `comprobar` (la etiqueta está en `main` y staging corre ese mismo commit), `suite-completa`, `fotos-staging` y luego `produccion`, que ahora llama a `desplegar-vps.yml` como workflow reutilizable.
 
-1. **`promover`.** No recompila: pone la etiqueta `v1.2.3` a la imagen `sha-<commit>` que ya corrió en staging. Mismo digest, mismo código.
+`fotos-staging` está **apagado** (`if: false`) hasta que existan el script `seguridad:fotos-staging` en `apps/api/package.json` y el subcomando `purga --ahora=<ISO>` del worker, que termine solo. Hoy `dist/worker.js` no tiene tareas y queda vivo hasta recibir SIGTERM, así que `desplegar.sh purgar` se colgaría; por eso `desplegar.sh` también rechaza `purgar` por ahora. `produccion` acepta ese job saltado. Mientras tanto, SEG-017 e INF-23 a INF-26 no se prueban antes de cada versión.
+
+1. **`promover`.** No recompila: pone la etiqueta `v1.2.3` a la imagen `sha-<commit>` que ya corrió en staging. Mismo digest, mismo código. El commit lo saca de la etiqueta git (`git rev-list -n1 refs/tags/v1.2.3`), no del commit en que corre el workflow, y si `v1.2.3` ya existe en GHCR con otro digest, se niega.
 2. **`desplegar`**, entorno `produccion`. Espera la aprobación. Después, lo mismo que en staging, con dos diferencias: `desplegar.sh` toma un respaldo `predespliegue` antes de migrar, y a producción solo entran versiones `v*`.
 3. Humo de solo lectura (`humo:produccion`). Si falla, vuelve atrás y abre `produccion-rota`.
 4. Después siguen `play-interna` y `release` de `version.yml`, como antes.
@@ -346,10 +350,32 @@ Empujar `v1.2.3` dispara `version.yml`, que ya tiene el orden: `comprobar` (la e
 
 | Caso | Qué pasa |
 | --- | --- |
-| La migración falla | No se cambia de versión. Prisma deja la migración fallida anotada en `_prisma_migrations`: arregla la migración en un PR nuevo y, antes de volver a desplegar, márcala con `prisma migrate resolve --rolled-back <nombre>` (dentro del contenedor, con `docker compose run --rm api npx prisma migrate resolve ...`) |
+| La migración falla | No se cambia de versión. Prisma deja la migración fallida anotada en `_prisma_migrations`: arregla la migración en un PR nuevo y, antes de volver a desplegar, márcala como revertida con el comando 1 de abajo |
 | `/health` no responde con la versión nueva | `desplegar.sh` vuelve solo a la anterior y el job falla |
-| El humo falla | El workflow pide `volver <entorno>` |
-| Algo se rompe después | `workflow_dispatch` de `desplegar-vps.yml` con `accion: volver`. Vuelve a `.version-anterior`, que sigue en el servidor (`desplegar.sh` no borra las imágenes en uso ni la anterior de cada entorno) |
+| El humo falla | El workflow pide `volver <entorno>` (solo si el humo corrió: sin script `humo:<entorno>` se salta) |
+| Algo se rompe después | `workflow_dispatch` de `desplegar-vps.yml` con `accion: volver`. Vuelve a `.version-anterior`, que sigue en el servidor (`desplegar.sh` no borra las imágenes en uso ni la anterior de cada entorno). Si GitHub no está disponible, el comando 2 de abajo |
+| Redesplegar una versión a mano | `workflow_dispatch` con `accion: desplegar`. Para producción, **córrelo desde la etiqueta** («Use workflow from» = `v1.2.3`, no `main`): `plan` lo exige, para que el humo sea el de esa versión y `promover` etiquete su commit |
+
+Los comandos a mano, en el servidor, con un usuario administrador. Compose necesita el proyecto (`-p`), los dos archivos (`-f`), `IMAGEN` (de `vps.env`) y `VERSION`, o no sabe qué imagen usar:
+
+```bash
+cd /opt/gymtrack && set -a && . ./vps.env && set +a   # exporta DOMINIO e IMAGEN
+
+# 1. Marcar como revertida una migración fallida, con la imagen de la versión que falló
+#    (desplegar.sh ya la bajó). <nombre> es la carpeta de la migración en prisma/migrations.
+VERSION=v1.2.4 docker compose -p gymtrack-produccion \
+  -f app/compose.yml -f app/compose.produccion.yml \
+  run --rm --no-deps api npx prisma migrate resolve --rolled-back <nombre>
+
+# 2. Volver a la versión anterior: lo mismo que hace «desplegar.sh volver produccion».
+sudo -u despliegue /opt/gymtrack/bin/desplegar.sh volver produccion
+#    Y si desplegar.sh no sirve, a mano (después corrige .version y .version-anterior):
+VERSION=$(cat produccion/.version-anterior) docker compose -p gymtrack-produccion \
+  -f app/compose.yml -f app/compose.produccion.yml \
+  up -d --wait --wait-timeout 120 api worker
+```
+
+En staging es lo mismo con `-p gymtrack-staging`, `compose.staging.yml` y `staging/`.
 | Una migración destructiva rompió datos | Volver el código no basta. Se restaura el respaldo `predespliegue` de esa versión en una base temporal y se recuperan los datos a mano; por eso ci.md pide hacer los cambios que borran o renombran en dos versiones |
 
 Volver atrás cambia el código, no el esquema. Funciona porque cada migración es compatible con la versión anterior del código (ci.md, «Migraciones de Prisma»).
@@ -381,8 +407,8 @@ Una sola vez, a mano, con una persona del equipo:
 | Copias locales | Las 3 más nuevas en `/var/backups/gymtrack/produccion`, para restaurar rápido sin bajar nada |
 | Bucket | Acceso uniforme, prevención de acceso público forzada, sin versionado (los objetos no se reemplazan) |
 | Aviso | Latido a Healthchecks.io al terminar; `/fail` si falla. Si no llega en 2 horas, Healthchecks.io avisa por correo |
-| Revisión | `respaldo-vps.yml`, todos los días a las 11:30 UTC: el diario existe, tiene menos de 26 horas y pesa más de `MINIMO_BYTES` |
-| Restauración de prueba | `respaldo-vps.yml`, los lunes: `restaurar-prueba.sh` baja el último diario **desde Cloud Storage**, lo descifra con la llave que llega por stdin y lo restaura en un PostgreSQL temporal sin red y con 256 MB; cuenta filas por tabla, compara con producción, mide la duración y borra todo. Queda anotado en el resumen del job, en un artefacto de 90 días y en `/var/log/gymtrack/restauraciones.log` (MAN-024) |
+| Revisión | `respaldo-vps.yml`, todos los días a las 11:30 UTC: el diario existe, tiene menos de 26 horas y pesa más de `MINIMO_BYTES`. Ese mínimo vale para el diario y para esta revisión, no para el `predespliegue`: el de la primera versión corre con la base casi vacía y pesa menos |
+| Restauración de prueba | `respaldo-vps.yml`, los lunes: `restaurar-prueba.sh` baja el último diario **desde Cloud Storage**, lo descifra con la llave que llega por stdin y lo restaura en un PostgreSQL temporal sin red y con 256 MB (espera a que responda por `127.0.0.1`, no solo por el socket); cuenta filas de cada tabla de `public` (la lista sale de `pg_tables` de la base restaurada, así sigue al esquema de Prisma), compara con producción, mide la duración y borra todo. Queda anotado en el resumen del job, en un artefacto de 90 días y en `/var/log/gymtrack/restauraciones.log` (MAN-024) |
 | Segunda capa | Respaldos automáticos de la instancia de Vultr, para volver a levantar el servidor entero |
 | Simulacro | Una vez por semestre: instancia nueva desde cero con la «Primera instalación» y el último respaldo (INF-20) |
 
@@ -408,13 +434,15 @@ Una sola vez, a mano, con una persona del equipo:
 | Swap | Archivo de 2 GB, `vm.swappiness=10`, solo para que el sistema no muera; los contenedores no lo usan |
 | Imagen | Sin `.env` ni llaves adentro (INF-37); paquete privado en GHCR |
 | Correo | Nada escucha en el puerto 25; los correos salen por la API HTTPS de Resend |
+| Tamaño de las peticiones | Caddy corta los cuerpos de más de 64 KiB (`request_body max_size 64KiB`), el mismo tope que `bodyLimit: 64 * 1024` de la API en `apps/api/src/app.ts`. Si la API lo sube, el Caddyfile cambia en el mismo PR |
+| IP real del cliente | `CONFIAR_PROXY=1` en `app.env`: la API cree un solo salto (Caddy) en `X-Forwarded-For`, y lo que el cliente invente a la izquierda no cuenta para el límite de ingresos por IP |
 
 ## Monitoreo
 
 | Qué | Cómo | Avisa |
 | --- | --- | --- |
 | Errores de la API, el worker y la app | Sentry, con `environment` y `release` igual a la versión | Correo de Sentry |
-| Salud de la API | Healthcheck de Docker cada 15 s y reinicio automático; `/health` responde 200, o 503 si no hay base (INT-140) | Docker reinicia; si se repite, `vigilar-recursos.sh` |
+| Salud de la API | Healthcheck de Docker cada 15 s; `/health` responde 200, o 503 si no hay base (INT-140). `restart: unless-stopped` solo actúa si el proceso termina (caída, OOM): un contenedor vivo pero *unhealthy* Docker lo deja así. Lo reinicia `vigilar-recursos.sh` (cada 5 minutos) cuando lleva 8 chequeos fallidos seguidos, unos 2 minutos, y nunca durante un despliegue de ese entorno | Correo de `vigilar-recursos.sh` con lo que reinició |
 | Disponibilidad desde afuera | Monitor HTTP externo cada 5 minutos a `https://api.<dominio>/health` y `https://api-staging.<dominio>/health`, con aviso de vencimiento del certificado. UptimeRobot o Better Stack en su plan gratuito (límites no verificados) | Correo al equipo |
 | Disco, RAM, swap, contenedores y OOM | `vigilar-recursos.sh` cada 5 minutos, con latido a Healthchecks.io. Umbrales: disco 80 %, RAM 90 %, swap 50 % | Correo; si el servidor se apaga, deja de llegar el latido y también avisa |
 | Respaldo diario | Latido de `respaldar.sh` a Healthchecks.io y revisión diaria de `respaldo-vps.yml` | Correo e issue `respaldo` |
@@ -429,10 +457,10 @@ Healthchecks.io gratis da 20 chequeos (no verificado); aquí se usan 3 o 4.
 
 | Proyecto | Plan | Tiene |
 | --- | --- | --- |
-| `<proyecto-staging>` | Blaze, con alerta de presupuesto | App Android `com.gymtrack.app.staging` (propuesta: paquete propio para instalarla junto a la de Play), FCM, bucket de medios de staging, App Distribution con los grupos, Hosting con el sitio `maquetas` |
+| `gymtrack-5dd46` (ya existe; alias `default` y, al activar, `staging`) | Blaze cuando use Storage, con alerta de presupuesto | Hoy: Hosting con las maquetas (su sitio por defecto). Después: App Android `com.gymtrack.app.staging` (propuesta: paquete propio para instalarla junto a la de Play), FCM, bucket de medios de staging, App Distribution con los grupos, Hosting con el sitio `maquetas` |
 | `<proyecto-produccion>` | Blaze, con alerta de presupuesto | App Android `com.gymtrack.app`, FCM, bucket de medios de producción, bucket de respaldos, y más adelante el sitio de la web del entrenador |
 
-Por qué dos proyectos: staging y producción quedan con llaves, reglas y personas distintas, y las maquetas, que toca más gente, quedan lejos de los datos reales. El plan Blaze es obligatorio para Cloud Storage desde el 3 de febrero de 2026 (documentación de Firebase). Las alertas de presupuesto avisan, pero no cortan el gasto.
+Por qué dos proyectos: staging y producción quedan con llaves, reglas y personas distintas, y las maquetas, que toca más gente, quedan lejos de los datos reales. Por eso el proyecto que ya existe, `gymtrack-5dd46`, se queda con las maquetas y con staging, y producción va en uno nuevo. El plan Blaze es obligatorio para Cloud Storage desde el 3 de febrero de 2026 (documentación de Firebase). Las alertas de presupuesto avisan, pero no cortan el gasto.
 
 ### Cloud Messaging
 
@@ -467,8 +495,12 @@ Si la llave de API de `google-services.json` está restringida, hay que permitir
 
 ### Hosting
 
-- Sitio `maquetas` en el proyecto de staging, que sirve `docs/pantallas` tal cual: los HTML, `sistema.css`, `maqueta.js`, `marca/` y `3d/`. No sirve archivos `.md` ni nada fuera de esa carpeta.
-- Encabezado `X-Robots-Tag: noindex` en todo: tienen datos falsos, pero no son para buscadores.
+- Target `maquetas` en `gymtrack-5dd46`, apuntado a su sitio por defecto (se supone `gymtrack-5dd46`, `https://gymtrack-5dd46.web.app`; no verificado: confírmalo con `firebase hosting:sites:list --project gymtrack-5dd46`). Es el mismo sitio que ya publica el `firebase.json` de la raíz: sirve `docs/pantallas` tal cual (los HTML, `sistema.css`, `maqueta.js`, `marca/` y `3d/`), sin los `.md` (`revision.md` y `3d/revision.md` existen y no se publican) ni nada fuera de esa carpeta.
+- Encabezado `X-Robots-Tag: noindex` en todo y `Cache-Control: no-cache` en HTML, CSS y JS, como en el `firebase.json` real: tienen datos falsos, pero no son para buscadores.
+- **Cómo se mezclan los borradores con los archivos reales, sin pisarlos.** `infra-propuesta/firebase.json` y `infra-propuesta/firebaserc.ejemplo` muestran el resultado de la mezcla, no se copian encima:
+  1. `.firebaserc`: se deja `default` como está y se agregan el alias `staging` -> `gymtrack-5dd46` y el target. Lo escribe la CLI: `firebase use --add` (interactivo: elige `gymtrack-5dd46` y el alias `staging`) y `firebase target:apply hosting maquetas gymtrack-5dd46 --project staging`. El alias `produccion` se agrega cuando exista ese proyecto.
+  2. `firebase.json`: en su bloque `hosting` se agrega solo `"target": "maquetas"`; `public`, `ignore` y `headers` quedan como están. Los bloques `storage` (con `storage.rules` copiado a `infra/firebase/`) y `emulators` se agregan recién cuando la API use Storage.
+  3. Se prueba con `firebase deploy --only hosting:maquetas --project staging` desde un computador antes de activar `hosting-maquetas.yml`. El workflow revisa al empezar que el alias y el target existan y falla con un mensaje claro si no.
 - La política de privacidad que §Privacidad pide en una URL propia puede ir en otro sitio de Hosting del proyecto de producción (REQ-68, SEG-029).
 - `hosting-maquetas.yml` publica en cada push a `main` que toque `docs/pantallas` y deja una vista previa de 7 días en cada PR del mismo repo.
 - La web futura del entrenador va en un sitio aparte del proyecto de producción, cuando exista.
@@ -517,7 +549,7 @@ El siguiente paso, cuando haya usuarios reales más allá del piloto, es sacar s
 | 4. Entrenador y alertas | Push real por FCM. INF-21, INF-22 |
 | 5. Piloto y publicación | Producción (por `version.yml`), `respaldo-vps.yml`, monitoreo completo. INF-02, INF-04, INF-06, INF-07, INF-14 a INF-20, INF-31, INF-32, INF-36 |
 
-Para activar un borrador: copia `ci-propuesto/<archivo>.yml` a `.github/workflows/`, y `infra-propuesta/` al servidor según «Carpetas» (`firebase.json` y `.firebaserc` a la raíz del repo, `storage.rules` a `infra/firebase/`). Revisa los `PENDIENTE` y abre un PR solo con eso.
+Para activar un borrador: copia `ci-propuesto/<archivo>.yml` a `.github/workflows/` y `ci-propuesto/acciones/preparar/` a `.github/actions/preparar/` (la usan `desplegar-vps.yml`, `version.yml` y los demás con `uses: ./.github/actions/preparar`), y `infra-propuesta/` al servidor según «Carpetas». `firebase.json` y `.firebaserc` **no se copian**: se mezclan con los de la raíz como dice «Hosting»; `storage.rules` va a `infra/firebase/` cuando se use Storage. Revisa los `PENDIENTE` y abre un PR solo con eso.
 
 ## Preguntas abiertas de este cambio
 

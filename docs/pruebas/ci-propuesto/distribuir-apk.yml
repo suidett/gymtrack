@@ -47,6 +47,11 @@ env:
   EAS_CLI_VERSION: "PENDIENTE"        # la misma que staging.yml y version.yml (eas.json pide 16 o más)
   FIREBASE_TOOLS_VERSION: "PENDIENTE" # fijar una versión exacta de firebase-tools
 
+# bash con pipefail en todos los pasos (un «a | tee» que falla en «a» no pasa como bueno).
+defaults:
+  run:
+    shell: bash
+
 jobs:
   apk:
     runs-on: ubuntu-latest

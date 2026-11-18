@@ -1,9 +1,13 @@
 {
   "hosting": {
     "public": "docs/pantallas",
-    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**", "**/*.md"],
     "cleanUrls": false,
     "headers": [
+      {
+        "source": "**",
+        "headers": [{ "key": "X-Robots-Tag", "value": "noindex" }]
+      },
       {
         "source": "**/*.@(html|css|js)",
         "headers": [{ "key": "Cache-Control", "value": "no-cache" }]

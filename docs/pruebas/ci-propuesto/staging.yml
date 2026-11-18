@@ -25,6 +25,11 @@ concurrency:
   group: staging
   cancel-in-progress: false
 
+# bash con pipefail en todos los pasos (un «a | tee» que falla en «a» no pasa como bueno).
+defaults:
+  run:
+    shell: bash
+
 jobs:
   desplegar:
     permissions:

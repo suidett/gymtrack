@@ -1,13 +1,13 @@
 {
-  "_borrador": "BORRADOR. Copiar a .firebaserc en la raíz con los ids reales y borrar esta clave. Las maquetas viven en el proyecto de staging; producción queda solo con datos reales y la web futura.",
+  "_borrador": "BORRADOR. No se copia encima del .firebaserc de la raíz: se le agregan el alias staging y el target maquetas, sin tocar default. gymtrack-5dd46 es hoy el proyecto de las maquetas y de staging. Lo más seguro es dejar que lo escriba la CLI: firebase use --add (interactivo: elige gymtrack-5dd46 y el alias staging) y firebase target:apply hosting maquetas gymtrack-5dd46 --project staging. El alias produccion se agrega recién cuando exista ese proyecto. Esta clave _borrador no se copia.",
   "projects": {
-    "staging": "<proyecto-staging>",
-    "produccion": "<proyecto-produccion>"
+    "default": "gymtrack-5dd46",
+    "staging": "gymtrack-5dd46"
   },
   "targets": {
-    "<proyecto-staging>": {
+    "gymtrack-5dd46": {
       "hosting": {
-        "maquetas": ["<sitio-maquetas>"]
+        "maquetas": ["gymtrack-5dd46"]
       }
     }
   }

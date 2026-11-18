@@ -23,6 +23,11 @@ permissions:
   contents: read
   issues: write
 
+# bash con pipefail en todos los pasos (un «a | tee» que falla en «a» no pasa como bueno).
+defaults:
+  run:
+    shell: bash
+
 jobs:
   e2e-completo:
     uses: ./.github/workflows/e2e-android.yml

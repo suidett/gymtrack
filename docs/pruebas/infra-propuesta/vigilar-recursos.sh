@@ -7,6 +7,10 @@
 # problemas, y Healthchecks.io avisa por correo al equipo. Si el servidor se
 # apaga, el latido deja de llegar y también avisa.
 #
+# También reinicia los contenedores de GymTrack que siguen «unhealthy»: Docker no
+# lo hace solo (restart: unless-stopped actúa cuando el proceso termina, no cuando
+# falla el healthcheck).
+#
 # Necesita /etc/gymtrack/vigilancia.env con HC_RECURSOS_URL y, si quieres
 # cambiarlos, UMBRAL_DISCO (por defecto 80 %), UMBRAL_RAM (90 %) y UMBRAL_SWAP (50 %).
 # Va en /opt/gymtrack/bin/vigilar-recursos.sh.
@@ -41,6 +45,24 @@ malos=$(
   docker ps -a --filter status=exited --filter label=com.docker.compose.project --format '{{.Names}} (detenido)'
 )
 [ -z "$malos" ] || problemas+=("contenedores: $(tr '\n' ' ' <<<"$malos")")
+
+# Reinicio de los «unhealthy» de los proyectos gymtrack-*. Solo con 8 chequeos fallidos
+# seguidos (unos 2 minutos con interval 15s, más que los 2 minutos que desplegar.sh le da
+# a una versión nueva) y nunca mientras hay un despliegue de ese entorno (su .bloqueo).
+# Si la causa es la base caída, reiniciar la API no la arregla, pero el aviso sale igual.
+reiniciados=()
+for id in $(docker ps -q --filter health=unhealthy --filter label=com.docker.compose.project); do
+  proyecto=$(docker inspect -f '{{index .Config.Labels "com.docker.compose.project"}}' "$id")
+  case "$proyecto" in gymtrack-produccion|gymtrack-staging) ;; *) continue ;; esac
+  bloqueo="/opt/gymtrack/${proyecto#gymtrack-}/.bloqueo"
+  if [ -e "$bloqueo" ] && ! flock -n "$bloqueo" true; then continue; fi
+  racha=$(docker inspect -f '{{.State.Health.FailingStreak}}' "$id")
+  if [ "${racha:-0}" -ge 8 ]; then
+    nombre=$(docker inspect -f '{{.Name}}' "$id")
+    docker restart "$id" >/dev/null && reiniciados+=("${nombre#/}")
+  fi
+done
+[ "${#reiniciados[@]}" -eq 0 ] || problemas+=("reiniciados por unhealthy: ${reiniciados[*]}")
 
 # El kernel mató algo por memoria en los últimos 5 minutos.
 oom=$(journalctl -k --since "-5 min" --no-pager 2>/dev/null | grep -ci "out of memory\|oom-kill")

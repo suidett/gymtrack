@@ -21,6 +21,11 @@ concurrency:
   group: app-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+# bash con pipefail en todos los pasos (un «a | tee» que falla en «a» no pasa como bueno).
+defaults:
+  run:
+    shell: bash
+
 jobs:
   # Decide si el PR toca la app. Se hace con un job (y no con «paths:» del workflow)
   # para que los checks obligatorios no queden pendientes cuando no hay nada que correr.

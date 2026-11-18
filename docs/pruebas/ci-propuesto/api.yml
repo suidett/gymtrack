@@ -38,6 +38,11 @@ env:
   CORREO_DRIVER: memoria
   PUSH_DRIVER: buzon
 
+# bash con pipefail en todos los pasos (un «a | tee» que falla en «a» no pasa como bueno).
+defaults:
+  run:
+    shell: bash
+
 jobs:
   cambios:
     runs-on: ubuntu-latest
@@ -276,7 +281,7 @@ jobs:
 
       - uses: docker/setup-buildx-action@v3
 
-      # PENDIENTE: apps/api/Dockerfile (la misma imagen sirve para la API y el worker).
+      # apps/api/Dockerfile: la misma imagen sirve para la API y el worker.
       - name: Imagen de la API
         uses: docker/build-push-action@v6
         with:

@@ -52,6 +52,11 @@ env:
   MAESTRO_VERSION: "PENDIENTE"   # fijar una versión exacta de Maestro al activar
   SALIDA: maestro-salida
 
+# bash con pipefail en todos los pasos (un «a | tee» que falla en «a» no pasa como bueno).
+defaults:
+  run:
+    shell: bash
+
 jobs:
   # Solo en PR: mira si el PR toca algo que afecte a la app o a la API.
   # En push, de noche y en versiones se salta y el job e2e corre siempre.

@@ -78,7 +78,14 @@ docker exec "$CONTENEDOR" sh -c \
   | age -r "$DESTINATARIO" > "$ARCHIVO.parcial"
 
 TAMANO=$(stat -c %s "$ARCHIVO.parcial")
-[ "$TAMANO" -ge "$MINIMO_BYTES" ] || { echo "respaldo demasiado chico: $TAMANO bytes" >&2; false; }
+# MINIMO_BYTES vale solo para el diario (y para «revisar», arriba): el predespliegue
+# de la primera versión corre con la base recién creada y pesa menos que eso; si se
+# exigiera aquí, el primer despliegue a producción no podría pasar nunca.
+if [ "$TIPO" = diario ]; then
+  [ "$TAMANO" -ge "$MINIMO_BYTES" ] || { echo "respaldo demasiado chico: $TAMANO bytes" >&2; false; }
+else
+  [ "$TAMANO" -gt 0 ] || { echo "respaldo vacío" >&2; false; }
+fi
 mv "$ARCHIVO.parcial" "$ARCHIVO"
 
 # --immutable: nunca reemplaza un archivo que ya existe en el bucket.

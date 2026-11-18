@@ -19,9 +19,12 @@ services:
       APP_ENTORNO: produccion
       # Que V8 limpie antes de chocar con el límite del contenedor.
       NODE_OPTIONS: --max-old-space-size=192
-      GOOGLE_APPLICATION_CREDENTIALS: /run/secretos/storage-api.json
-    volumes:
-      - /opt/gymtrack/produccion/secretos/storage-api.json:/run/secretos/storage-api.json:ro
+      # Storage: descomenta las dos líneas cuando la API use el Admin SDK. La llave va
+      # con dueño root, grupo 1000 (el de «node» en la imagen) y permisos 640; si no
+      # existe, Docker crea una carpeta con ese nombre en su lugar (env.ejemplo).
+      # GOOGLE_APPLICATION_CREDENTIALS: /run/secretos/storage-api.json
+    # volumes:
+    #   - /opt/gymtrack/produccion/secretos/storage-api.json:/run/secretos/storage-api.json:ro
     networks:
       borde:
         aliases: [api-produccion]   # Caddy apunta aquí; nunca a «api», que es ambiguo
@@ -34,9 +37,12 @@ services:
     environment:
       APP_ENTORNO: produccion
       NODE_OPTIONS: --max-old-space-size=128
-      GOOGLE_APPLICATION_CREDENTIALS: /run/secretos/storage-api.json
-    volumes:
-      - /opt/gymtrack/produccion/secretos/storage-api.json:/run/secretos/storage-api.json:ro
+      # Storage: descomenta las dos líneas cuando la API use el Admin SDK. La llave va
+      # con dueño root, grupo 1000 (el de «node» en la imagen) y permisos 640; si no
+      # existe, Docker crea una carpeta con ese nombre en su lugar (env.ejemplo).
+      # GOOGLE_APPLICATION_CREDENTIALS: /run/secretos/storage-api.json
+    # volumes:
+    #   - /opt/gymtrack/produccion/secretos/storage-api.json:/run/secretos/storage-api.json:ro
     mem_limit: 192m
     memswap_limit: 192m
     cpus: 0.5

@@ -21,10 +21,12 @@
 	}
 
 	# Las fotos y videos suben directo a Cloud Storage con URL firmada; a la API
-	# solo llega JSON. 2 MB alcanza para un lote de sincronización grande.
-	# PENDIENTE: confirmar con el tamaño real de POST /sync/sessions con 10 sesiones.
+	# solo llega JSON. El mismo tope que la API: bodyLimit 64 * 1024 en
+	# apps/api/src/app.ts. KiB y no KB: en Caddy KB son 1000 bytes.
+	# Si la API sube su bodyLimit (por ejemplo para POST /sync/sessions), sube este
+	# número en el mismo PR; nunca más alto que el de la API.
 	request_body {
-		max_size 2MB
+		max_size 64KiB
 	}
 
 	# Defensa en profundidad para SEG-025: las rutas de prueba solo existen con

@@ -4,12 +4,17 @@
 # Al empujar una etiqueta v1.2.3:
 #   0. comprobar       la etiqueta está en main y staging corre ese mismo commit
 #   1. suite-completa  corre nocturno.yml sobre ese commit; si no está verde, no sigue
-#   2. fotos-staging   SEG-017: URL vencida y purga de fotos en staging (§Riesgos)
+#   2. fotos-staging   SEG-017: URL vencida y purga de fotos en staging (§Riesgos).
+#                      APAGADO por ahora (if: false): ver el comentario del job
 #   3. produccion      llama a desplegar-vps.yml: espera la aprobación del entorno «produccion»
 #                      y despliega en el VPS de Vultr la misma imagen que corrió en staging
 #   4. play-interna    AAB con EAS, a la pista de prueba interna de Google Play, y tamaño (REN-006)
 #   5. release         release de GitHub con el changelog
 # Pasar de prueba interna a prueba cerrada o a producción en Play se hace a mano.
+#
+# «comprobar» y «fotos-staging» usan el entorno «staging» corriendo en una etiqueta:
+# la regla de despliegue de ese entorno tiene que aceptar la rama main y las
+# etiquetas v*.*.* (docs/pruebas/infraestructura-vps-firebase.md, «Entornos de GitHub»).
 # ─────────────────────────────────────────────────────────────────────────────
 name: Versión
 
@@ -20,6 +25,11 @@ on:
 permissions:
   contents: write   # para crear el release
   issues: write
+
+# bash con pipefail en todos los pasos: un «curl | tee» que falla no pasa como bueno.
+defaults:
+  run:
+    shell: bash
 
 concurrency:
   group: version
@@ -46,9 +56,10 @@ jobs:
       - name: La etiqueta está en main
         run: git merge-base --is-ancestor "$GITHUB_SHA" origin/main
 
-      # PENDIENTE: que /health devuelva la versión y el commit desplegados
-      # ({ "estado": "ok", "version": "sha-<sha>", "commit": "<sha>" }). El commit lo
-      # trae la imagen desde su construcción (build-arg COMMIT en desplegar-vps.yml).
+      # /health ya responde {"estado","version","commit","base"} (apps/api/src/salud/rutas.ts).
+      # «commit» es el COMMIT_SHA que la imagen trae desde su construcción: desplegar-vps.yml
+      # pasa siempre el SHA completo (build-arg COMMIT_SHA=${{ github.sha }}), así que se
+      # compara completo, 40 caracteres contra 40, con GITHUB_SHA.
       - name: Staging corre este commit
         run: |
           DESPLEGADO=$(curl -fsS "$STAGING_API_URL/health" | jq -r '.commit')
@@ -62,8 +73,15 @@ jobs:
     uses: ./.github/workflows/nocturno.yml
     secrets: inherit
 
+  # APAGADO hasta que existan las dos piezas que usa:
+  #   - el script «seguridad:fotos-staging» en apps/api/package.json (hoy no está);
+  #   - el subcomando «purga --ahora=<ISO>» del worker, que termina solo. Hoy
+  #     dist/worker.js no tiene tareas y queda vivo esperando SIGTERM, así que
+  #     «desplegar.sh purgar» se colgaría; por eso desplegar.sh también lo rechaza.
+  # Cuando estén, borra el «if» de abajo. «produccion» ya acepta este job saltado.
   fotos-staging:
     needs: suite-completa
+    if: ${{ false }}
     runs-on: ubuntu-latest
     environment: staging
     timeout-minutes: 30
@@ -113,6 +131,10 @@ jobs:
   # Si la migración borra o renombra algo, el PR trajo su plan de vuelta atrás.
   produccion:
     needs: [suite-completa, fotos-staging]
+    # fotos-staging puede venir saltado (está apagado); si corrió, tiene que salir bien.
+    if: >-
+      !cancelled() && needs.suite-completa.result == 'success' &&
+      (needs.fotos-staging.result == 'success' || needs.fotos-staging.result == 'skipped')
     permissions:
       contents: read
       packages: write   # para etiquetar la imagen en GHCR

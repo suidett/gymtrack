@@ -1,15 +1,20 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # Maquetas en Firebase Hosting · borrador
 #
-#   push a main      publica docs/pantallas en el sitio «maquetas» del proyecto de staging
+#   push a main      publica docs/pantallas en el sitio «maquetas» del proyecto de staging,
+#                    que hoy es gymtrack-5dd46 (el mismo que ya publica las maquetas)
 #   pull_request     publica un canal de vista previa por PR, que vence a los 7 días,
 #                    y deja el enlace en el PR (solo PR del mismo repo: los de forks no
 #                    reciben secretos ni token de OIDC)
 #
-# Necesita firebase.json y .firebaserc en la raíz (borradores en
-# docs/pruebas/infra-propuesta/). Las maquetas tienen datos falsos, pero igual se
-# sirven con X-Robots-Tag: noindex. Solo se publica docs/pantallas; el resto del
-# repo no sale nunca (INF-30).
+# Usa el firebase.json y el .firebaserc reales de la raíz, una vez mezclados con los
+# borradores de docs/pruebas/infra-propuesta/ (no copiados encima): .firebaserc con
+# el alias «staging» -> gymtrack-5dd46 y el target «maquetas», y firebase.json con
+# "target": "maquetas" en su bloque de hosting. Cómo, en «Hosting» de
+# docs/pruebas/infraestructura-vps-firebase.md. El primer paso lo revisa y falla con
+# un mensaje claro si falta algo.
+# Las maquetas tienen datos falsos, pero igual se sirven con X-Robots-Tag: noindex.
+# Solo se publica docs/pantallas, sin sus .md; el resto del repo no sale nunca (INF-30).
 #
 # Entra con Workload Identity Federation. La cuenta de servicio «gh-hosting» del
 # proyecto de staging solo tiene el rol «Firebase Hosting Admin».
@@ -24,9 +29,11 @@ on:
     paths:
       - "docs/pantallas/**"
       - "firebase.json"
+      - ".firebaserc"
   pull_request:
     paths:
       - "docs/pantallas/**"
+      - "firebase.json"
   workflow_dispatch:
 
 permissions:
@@ -40,6 +47,11 @@ concurrency:
 env:
   FIREBASE_TOOLS_VERSION: "PENDIENTE"
 
+# bash con pipefail en todos los pasos (un «a | tee» que falla en «a» no pasa como bueno).
+defaults:
+  run:
+    shell: bash
+
 jobs:
   publicar:
     if: github.event_name != 'pull_request'
@@ -47,6 +59,14 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+      - name: Revisar firebase.json y .firebaserc
+        run: |
+          PROYECTO=$(jq -er '.projects.staging' .firebaserc) \
+            || { echo "::error::.firebaserc no tiene el alias «staging» (gymtrack-5dd46)"; exit 1; }
+          jq -e --arg p "$PROYECTO" '.targets[$p].hosting.maquetas | length > 0' .firebaserc >/dev/null \
+            || { echo "::error::.firebaserc no tiene el target de hosting «maquetas» para $PROYECTO"; exit 1; }
+          jq -e '[.hosting] | flatten | map(select(.target == "maquetas")) | length == 1' firebase.json >/dev/null \
+            || { echo "::error::firebase.json no tiene un bloque de hosting con \"target\": \"maquetas\""; exit 1; }
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -61,17 +81,22 @@ jobs:
             --only hosting:maquetas --project staging --non-interactive \
             --message "$(git log -1 --pretty='%h %s')"
 
-      # INF-29: la portada y sus recursos responden y no se indexan; INF-30: nada fuera de docs/pantallas.
+      # INF-29: la portada y sus recursos responden y no se indexan; INF-30: nada fuera de
+      # docs/pantallas y ningún .md (el firebase.json real los ignora con "**/*.md").
       - name: Revisar el sitio
         env:
-          SITIO: ${{ vars.MAQUETAS_URL }}   # https://<sitio-maquetas>.web.app
+          SITIO: ${{ vars.MAQUETAS_URL }}   # https://gymtrack-5dd46.web.app (sitio por defecto; confírmalo)
         run: |
           curl -fsSI "$SITIO/index.html" | tee cabeceras.txt
-          grep -qi '^x-robots-tag: noindex' cabeceras.txt
+          grep -qi '^x-robots-tag: *noindex' cabeceras.txt
+          grep -qi '^x-robots-tag' <(curl -fsSI "$SITIO/sistema.css")
           curl -fsS -o /dev/null "$SITIO/hoy.html"
           curl -fsS -o /dev/null "$SITIO/sistema.css"
           curl -fsS -o /dev/null "$SITIO/maqueta.js"
+          # Los .md que sí existen en docs/pantallas no se publican.
           test "$(curl -s -o /dev/null -w '%{http_code}' "$SITIO/revision.md")" = 404
+          test "$(curl -s -o /dev/null -w '%{http_code}' "$SITIO/3d/revision.md")" = 404
+          test "$(curl -s -o /dev/null -w '%{http_code}' "$SITIO/firebase.json")" = 404
 
   vista-previa:
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
@@ -83,6 +108,14 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@v4
+      - name: Revisar firebase.json y .firebaserc
+        run: |
+          PROYECTO=$(jq -er '.projects.staging' .firebaserc) \
+            || { echo "::error::.firebaserc no tiene el alias «staging» (gymtrack-5dd46)"; exit 1; }
+          jq -e --arg p "$PROYECTO" '.targets[$p].hosting.maquetas | length > 0' .firebaserc >/dev/null \
+            || { echo "::error::.firebaserc no tiene el target de hosting «maquetas» para $PROYECTO"; exit 1; }
+          jq -e '[.hosting] | flatten | map(select(.target == "maquetas")) | length == 1' firebase.json >/dev/null \
+            || { echo "::error::firebase.json no tiene un bloque de hosting con \"target\": \"maquetas\""; exit 1; }
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -99,7 +132,7 @@ jobs:
           npx --yes "firebase-tools@${FIREBASE_TOOLS_VERSION}" hosting:channel:deploy "pr-$PR" \
             --only maquetas --project staging --expires 7d --json > canal.json
           # PENDIENTE: confirmar la forma del JSON con la versión fijada.
-          echo "url=$(jq -r '.result[].url' canal.json | head -n1)" >> "$GITHUB_OUTPUT"
+          echo "url=$(jq -r '[.result[].url][0]' canal.json)" >> "$GITHUB_OUTPUT"
 
       - name: Dejar el enlace en el PR
         env:

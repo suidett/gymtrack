@@ -4,7 +4,7 @@ Qué se hizo, dónde está y qué queda abierto. Si vas a revisar, parte por aqu
 
 ## Cómo verlo
 
-- **En línea:** las maquetas y los ejercicios 3D quedan publicados en Firebase Hosting, en `https://gymtrack-mas-2026.web.app` (proyecto `gymtrack-mas-2026`).
+- **En línea:** las maquetas y los ejercicios 3D quedan publicados en Firebase Hosting, en `https://gymtrack-5dd46.web.app` (proyecto `gymtrack-5dd46`).
 - **En tu computador:** desde la raíz del repo, `python3 -m http.server 4322 --directory docs/pantallas` y abre `http://localhost:4322`. La página de inicio enlaza todo.
 
 ## 1. Marca · `docs/marca/v2/`
@@ -16,20 +16,20 @@ Qué se hizo, dónde está y qué queda abierto. Si vas a revisar, parte por aqu
 ## 2. Pantallas · `docs/pantallas/`
 
 - Las 20 pantallas del PRD como maquetas HTML de 412 × 892 dp, en modo gimnasio y en clara, con todos sus estados (vacíos, errores, cargando, sin señal) y enlazadas entre sí. Alumno: Ingreso, Crear cuenta, Recuperar, Encuesta, Hoy, Rutinas, Nueva rutina, Detalle de rutina, Ejercicios, Detalle de ejercicio, Registro de sesión con su descanso, Rutina completada, Progreso, Perfil y Motivos de la baja. Entrenador: Clientes, Ficha del cliente, Alertas y Ajustar cargas.
-- Piezas compartidas en `sistema.css` y `maqueta.js`. Revisión de Fable en `revision.md`.
+- Piezas compartidas en `sistema.css` y `maqueta.js`. Revisión de dirección de arte en `revision.md`.
 - Auditoría de accesibilidad y uso (`auditoria.js`): toques de 48 y 56 dp, contraste AA, letra mínima, etiquetas, enlaces rotos y desbordes, en cerca de 150 estados y los dos temas. Resultado final: 0 hallazgos.
 
 ## 3. Ejercicios en 3D · `docs/pantallas/3d/` y `docs/pantallas/ejercicios-3d.html`
 
 - Los 67 ejercicios de la biblioteca (`packages/shared/src/exercises.seed.ts`, con los mismos ids) tienen su animación 3D: un maniquí simple que se gira con el dedo, con los músculos que trabajan en ámbar y los pasos de la técnica sincronizados. Funciona sin conexión: cada ejercicio son datos de movimiento, no un video.
 - `esqueleto.js` es matemática pura, sin three.js, para llevarla después a la app. `motor.js` dibuja con three.js. Cada ejercicio vive en `3d/ejercicios/<id>.js`.
-- Revisados por Fable en técnica y claridad (`3d/revision.md`). La hoja `3d/revision.html` muestra todos de un vistazo.
+- Revisados en técnica y claridad (`3d/revision.md`). La hoja `3d/revision.html` muestra todos de un vistazo.
 
 ## 4. Plan de pruebas y CI · `docs/pruebas/`
 
 - 60 casos de uso, 478 escenarios en Dado / Cuando / Entonces (unitarias, integración, contrato, app, Maestro de punta a punta, sin señal, worker, seguridad, rendimiento, accesibilidad, infraestructura y prueba manual en Play) y la matriz que cruza cada requisito del PRD con sus pruebas.
 - Diseño de CI/CD y borradores de GitHub Actions en `ci-propuesto/` (no se ejecutan hasta moverlos a `.github/`).
-- Revisado por Fable. Las preguntas abiertas están ordenadas en `README.md`, partiendo por las que bloquean los criterios de «lista».
+- Revisado. Las preguntas abiertas están ordenadas en `README.md`, partiendo por las que bloquean los criterios de «lista».
 
 ## 5. Infraestructura · `docs/pruebas/infraestructura-vps-firebase.md`
 
@@ -51,7 +51,7 @@ Qué se hizo, dónde está y qué queda abierto. Si vas a revisar, parte por aqu
 
 ## Lo que queda abierto
 
-- **Firebase:** aceptar los términos de Firebase en la consola y agregarlo al proyecto `gymtrack-mas-2026` (sin eso no se puede publicar). Para Storage y App Distribution hará falta el plan Blaze, que pide tarjeta pero trae cuota gratis.
+- **Firebase:** aceptar los términos de Firebase en la consola y agregarlo al proyecto `gymtrack-5dd46` (sin eso no se puede publicar). Para Storage y App Distribution hará falta el plan Blaze, que pide tarjeta pero trae cuota gratis.
 - **Resend:** crear la cuenta y verificar el dominio de los correos (registros DNS SPF y DKIM). Ver `apps/api/README.md`.
 - **Vultr:** confirmar ubicación, tamaño y dominio (`api.` y `api-staging.`); precios marcados «no verificado».
 - **PRD:** actualizar las secciones que todavía dicen Railway.
