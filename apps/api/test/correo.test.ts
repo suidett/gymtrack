@@ -1,11 +1,13 @@
 // Módulo de correo sin red: plantillas, adaptador de Resend con un fetch falso (nunca se llama a
 // la API real de Resend) y adaptador de consola sin datos personales ni tokens en el log.
 import { Writable } from 'node:stream';
+import { colors } from '@gymtrack/tokens';
 import pino from 'pino';
 import { describe, expect, it } from 'vitest';
-import { crearAdaptadorConsola, crearBuzon } from '../src/correo/desarrollo';
+import { crearServicioCorreo } from '../src/correo';
+import { crearAdaptadorConsola, crearAdaptadorMemoria, crearBuzon } from '../src/correo/desarrollo';
 import { escaparHtml, fmtVencimiento, plantillaBienvenida, plantillaRecuperacion } from '../src/correo/plantillas';
-import { crearAdaptadorResend, URL_RESEND } from '../src/correo/resend';
+import { crearAdaptadorResend, ErrorResend, TOPE_RESEND_MS, URL_RESEND } from '../src/correo/resend';
 import type { CorreoSaliente } from '../src/correo/tipos';
 
 const TOKEN = 'AbCdEfGhIjKlMnOpQrStUvWxYz0123456789_-abcd';
@@ -24,7 +26,8 @@ describe('plantillas', () => {
     expect(c.texto).toContain(`gymtrack://restablecer?token=${TOKEN}`);
     expect(c.texto).toContain('martes 17 de noviembre, 11:00');
     expect(c.texto).toContain('Si no lo pediste tú');
-    expect(c.html).toContain('#45B392');
+    // El color de la marca sale de @gymtrack/tokens, no escrito a mano en la plantilla.
+    expect(c.html).toContain(colors.primary.DEFAULT);
     expect(c.html).toContain('lang="es-CL"');
   });
   it('la hora sigue la zona: Punta Arenas está en UTC-3 todo el año', () => {
@@ -63,11 +66,74 @@ describe('adaptador de Resend (fetch falso)', () => {
     });
     expect(body.html).toContain(TOKEN);
   });
-  it('si Resend responde error, falla sin copiar el destinatario al mensaje', async () => {
-    const resend = crearAdaptadorResend({ apiKey: 'x', remitente: 'y', fetch: async () => ({ ok: false, status: 422 }) });
+  it('si Resend responde error, falla sin copiar el destinatario al mensaje y sin reintentar un 4xx', async () => {
+    let llamadas = 0;
+    const resend = crearAdaptadorResend({
+      apiKey: 'x', remitente: 'y', pausaReintentoMs: 0,
+      fetch: async () => {
+        llamadas += 1;
+        return { ok: false, status: 422 };
+      },
+    });
     const error = await resend.enviar(recuperacion()).catch((e: Error) => e);
-    expect(error).toBeInstanceOf(Error);
+    expect(error).toBeInstanceOf(ErrorResend);
     expect((error as Error).message).toBe('Resend respondió 422 al enviar recuperacion');
+    expect((error as ErrorResend).code).toBe('RESEND_422');
+    expect(llamadas).toBe(1);
+  });
+
+  it('cada intento tiene tope de 10 s y, si se cae por tiempo, reintenta una vez con la misma Idempotency-Key', async () => {
+    const intentos: { signal?: AbortSignal; clave: string }[] = [];
+    const resend = crearAdaptadorResend({
+      apiKey: 'x', remitente: 'y', pausaReintentoMs: 0,
+      fetch: async (_url, init) => {
+        intentos.push({ signal: init.signal, clave: init.headers['idempotency-key']! });
+        if (intentos.length === 1) throw new DOMException('The operation was aborted due to timeout', 'TimeoutError');
+        return { ok: true, status: 200 };
+      },
+    });
+    await resend.enviar(recuperacion());
+    expect(TOPE_RESEND_MS).toBe(10_000);
+    expect(intentos).toHaveLength(2);
+    expect(intentos.every((i) => i.signal instanceof AbortSignal)).toBe(true);
+    expect(intentos[0]!.clave).toMatch(/^gymtrack-recuperacion-/);
+    expect(intentos[1]!.clave).toBe(intentos[0]!.clave);
+  });
+
+  it('un 5xx se reintenta una sola vez y después falla con su código', async () => {
+    let llamadas = 0;
+    const resend = crearAdaptadorResend({
+      apiKey: 'x', remitente: 'y', pausaReintentoMs: 0,
+      fetch: async () => {
+        llamadas += 1;
+        return { ok: false, status: 503 };
+      },
+    });
+    const error = await resend.enviar(recuperacion()).catch((e: unknown) => e);
+    expect(llamadas).toBe(2);
+    expect(error).toMatchObject({ name: 'ErrorResend', code: 'RESEND_503' });
+  });
+});
+
+describe('servicio de correo en segundo plano', () => {
+  it('prepara y manda después de responder; si algo falla, el log lleva el tipo y el código, no el mensaje', async () => {
+    const lineas: string[] = [];
+    const log = pino({ level: 'info' }, new Writable({ write(t, _e, listo) { lineas.push(String(t)); listo(); } }));
+    const buzon = crearBuzon();
+    const servicio = crearServicioCorreo({ adaptador: crearAdaptadorMemoria(buzon), buzon, log });
+    servicio.prepararEnSegundoPlano('recuperacion', async () => recuperacion());
+    servicio.prepararEnSegundoPlano('recuperacion', async () => undefined);
+    servicio.prepararEnSegundoPlano('recuperacion', async () => {
+      throw Object.assign(new Error('Key (email)=(martina.fuentes@gymtrack.test) already exists'), { code: '23505' });
+    });
+    // Todavía no corrió nada: empieza después de que la ruta respondió.
+    expect(buzon.todos()).toHaveLength(0);
+    await servicio.esperarPendientes();
+    expect(buzon.todos()).toHaveLength(1);
+    const texto = lineas.join('');
+    expect(texto).toContain('"codigo":"23505"');
+    expect(texto).not.toContain('martina.fuentes@gymtrack.test');
+    expect(texto).not.toContain('already exists');
   });
 });
 

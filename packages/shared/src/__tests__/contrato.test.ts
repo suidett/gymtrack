@@ -9,8 +9,13 @@ describe('CON-005 códigos de error por estado', () => {
     VALIDATION_ERROR: 400, RESET_TOKEN_INVALID: 400,
     UNAUTHENTICATED: 401, TOKEN_INVALID: 401, TOKEN_EXPIRED: 401, INVALID_CREDENTIALS: 401,
     ACCOUNT_DELETED: 401, REFRESH_INVALID: 401, REFRESH_EXPIRED: 401, REFRESH_REUSED: 401,
-    FORBIDDEN: 403, NOT_FOUND: 404, EMAIL_TAKEN: 409, RATE_LIMITED: 429,
-    INTERNAL_ERROR: 500, SERVICE_UNAVAILABLE: 503,
+    FORBIDDEN: 403, NOT_FOUND: 404, INVITATION_NOT_FOUND: 404,
+    EMAIL_TAKEN: 409, SESSION_CLOSED: 409, SESSION_IN_PROGRESS: 409, SESSION_DISCARDED: 409,
+    INVITATION_USED: 409, ALREADY_LINKED: 409, EXERCISE_IN_ACTIVE_ROUTINE: 409,
+    EXERCISE_HAS_HISTORY: 409, SUGGESTION_USED: 409, CONFLICT: 409,
+    CONSENT_REQUIRED: 422, REPS_RANGE_INVALID: 422, EXERCISE_NOT_OWNED: 422,
+    ACTIVE_ROUTINE_CONFLICT: 422, ROUTINE_EMPTY: 422, BUSINESS_RULE: 422,
+    RATE_LIMITED: 429, INTERNAL_ERROR: 500, SERVICE_UNAVAILABLE: 503,
   };
   it('el catálogo y la tabla tienen los mismos códigos', () => {
     expect(Object.keys(CODIGOS_ERROR).sort()).toEqual(Object.keys(esperado).sort());
@@ -57,5 +62,46 @@ describe('cliente de cuentas', () => {
     const cliente = crearClienteCuentas({ urlBase: 'http://api', fetch, obtenerAccessToken: () => 'abc' });
     await expect(cliente.perfil()).rejects.toMatchObject({ codigo: 'TOKEN_EXPIRED' });
     expect(llamadas[0]).toEqual({ url: 'http://api/v1/me', headers: { accept: 'application/json', authorization: 'Bearer abc' } });
+  });
+
+  it('renueva de a uno: tres llamadas simultáneas con el mismo refresh hacen un solo POST /v1/auth/refresh', async () => {
+    const tokens = {
+      token_type: 'Bearer', access_token: 'a2', access_vence_at: '2026-11-17T13:15:00.000Z',
+      refresh_token: 'r2', refresh_vence_at: '2026-12-17T13:00:00.000Z',
+    };
+    const cuerpos: string[] = [];
+    let soltar!: () => void;
+    const espera = new Promise<void>((r) => { soltar = r; });
+    const fetch: FetchMinimo = async (_url, init) => {
+      cuerpos.push(init.body!);
+      await espera;
+      return respuesta(200, { tokens });
+    };
+    const cliente = crearClienteCuentas({ urlBase: 'http://api', fetch });
+    const tres = [cliente.renovar('r1'), cliente.renovar('r1'), cliente.renovar('r1')];
+    // Otro token mientras hay uno en curso: espera su turno, no sale en paralelo.
+    const otro = cliente.renovar('r9');
+    await Promise.resolve();
+    expect(cuerpos).toEqual([JSON.stringify({ refresh_token: 'r1' })]);
+    soltar();
+    for (const r of await Promise.all(tres)) expect(r.tokens.refresh_token).toBe('r2');
+    await otro;
+    expect(cuerpos).toEqual([JSON.stringify({ refresh_token: 'r1' }), JSON.stringify({ refresh_token: 'r9' })]);
+    // Terminada, la siguiente renovación vuelve a salir.
+    await cliente.renovar('r2');
+    expect(cuerpos).toHaveLength(3);
+  });
+
+  it('si la renovación en curso falla, todas las que la esperaban reciben el mismo error', async () => {
+    let llamadas = 0;
+    const fetch: FetchMinimo = async () => {
+      llamadas += 1;
+      return respuesta(401, { error: { code: 'REFRESH_REUSED', message: 'Inicia sesión de nuevo' } });
+    };
+    const cliente = crearClienteCuentas({ urlBase: 'http://api', fetch });
+    const r = await Promise.allSettled([cliente.renovar('r1'), cliente.renovar('r1')]);
+    expect(llamadas).toBe(1);
+    expect(r.map((x) => x.status)).toEqual(['rejected', 'rejected']);
+    expect((r[0] as PromiseRejectedResult).reason).toMatchObject({ codigo: 'REFRESH_REUSED' });
   });
 });

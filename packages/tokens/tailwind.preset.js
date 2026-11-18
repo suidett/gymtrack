@@ -1,62 +1,73 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Preset de Tailwind · Zona: Diseño
 //
-// Qué hace: traduce los tokens de index.js al formato que entiende Tailwind, para que en la app
-// (NativeWind) y en cualquier web futura existan las mismas clases: bg-primary-soft,
-// text-ink-muted, font-sans-bold, rounded-card. Es un preset, no una config completa: la app
-// lo carga desde apps/mobile/tailwind.config.js junto con el preset de NativeWind.
-// Tócalo cuando: agregues una clave nueva en index.js y quieras que exista como clase, o
-// necesites cambiar cómo se llama una clase (por ejemplo, exponer un radio nuevo).
-// No lo toques para: cambiar un valor (un hexadecimal, el tamaño de un radio): eso va en
-// index.js y acá se refleja solo. Tampoco para agregar plugins o cambiar qué carpetas escanea
-// Tailwind: eso es de la config de la app (apps/mobile/tailwind.config.js).
-// Depende de: ./index.js (colors, fonts, radius).
+// Qué hace: traduce los tokens de index.js al formato de Tailwind para que en la app
+// (NativeWind) existan las clases de la marca «Más»: bg-fondo, bg-sup, text-texto-2,
+// bg-accion, text-accion-texto, border-borde, font-sans-bold, font-mono-bold, rounded-control.
+// Los colores no son hexadecimales fijos: apuntan a variables CSS (--fondo, --texto...) que la
+// raíz de la app llena con el tema activo (modo gimnasio o clara). Así una misma clase sirve en
+// los dos temas y cambiar de tema no obliga a tocar ninguna pantalla.
+// Tócalo cuando: agregues una clave nueva en index.js y quieras que exista como clase.
+// No lo toques para: cambiar un valor (index.js) ni para agregar plugins o carpetas que escanea
+// Tailwind (apps/mobile/tailwind.config.js).
+// Depende de: ./index.js (temas, nombresColor, variablesTema, fonts, radius).
 // ─────────────────────────────────────────────────────────────────────────────
 
-const { colors, fonts, radius } = require('./index.js');
+const { nombresColor, variablesTema, fonts, radius, marca } = require('./index.js');
+
+// ── Colores por variable ─────────────────────────────────────────────────────
+// `rgb(var(--x) / <alpha-value>)` permite además la opacidad de Tailwind (bg-fondo/80).
+const v = (nombre) => `rgb(var(--${nombre}) / <alpha-value>)`;
+const coloresTema = Object.fromEntries(nombresColor.map((n) => [n, v(n)]));
+
+// Nombres de la versión 0.1 (menta) apuntando a las variables nuevas, para que el código viejo
+// (features/sesion, components/) se vea con la marca nueva sin reescribirlo. No los uses en
+// pantallas nuevas.
+const coloresViejos = {
+  primary: { DEFAULT: v('accion'), deep: v('acento-texto'), soft: v('fila-hecha'), bright: v('accion') },
+  accent: { DEFAULT: v('accion'), deep: v('acento-texto'), soft: v('fila-hecha'), bright: v('accion') },
+  ink: { DEFAULT: v('texto'), muted: v('texto-2'), faint: v('desh-texto') },
+  bg: v('fondo'),
+  surface: v('sup'),
+  line: v('sup-alta'),
+  field: v('sup-alta'),
+  danger: { DEFAULT: v('peligro'), soft: v('sup-alta') },
+};
 
 /**
  * Preset compartido. Todo va dentro de `theme.extend` para sumar a la paleta y las escalas por
- * defecto de Tailwind, no reemplazarlas: así siguen existiendo `bg-white`, `rounded-full` o
- * `text-xs` al lado de las nuestras.
+ * defecto de Tailwind, no reemplazarlas.
  * @type {import('tailwindcss').Config}
  */
 module.exports = {
   theme: {
     extend: {
-      // Las familias van listadas una por una y no como `...colors`, para que se vea de un
-      // vistazo cuáles existen como clase y agregar una sea una decisión explícita.
-      // Un objeto con DEFAULT da la clase sin sufijo (bg-primary) y una por variante
-      // (bg-primary-soft); un string da una sola clase (bg-bg, bg-surface, border-line).
       colors: {
-        primary: colors.primary,
-        accent: colors.accent,
-        ink: colors.ink,
-        bg: colors.bg,
-        surface: colors.surface,
-        line: colors.line,
-        field: colors.field,
-        danger: colors.danger,
-        gym: colors.gym,
+        ...coloresTema,
+        ...coloresViejos,
+        // Fijos de la marca, sin tema: el ámbar del símbolo y el grafito.
+        ambar: marca.ambar,
+        grafito: marca.grafito,
       },
-      // Hay una clave por peso y no una sola `sans` con varios pesos porque en React Native
-      // cada peso de una fuente cargada es una familia distinta (ver index.js). Las clases
-      // quedan como font-sans, font-sans-medium, font-mono-semibold. Si sumas un peso acá,
-      // súmalo también en index.js y en el useFonts de apps/mobile/src/app/_layout.tsx.
+      // Una clave por peso: en React Native cada peso de una fuente cargada es una familia.
+      // font-sans es Archivo 500 (el texto de la marca); font-mono-bold es la cifra.
       fontFamily: {
-        sans: [fonts.sans.regular],
+        sans: [fonts.sans.medium],
+        'sans-regular': [fonts.sans.regular],
         'sans-medium': [fonts.sans.medium],
         'sans-semibold': [fonts.sans.semibold],
         'sans-bold': [fonts.sans.bold],
         'sans-extrabold': [fonts.sans.extrabold],
-        mono: [fonts.mono.regular],
+        mono: [fonts.mono.medium],
+        'mono-regular': [fonts.mono.regular],
         'mono-medium': [fonts.mono.medium],
         'mono-semibold': [fonts.mono.semibold],
+        'mono-bold': [fonts.mono.bold],
       },
-      // Tailwind espera unidades, por eso el `px`; en React Native NativeWind lo vuelve el
-      // número sin unidad de siempre. `pill` queda fuera a propósito: para eso está
-      // `rounded-full`, que ya viene con Tailwind.
       borderRadius: {
+        control: `${radius.control}px`,
+        perilla: `${radius.perilla}px`,
+        hoja: `${radius.hoja}px`,
         field: `${radius.field}px`,
         button: `${radius.button}px`,
         card: `${radius.card}px`,
@@ -64,4 +75,12 @@ module.exports = {
       },
     },
   },
+  // ── Valores por defecto ──────────────────────────────────────────────────────
+  // Las variables del modo gimnasio en :root, para que cualquier pieza que se pinte fuera del
+  // proveedor de tema (o antes de que monte) tenga colores y no quede transparente.
+  plugins: [
+    function temaPorDefecto({ addBase }) {
+      addBase({ ':root': variablesTema('gimnasio') });
+    },
+  ],
 };

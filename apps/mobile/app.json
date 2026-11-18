@@ -5,10 +5,10 @@
     "version": "0.1.0",
     "scheme": "gymtrack",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "icon": "./assets/marca/icono.png",
+    "userInterfaceStyle": "dark",
     "newArchEnabled": true,
-    "backgroundColor": "#F5F7F5",
+    "backgroundColor": "#0F1113",
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.gymtrack.app"
@@ -16,31 +16,32 @@
     "android": {
       "package": "com.gymtrack.app",
       "adaptiveIcon": {
-        "backgroundColor": "#E3F3ED",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "backgroundColor": "#1A1D20",
+        "foregroundImage": "./assets/marca/android-primer-plano.png",
+        "backgroundImage": "./assets/marca/android-fondo.png",
+        "monochromeImage": "./assets/marca/android-monocromo.png"
       },
       "predictiveBackGestureEnabled": false
     },
     "web": {
       "bundler": "metro",
       "output": "single",
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/marca/favicon.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/splash-icon.png",
-          "imageWidth": 160,
+          "image": "./assets/marca/splash.png",
+          "imageWidth": 96,
           "resizeMode": "contain",
-          "backgroundColor": "#F5F7F5"
+          "backgroundColor": "#0F1113"
         }
       ],
       "expo-status-bar",
-      "expo-font"
+      "expo-font",
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true

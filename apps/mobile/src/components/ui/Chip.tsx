@@ -1,58 +1,87 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Chip · Zona: Kit de interfaz
+// Chips · Zona: Kit de interfaz
 //
-// Qué hace: las pastillas para elegir una opción entre varias, como el método de progresión de
-// una rutina. Chip es una sola; Chips arma la fila completa a partir de una lista y avisa cuál
-// quedó elegida.
-// Tócalo cuando: quieras cambiar cómo se ve una opción elegida o no elegida, o cómo se
-// distribuyen las pastillas (hoy van en fila y saltan de línea si no caben).
-// No lo toques para: definir las opciones en sí (cada pantalla trae su lista) ni para pastillas
-// que solo se leen y no se tocan (eso es Etiqueta, en Tarjeta.tsx).
-// Depende de: nada propio (solo React Native). Las clases bg-primary, border-line, etc. salen del
-// preset de packages/tokens.
+// Qué hace: las opciones tocables de sistema.css (.chip): 48 dp de toque con 40 dp visibles,
+// borde de 2 dp, radio 8. Por defecto la letra es la cifra (JetBrains Mono 700, para RIR o
+// repeticiones); con `texto` es Archivo 600. El elegido se pinta con el texto del tema de fondo.
+// `Chips` es el grupo donde queda una sola elegida.
+// Tócalo cuando: cambie cómo se ve una opción elegible en toda la app.
+// No lo toques para: filtros con varias elegidas a la vez (arma la lista con <Chip> sueltos).
+// Depende de: react-native y ../../lib/vibrar.
 // ─────────────────────────────────────────────────────────────────────────────
 import { Pressable, Text, View } from 'react-native';
+import { vibrarSeleccion } from '@/lib/vibrar';
 
-// ── Una pastilla ─────────────────────────────────────────────────────────────
+// ── Una opción ───────────────────────────────────────────────────────────────
 /**
- * Una opción tocable.
- * Recibe `titulo`, `activo` (si está elegida se pinta con el color primario) y `onPress`.
- * Le avisa al lector de pantalla que es un botón y si está seleccionada.
+ * Una opción. `titulo` es lo que dice, `activo` si está elegida. `texto` la escribe en Archivo
+ * (para palabras); sin él va en mono (para cifras). `ancho` la estira a lo que sobre (fila de RIR).
  */
-export function Chip({ titulo, activo, onPress }: { titulo: string; activo: boolean; onPress: () => void }) {
+export function Chip({
+  titulo,
+  activo,
+  onPress,
+  texto = true,
+  ancho = false,
+  etiqueta,
+}: {
+  titulo: string;
+  activo: boolean;
+  onPress: () => void;
+  texto?: boolean;
+  ancho?: boolean;
+  /** Lo que lee el lector de pantalla si el título no alcanza («RIR 2»). */
+  etiqueta?: string;
+}) {
   return (
     <Pressable
-      onPress={onPress}
+      onPress={() => {
+        vibrarSeleccion();
+        onPress();
+      }}
       accessibilityRole="button"
+      accessibilityLabel={etiqueta ?? titulo}
       accessibilityState={{ selected: activo }}
-      className={`rounded-full px-3.5 py-2 ${activo ? 'bg-primary' : 'border border-line bg-surface'}`}
+      className={`h-12 justify-center py-1 ${ancho ? 'flex-1' : ''}`}
     >
-      <Text className={`font-sans-semibold text-[13px] ${activo ? 'text-white' : 'text-ink-muted'}`}>{titulo}</Text>
+      {({ pressed }) => (
+        <View
+          className={`h-10 items-center justify-center rounded-control border-2 ${texto ? 'px-3.5' : 'px-2'} ${
+            activo ? 'border-chip-fondo bg-chip-fondo' : pressed ? 'border-borde bg-fantasma-pres' : 'border-borde bg-transparent'
+          }`}
+        >
+          <Text
+            className={`${texto ? 'font-sans-semibold text-[15px]' : 'font-mono-bold text-[16px]'} ${activo ? 'text-chip-texto' : 'text-texto'}`}
+          >
+            {titulo}
+          </Text>
+        </View>
+      )}
     </Pressable>
   );
 }
 
-// ── Grupo de pastillas ───────────────────────────────────────────────────────
+// ── Grupo ────────────────────────────────────────────────────────────────────
 /**
- * Fila de chips donde una sola queda elegida (como un grupo de radio).
- * Recibe `opciones` (lista de { id, nombre }), `valor` (el id elegido) y `onCambio`, que se llama
- * con el id de la pastilla tocada. El genérico T deja `valor` y `onCambio` tipados con los mismos
- * ids de las opciones, así el compilador te avisa si pasas uno que no existe.
- * Tocar la que ya está elegida vuelve a llamar onCambio con el mismo id; no la deselecciona.
+ * Fila de chips donde una sola queda elegida. `opciones` es una lista de { id, nombre }; `valor`
+ * el id elegido; `onCambio` recibe el id tocado. `cifras` las escribe en mono y las estira
+ * (fila de RIR 0 a 4); sin él son palabras y bajan de línea si no caben.
  */
 export function Chips<T extends string>({
   opciones,
   valor,
   onCambio,
+  cifras = false,
 }: {
   opciones: readonly { id: T; nombre: string }[];
   valor: T;
   onCambio: (v: T) => void;
+  cifras?: boolean;
 }) {
   return (
-    <View className="flex-row flex-wrap gap-2">
+    <View className={`flex-row gap-2 ${cifras ? '' : 'flex-wrap'}`}>
       {opciones.map((o) => (
-        <Chip key={o.id} titulo={o.nombre} activo={o.id === valor} onPress={() => onCambio(o.id)} />
+        <Chip key={o.id} titulo={o.nombre} texto={!cifras} ancho={cifras} activo={o.id === valor} onPress={() => onCambio(o.id)} />
       ))}
     </View>
   );

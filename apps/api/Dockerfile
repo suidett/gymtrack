@@ -6,8 +6,10 @@
 # imagen para la API (`node dist/servidor.js`, el comando por defecto) y el worker
 # (`node dist/worker.js`). Trae el CLI de Prisma y las migraciones para que desplegar.sh corra
 # `npx prisma migrate deploy` con esta misma imagen antes de levantar la versión nueva.
+# El HEALTHCHECK pide /health a la API cada 15 s (200 solo si la base responde). En el contenedor
+# del worker (misma imagen, otro comando) no hay servidor HTTP: el chequeo lo ve y da sano.
 # Se construye desde la raíz del monorepo:
-#   docker build -f apps/api/Dockerfile --build-arg COMMIT_SHA=$(git rev-parse --short HEAD) -t gymtrack-api .
+#   docker build -f apps/api/Dockerfile --build-arg COMMIT_SHA=$(git rev-parse HEAD) -t gymtrack-api .
 # Tócalo cuando: cambie la versión de Node, de pnpm o lo que la API necesita al correr.
 # No lo toques para: variables de entorno (van en app.env del VPS, nunca en la imagen).
 # Depende de: pnpm-lock.yaml, apps/api, packages/shared y packages/tokens.
@@ -41,6 +43,19 @@ COPY apps/api/prisma.config.ts apps/api/
 ARG COMMIT_SHA=desconocido
 ENV COMMIT_SHA=${COMMIT_SHA}
 WORKDIR /repo/apps/api
+COPY <<'SALUD' /repo/apps/api/salud-contenedor.mjs
+// HEALTHCHECK de la imagen. Solo revisa /health si el proceso principal es la API.
+import { readFileSync } from 'node:fs';
+let comando = '';
+try {
+  comando = readFileSync('/proc/1/cmdline', 'utf8');
+} catch {}
+if (!comando.includes('servidor.js')) process.exit(0);
+fetch(`http://127.0.0.1:${process.env.PORT ?? '3000'}/health`, { signal: AbortSignal.timeout(4000) })
+  .then((r) => process.exit(r.ok ? 0 : 1))
+  .catch(() => process.exit(1));
+SALUD
 USER node
 EXPOSE 3000
+HEALTHCHECK --interval=15s --timeout=5s --start-period=20s --retries=3 CMD ["node", "salud-contenedor.mjs"]
 CMD ["node", "dist/servidor.js"]

@@ -1,7 +1,7 @@
 // Contrato entre la app y la API (plan-de-validacion.md, CON). No necesitan base: la API se arma
 // con una URL que no lleva a ninguna y estas pruebas no llegan a consultarla.
 import {
-  crearClienteCuentas, esquemaUsuario, RESPUESTAS_ERROR, RUTAS_CUENTAS, type FetchMinimo,
+  crearClienteCuentas, esquemaUsuario, LISTA_RUTAS_API, RESPUESTAS_ERROR, RUTAS_CUENTAS, type FetchMinimo,
 } from '@gymtrack/shared';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -20,15 +20,18 @@ describe('Contrato sin base', () => {
   });
 
   it('CON-001 cada ruta registrada usa el esquema de entrada y de salida de @gymtrack/shared', () => {
-    const catalogo = Object.values(RUTAS_CUENTAS);
+    // Todas las rutas de todos los módulos (CATALOGO_API en packages/shared/src/api/index.ts).
+    const catalogo = LISTA_RUTAS_API;
     const rutas = a.app.gymtrack.rutas;
     expect(rutas).toHaveLength(catalogo.length);
     for (const r of rutas) {
       const c = catalogo.find((x) => x.ruta === r.url && x.metodo === r.metodo);
-      expect(c, `${r.metodo} ${r.url} está en RUTAS_CUENTAS`).toBeDefined();
-      const schema = r.schema as { body?: unknown; response: Record<string, unknown> };
+      expect(c, `${r.metodo} ${r.url} está en CATALOGO_API`).toBeDefined();
+      const schema = r.schema as { body?: unknown; querystring?: unknown; params?: unknown; response: Record<string, unknown> };
       // El mismo objeto, no una copia: ninguna ruta define un esquema propio en apps/api.
       expect(schema.body).toBe(c!.cuerpo);
+      expect(schema.querystring).toBe(c!.query);
+      expect(schema.params).toBe(c!.params);
       expect(schema.response[c!.exito]).toBe(c!.respuesta);
       for (const [estado, esquema] of Object.entries(RESPUESTAS_ERROR)) expect(schema.response[estado]).toBe(esquema);
     }

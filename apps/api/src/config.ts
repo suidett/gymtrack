@@ -10,6 +10,7 @@
 // Depende de: zod. Lo usan servidor.ts, worker.ts y las pruebas.
 // ─────────────────────────────────────────────────────────────────────────────
 import { randomBytes } from 'node:crypto';
+import { BlockList, isIP, isIPv4, isIPv6 } from 'node:net';
 import { z } from 'zod';
 
 // ── Esquema de variables ─────────────────────────────────────────────────────
@@ -26,8 +27,8 @@ const esquemaEntorno = z.object({
   VERSION: z.string().min(1).default('dev'),
   COMMIT_SHA: z.string().min(1).default('desconocido'),
   // Detrás de Caddy la IP real llega en X-Forwarded-For. Sin esto el límite de ingresos por IP
-  // contaría a todos como la IP de Caddy.
-  CONFIAR_PROXY: z.enum(['true', 'false']).default('false'),
+  // contaría a todos como la IP de Caddy. Se lee con leerConfiarProxy (abajo): saltos, IPs o false.
+  CONFIAR_PROXY: z.string().trim().optional(),
   // Correo.
   CORREO_DRIVER: z.enum(['resend', 'consola', 'memoria']).optional(),
   RESEND_API_KEY: z.string().min(1).optional(),
@@ -38,6 +39,10 @@ const esquemaEntorno = z.object({
   ENLACE_RESTABLECER_URL: z.string().min(1).default('gymtrack://restablecer'),
   // Solo para pruebas y desarrollo: la API parte con este «ahora» (ISO con zona).
   RELOJ_FIJO: z.iso.datetime({ offset: true }).optional(),
+  // Orígenes web que pueden llamar a la API desde un navegador (la versión web de la app),
+  // separados por coma. La app nativa no lo necesita. Fuera de producción, sin valor, se aceptan
+  // http://localhost:* y http://127.0.0.1:* (Expo web).
+  CORS_ORIGENES: z.string().trim().optional(),
 });
 
 export type Entorno = z.infer<typeof esquemaEntorno>;
@@ -51,7 +56,8 @@ export interface Config {
   jwtSecreto: string;
   version: string;
   commit: string;
-  confiarProxy: boolean;
+  /** Va tal cual a `trustProxy` de Fastify: false, la función de saltos o las IPs/redes del proxy. */
+  confiarProxy: ConfiarProxy;
   correo: {
     driver: 'resend' | 'consola' | 'memoria';
     resendApiKey?: string;
@@ -60,6 +66,68 @@ export interface Config {
   };
   enlaceRestablecer: string;
   relojFijo?: string;
+  /** Orígenes web con permiso (CORS). `localhost`: cualquier http://localhost:* o 127.0.0.1:*. */
+  cors: { origenes: string[]; localhost: boolean };
+}
+
+// ── Proxy de confianza ───────────────────────────────────────────────────────
+/** Lo que entiende `trustProxy` de Fastify: si la dirección del salto `salto` es un proxy creíble. */
+export type FuncionConfianza = (direccion: string, salto: number) => boolean;
+/** false: la IP del socket. Una función: cuántos saltos se creen. Una lista: las IPs o redes del proxy. */
+export type ConfiarProxy = false | string[] | FuncionConfianza;
+
+const REDES_CON_NOMBRE = new Set(['loopback', 'linklocal', 'uniquelocal']);
+
+// Redes privadas y locales: de donde puede venir Caddy dentro de Docker o del mismo equipo.
+const REDES_PRIVADAS = new BlockList();
+for (const [red, prefijo] of [['10.0.0.0', 8], ['172.16.0.0', 12], ['192.168.0.0', 16], ['127.0.0.0', 8], ['169.254.0.0', 16]] as const) {
+  REDES_PRIVADAS.addSubnet(red, prefijo, 'ipv4');
+}
+for (const [red, prefijo] of [['fc00::', 7], ['fe80::', 10], ['::1', 128]] as const) REDES_PRIVADAS.addSubnet(red, prefijo, 'ipv6');
+
+function esDireccionPrivada(direccion: string): boolean {
+  const v4 = /^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/i.exec(direccion)?.[1] ?? direccion;
+  if (isIPv4(v4)) return REDES_PRIVADAS.check(v4, 'ipv4');
+  return isIPv6(direccion) && REDES_PRIVADAS.check(direccion, 'ipv6');
+}
+
+/**
+ * Cree `saltos` proxies desde el socket hacia atrás. El primero (quien abrió la conexión) además
+ * tiene que venir de una red privada: Fastify 5 ya no acepta un número en trustProxy porque así
+ * cualquiera que llegue directo, sin pasar por Caddy, elegiría su IP con un X-Forwarded-For.
+ */
+export function confiarEnSaltos(saltos: number): FuncionConfianza {
+  return (direccion, salto) => salto < saltos && (salto > 0 || esDireccionPrivada(direccion));
+}
+
+function esIpORed(texto: string): boolean {
+  if (REDES_CON_NOMBRE.has(texto)) return true;
+  const [ip = '', prefijo, ...resto] = texto.split('/');
+  const version = isIP(ip);
+  if (!version || resto.length) return false;
+  if (prefijo === undefined) return true;
+  return /^\d{1,3}$/.test(prefijo) && Number(prefijo) <= (version === 4 ? 32 : 128);
+}
+
+/**
+ * CONFIAR_PROXY acepta:
+ *   - un número de saltos: `1` = solo Caddy (el valor por defecto en producción); se usa la
+ *     última IP de X-Forwarded-For, la que agregó Caddy, y lo que el cliente inventó a la
+ *     izquierda no cuenta;
+ *   - las IPs o redes del proxy separadas por coma (`172.18.0.0/16,10.0.0.2`, o `uniquelocal`);
+ *   - `false` o `0`: nadie, se usa la IP del socket (el valor por defecto fuera de producción).
+ * `true` se lee como `1`: creerle a toda la cadena dejaría que cualquiera elija su IP con un
+ * X-Forwarded-For inventado y se salte los límites por IP.
+ * Devuelve el valor listo para `trustProxy` de Fastify, o un Error con el motivo.
+ */
+export function leerConfiarProxy(valor: string | undefined, produccion: boolean): ConfiarProxy | Error {
+  if (valor === undefined || valor === '') return produccion ? confiarEnSaltos(1) : false;
+  if (valor === 'false' || valor === '0') return false;
+  if (valor === 'true') return confiarEnSaltos(1);
+  if (/^\d{1,2}$/.test(valor)) return confiarEnSaltos(Number(valor));
+  const partes = valor.split(',').map((p) => p.trim()).filter(Boolean);
+  if (partes.length && partes.every(esIpORed)) return partes;
+  return new Error('CONFIAR_PROXY tiene que ser un número de saltos (1), IPs o redes del proxy separadas por coma, o false');
 }
 
 // ── Lectura ──────────────────────────────────────────────────────────────────
@@ -92,6 +160,9 @@ export function leerConfig(env: Record<string, string | undefined> = process.env
     problemas.push('en producción los correos salen por Resend (CORREO_DRIVER=resend)');
   }
 
+  const confiarProxy = leerConfiarProxy(e.CONFIAR_PROXY, e.NODE_ENV === 'production');
+  if (confiarProxy instanceof Error) problemas.push(confiarProxy.message);
+
   if (problemas.length) throw new Error(`Configuración inválida: ${problemas.join('; ')}`);
 
   return {
@@ -103,7 +174,7 @@ export function leerConfig(env: Record<string, string | undefined> = process.env
     jwtSecreto: jwtSecreto!,
     version: e.VERSION,
     commit: e.COMMIT_SHA,
-    confiarProxy: e.CONFIAR_PROXY === 'true',
+    confiarProxy: confiarProxy as ConfiarProxy,
     correo: {
       driver,
       resendApiKey: e.RESEND_API_KEY,
@@ -112,5 +183,9 @@ export function leerConfig(env: Record<string, string | undefined> = process.env
     },
     enlaceRestablecer: e.ENLACE_RESTABLECER_URL,
     relojFijo: e.RELOJ_FIJO,
+    cors: {
+      origenes: (e.CORS_ORIGENES ?? '').split(',').map((o) => o.trim()).filter(Boolean),
+      localhost: e.NODE_ENV !== 'production' && !e.CORS_ORIGENES,
+    },
   };
 }

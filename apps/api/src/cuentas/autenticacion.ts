@@ -2,9 +2,10 @@
 // Autenticación de las rutas privadas · Zona: Cuentas (API)
 //
 // Qué hace: el preHandler de toda ruta que no es pública. Lee `Authorization: Bearer <access>`,
-// verifica el JWT con el reloj inyectado, carga al usuario (si ya no existe o está marcado para
-// borrado, 401 aunque el token no haya vencido) y aplica el tope de 60 llamadas por minuto por
-// usuario (§Seguridad; SEG-011). Deja al usuario en `req.usuario`.
+// verifica el JWT con el reloj inyectado, carga al usuario (si ya no existe, está marcado para
+// borrado o cambió la contraseña después de emitido el token, 401 aunque no haya vencido) y
+// aplica el tope de 60 llamadas por minuto por usuario (§Seguridad; SEG-011). Deja al usuario en
+// `req.usuario`.
 // Tócalo cuando: cambie cómo se identifica a quien llama.
 // No lo toques para: la firma o la duración del token (src/seguridad/tokens.ts).
 // Depende de: src/seguridad/tokens.ts, src/seguridad/limitador.ts y la base.
@@ -33,6 +34,8 @@ export function crearAutenticador(d: { prisma: BaseDeDatos; reloj: Reloj; firmad
     if (claims === 'invalido') throw new ErrorApi('TOKEN_INVALID');
     const usuario = await d.prisma.usuario.findUnique({ where: { id: claims.sub } });
     if (!usuario || usuario.deletedAt) throw new ErrorApi('TOKEN_INVALID');
+    // Un access emitido con la contraseña anterior (antes de un reset) ya no sirve.
+    if (!d.firmador.selloVigente(claims.sello, usuario.passwordHash)) throw new ErrorApi('TOKEN_INVALID');
     const limite = d.limitador.intentar(usuario.id);
     if (!limite.permitido) {
       throw new ErrorApi('RATE_LIMITED', { reintentar_en_s: limite.reintentarEnS }, undefined, limite.reintentarEnS);

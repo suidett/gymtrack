@@ -1,23 +1,25 @@
 # API de GymTrack
 
-Fastify 5, Zod y Prisma 7 sobre PostgreSQL 16, en TypeScript. Esta primera parte trae las **cuentas**: registro por rol, ingreso, refresh rotativo con detección de reuso, cierre de sesión, recuperación de contraseña por correo, `GET /v1/me` y `GET /health`. El ingreso es propio (Argon2id y JWT): no se usa Firebase Auth.
+Fastify 5, Zod y Prisma 7 sobre PostgreSQL 16, en TypeScript. Trae las cuentas (Argon2id y JWT propios, sin Firebase Auth) y los siete módulos de §API: perfil, ejercicios, rutinas, sesiones, progreso, alertas y entrenador, más un worker con la detección nocturna y la purga. Qué está probado y qué falta: [docs/ESTADO-DEL-CODIGO.md](../../docs/ESTADO-DEL-CODIGO.md).
 
-Los esquemas de entrada y salida no viven aquí: están en `packages/shared/src/api/` y la API los importa tal cual. La app usa los mismos esquemas con el cliente tipado `crearClienteCuentas` del mismo paquete.
+Los esquemas de entrada y salida no viven aquí: están en `packages/shared/src/api/` (uno por módulo, con su catálogo `RUTAS_<MÓDULO>`) y la API los importa tal cual. La app usa los mismos esquemas para armar sus cuerpos.
 
-## Rutas listas
+## Rutas
 
-| Método y ruta | Qué hace | Éxito | Errores |
-| --- | --- | --- | --- |
-| `POST /v1/auth/register` | Crea la cuenta (`rol`: `trainer` o `client`, `nombre`, `apellido`, `email`, `password`). Manda la bienvenida. Devuelve `{ usuario, tokens }` | 201 | 400 `VALIDATION_ERROR`, 409 `EMAIL_TAKEN` |
-| `POST /v1/auth/login` | Correo y contraseña. Devuelve `{ usuario, tokens }` | 200 | 401 `INVALID_CREDENTIALS` (mismo cuerpo si el correo no existe), 401 `ACCOUNT_DELETED`, 429 `RATE_LIMITED` (5 por minuto por IP, con `Retry-After`) |
-| `POST /v1/auth/refresh` | `{ refresh_token }`. Rota el refresh y devuelve un par nuevo | 200 | 401 `REFRESH_INVALID`, `REFRESH_EXPIRED` (30 días), `REFRESH_REUSED` (revoca todos los refresh del usuario) |
-| `POST /v1/auth/logout` | `{ refresh_token }`. Revoca solo ese refresh. Siempre responde igual | 200 | 400 |
-| `POST /v1/auth/password/forgot` | `{ email }`. 202 siempre con el mismo cuerpo; si hay cuenta, manda el enlace de 1 hora | 202 | 429 (3 por hora por correo) |
-| `POST /v1/auth/password/reset` | `{ token, password }`. Un solo uso; revoca todos los refresh | 200 | 400 `RESET_TOKEN_INVALID` (vencido, usado o inventado) |
-| `GET /v1/me` | Perfil del usuario del access token | 200 | 401 `UNAUTHENTICATED`, `TOKEN_EXPIRED`, `TOKEN_INVALID`; 429 (60 por minuto por usuario) |
-| `GET /health` | `{ estado, version, commit, base }`. Sin `/v1` y sin token | 200 | 503 `SERVICE_UNAVAILABLE` si la base no responde |
+Todas bajo `/v1`, salvo `/health`. Las privadas piden `Authorization: Bearer <access>`.
 
-Todo error sale con el sobre de §API: `{ "error": { "code", "message", "details" } }`. Los códigos están en `packages/shared/src/api/errores.ts`. El access dura 15 minutos (HS256); el refresh, 30 días; los dos tokens opacos (refresh y enlace) se guardan solo como hash SHA-256.
+| Módulo | Rutas | Notas |
+| --- | --- | --- |
+| Cuentas (`src/cuentas`) | `POST /auth/register`, `/auth/login`, `/auth/refresh`, `/auth/logout`, `/auth/password/forgot`, `/auth/password/reset`; `GET /me`; `GET /health` | `GET /me` y el ingreso traen el entrenador del vínculo activo y `encuesta_pendiente` real |
+| Perfil (`modulos/perfil`) | `PATCH /me`, `DELETE /me`, `POST` y `GET /me/survey`, `POST /me/push-tokens`, `GET /me/export`, `GET /me/export/archivo` (pública, firmada), `POST` y `GET /trainer/invitations`, `POST /me/trainer/link` (con `vista_previa`), `DELETE /me/trainer` | La encuesta vincula si trae `codigo_entrenador`. 10 códigos fallidos por hora (P-27) |
+| Ejercicios (`modulos/ejercicios`) | `GET /exercises`, `GET /exercises/:id`, `POST /exercises`, `PATCH` y `DELETE /exercises/:id` | Visibilidad P-07: base, propios, del entrenador en tus rutinas |
+| Rutinas (`modulos/rutinas`) | `GET` y `POST /routines`, `GET` y `PATCH /routines/:id`, `PUT /routines/:id/days`, `POST /routines/:id/assign`, `/activate`, `/duplicate`, `DELETE /routines/:id` | Una sola activa por alumno (P-06); `PUT /days` conserva lo que viene con id |
+| Sesiones (`modulos/sesiones`) | `GET /me/today`, `POST /sessions`, `PUT /sessions/:id/sets`, `POST /sessions/:id/finish`, `/discard`, `POST /sync/sessions`, `GET /sessions`, `GET /sessions/:id`, `POST` y `GET /observations` | Ids UUID v7 del celular. Cerrar corre la detección de estancamiento y baja |
+| Progreso (`modulos/progreso`) | `GET /me/progress/exercises/:id`, `GET /me/progress/volume`, `GET /me/prs`, `GET` y `POST /me/body-metrics`, `POST` y `GET /me/photos`, `DELETE /me/photos/:id`, `PUT` y `GET /me/photos/:id/archivo` (públicas, firmadas), `GET /clients/:id/suggestions`, `PATCH /suggestions/:id` | El entrenador lee con `?client_id=` (P-02) |
+| Alertas (`modulos/alertas`) | `GET /trainer/alerts`, `PATCH /alerts/:id`, `GET /me/alerts`, `POST /me/drop-reports` | Resolver guarda `acciones` (cargas, consejo, rutina, nada) |
+| Entrenador (`modulos/entrenador`) | `GET /trainer/clients`, `GET /trainer/clients/:id`, `DELETE /trainer/clients/:id` | Lo ajeno da 404 |
+
+Todo error sale con el sobre de §API: `{ "error": { "code", "message", "details" } }`, con un código de `packages/shared/src/api/errores.ts`. El access dura 15 minutos (HS256); el refresh, 30 días; los tokens opacos se guardan solo como hash SHA-256. Lo que el rol no puede hacer da 403 `FORBIDDEN`; lo que no es tuyo ni de tu alumno, 404.
 
 ## Cómo levantarla en local
 
@@ -28,6 +30,7 @@ pnpm install                         # desde la raíz
 cp apps/api/.env.ejemplo apps/api/.env
 pnpm --filter api db:levantar        # PostgreSQL 16 en 127.0.0.1:5442 (bases gymtrack y gymtrack_test)
 pnpm --filter api db:migrar          # aplica prisma/migrations
+pnpm --filter api db:sembrar         # 67 ejercicios base y 15 consejos (idempotente)
 pnpm --filter api dev                # http://localhost:3000/health
 ```
 
@@ -48,7 +51,7 @@ docker compose -f apps/api/compose.dev.yml --profile completo up --build
 | `DATABASE_URL` | sí | PostgreSQL 16 |
 | `JWT_SECRET` | en producción | Clave HS256 de al menos 32 caracteres (`openssl rand -hex 32`). Fuera de producción, si falta se inventa una por proceso |
 | `VERSION`, `COMMIT_SHA` | no | Lo que devuelve `/health`. Compose fija `VERSION` (`sha-<commit>` o `v1.2.3`); el Dockerfile graba `COMMIT_SHA` con `--build-arg` |
-| `CONFIAR_PROXY` | no (`false`) | `true` detrás de Caddy, para que el límite por IP use la IP real |
+| `CONFIAR_PROXY` | no (`1` en producción, `false` fuera) | Saltos de proxy (`1` = Caddy o Traefik), IPs o redes del proxy separadas por coma, o `false`. `true` se lee como `1`. |
 | `CORREO_DRIVER` | no | `resend`, `consola` o `memoria`. Por defecto: producción `resend`, pruebas `memoria`, local `consola`. En producción solo se acepta `resend` |
 | `RESEND_API_KEY` | con `resend` | Clave de Resend del entorno |
 | `CORREO_REMITENTE` | no | `GymTrack <hola@correo.tudominio.cl>`: tiene que ser de un dominio verificado en Resend |
@@ -57,6 +60,23 @@ docker compose -f apps/api/compose.dev.yml --profile completo up --build
 | `ENLACE_RESTABLECER_URL` | no (`gymtrack://restablecer`) | Base del enlace del correo; la API agrega `?token=...` |
 | `RELOJ_FIJO` | no | Solo pruebas y local: «ahora» fijo en ISO. La API no arranca con esto en producción (SEG-032) |
 | `LOG_LEVEL` | no (`info`) | Nivel de pino. Los logs no llevan correos, nombres ni tokens: solo ids |
+| `CORS_ORIGENES` | no | Orígenes web que pueden llamar desde un navegador, separados por coma (la versión web en staging). Sin valor y fuera de producción se acepta `http://localhost:*` y `http://127.0.0.1:*` (Expo web). La app nativa no lo necesita |
+| `ALMACENAMIENTO_DRIVER` | no (`disco`) | Dónde quedan las fotos de progreso. Hoy solo `disco`; `firebase` todavía no existe y falla al arrancar |
+| `ALMACENAMIENTO_DIR` | con `disco` | Carpeta de las fotos. En Docker tiene que ser un volumen, si no se pierden al recrear el contenedor |
+| `UMBRAL_ESTANCAMIENTO_SESIONES`, `UMBRAL_BAJA_PCT`, `UMBRAL_BAJA_SEMANAS`, `UMBRAL_BAJA_SEMANAS_MIN`, `UMBRAL_SIN_SESIONES_DIAS`, `UMBRAL_DOLOR_INTENSIDAD` | no (3, 10, 4, 2, 7, 7) | Umbrales de las alertas (P-34) |
+| `TOLERANCIA_RELOJ_CELULAR_MS` | no (24 h) | Cuánto puede venir en el futuro una fecha del celular antes de dar 422 |
+
+## Worker
+
+`src/worker.ts` arranca las tareas de `src/worker/`:
+
+```bash
+node dist/worker.js noche                               # detección y purga, una vez, y termina (cron)
+node dist/worker.js purga --ahora=2026-12-17T03:00:00Z  # --ahora solo fuera de producción (SEG-032)
+node dist/worker.js                                     # residente: corre `noche` cada día a las 07:00 UTC
+```
+
+En local, sin empaquetar: `node --import tsx src/worker.ts noche`. Termina con código 1 si la configuración está mal o si una cuenta quedó pendiente de purga. Falta el push (recordatorios, avisos al entrenador) y el latido a `HC_WORKER_URL`.
 
 ## Pruebas
 
@@ -71,6 +91,8 @@ DATABASE_URL=postgresql://gymtrack:gymtrack@127.0.0.1:5442/gymtrack_test pnpm --
 - Correo en memoria: las pruebas leen el último correo por destinatario. Nunca se llama a la API real de Resend: el adaptador se prueba con un `fetch` falso.
 - Contraseña de las personas de prueba: `SEMILLA_CLAVE` o 12 caracteres al azar por corrida.
 - Cada prueba lleva en el nombre el id del plan (`INT-010`, `SEG-009`, `CON-001`), así se cruzan con `docs/pruebas/plan-de-validacion.md`.
+- Hay un archivo por módulo en `test/<módulo>/` y `test/integracion.int.test.ts` para lo que une módulos (GET /me con vínculo y encuesta, alertas al cerrar, CORS).
+- `test:int` vacía `gymtrack_test` en cada caso: no la corran dos procesos a la vez. Para correr en paralelo, otra base: `docker exec gymtrack-dev-db-1 psql -U gymtrack -d gymtrack -c 'CREATE DATABASE gymtrack_test_yo'` y `DATABASE_URL=.../gymtrack_test_yo npx vitest run`.
 - El ayudante `pedir` revisa en cada respuesta 4xx y 5xx de la suite que tenga el sobre y un código del catálogo (CON-004).
 
 ## Correo con Resend
@@ -91,30 +113,62 @@ Qué tiene que configurar el equipo en Resend (una vez por dominio):
 6. **Remitente.** `CORREO_REMITENTE=GymTrack <hola@correo.tudominio.cl>`, del dominio verificado.
 7. **Staging.** No mandes correos a direcciones `@gymtrack.test`: ese dominio no recibe correo, rebota y los rebotes bajan la reputación del dominio en Resend. Para el humo de staging usa las direcciones de prueba de Resend (por ejemplo `delivered@resend.dev`) o correos reales del equipo.
 
+## Cómo agregar un módulo
+
+Cada área de §API es una carpeta en `src/modulos/<nombre>/` (hoy: perfil, ejercicios, rutinas, sesiones, progreso, alertas, entrenador) y se registra sola bajo `/v1`: no se toca `app.ts`.
+
+1. **Contrato.** En `packages/shared/src/api/<nombre>.ts` define los esquemas Zod (cuerpos con `z.strictObject`, snake_case, pesos en `*_kg`, fechas con `esquemaFechaHora`) y llena el catálogo `RUTAS_<NOMBRE>` con `{ metodo, ruta: '/v1/...', publica: false, cuerpo?, query?, params?, exito, respuesta }`. Las listas usan `esquemaPaginacion` y `esquemaPagina(item)`; las rutas «Alumno y su entrenador», `esquemaQueryAlumno` (`?client_id=`, P-02). Nombres con el área (`esquemaRutinaNueva`), porque `index.ts` junta todo con `export *`.
+2. **Rutas.** En `src/modulos/<nombre>/index.ts`:
+
+   ```ts
+   import { RUTAS_EJERCICIOS as R } from '@gymtrack/shared';
+   import { definirModulo, esquemaDe, urlDe, usuarioDe } from '../../compartido';
+
+   export default definirModulo(async (app, ctx) => {
+     app.get(urlDe(R.listar), { schema: esquemaDe(R.listar), preHandler: app.exigirSesion }, async (req) => {
+       const usuario = usuarioDe(req);
+       // ctx.prisma, ctx.reloj.ahora(), ctx.config, ctx.correo, ctx.crearLimitador(nombre, { maximo, ventanaMs })
+     });
+   });
+   ```
+
+   `esquemaDe` pone el mismo objeto Zod de entrada y salida y las respuestas de error (CON-001 lo revisa contra `CATALOGO_API`); `urlDe` quita el `/v1`. Una carpeta que empieza con `_` se salta.
+3. **Permisos** (`src/compartido`). `app.exigirSesion` (401), `app.exigirRol('trainer')` (403 `FORBIDDEN`, P-01) y `app.exigirPermiso('registrarEntreno')` (la matriz de §Roles en `permisos.ts`, con alumno vinculado y alumno solo separados; deja `req.actor`). El alcance va aparte y da 404: `alumnoObjetivo(prisma, usuario, req.query.client_id)` para `/me/...`, `exigirClienteDe`, `exigirAccesoAlAlumno`, `vinculoDelAlumno`, `idsDeClientes`.
+4. **Errores.** `noEncontrado()`, `prohibido()`, `campoInvalido(campo, motivo)`, `fallar('SESSION_CLOSED', { session_id })`, `existeOFalla(fila)`. Un código nuevo va en `packages/shared/src/api/errores.ts` y en la tabla de CON-005 (`packages/shared/src/__tests__/contrato.test.ts`).
+5. **Listas.** `const p = paginaPorId(req.query, 'desc')`, `findMany({ ...p, where: { ...p.where, ... } })` y `armarPagina(filas, req.query.limit, (u) => ({ id: u.id }))`. Para otro orden: `leerCursor` y `codificarCursor`.
+6. **Pruebas.** Un `test/<nombre>.int.test.ts` con el id del plan en cada nombre:
+
+   ```ts
+   import { describeConBase, idEjercicioBase, usarEntornoApi } from './ayudas';
+   describeConBase('Ejercicios', () => {
+     const e = usarEntornoApi();               // base vacía y sembrada, reloj en AHORA, antes de cada caso
+     it('INT-050 Martina ve la biblioteca base', async () => {
+       const { camila, martina, diego } = await e.escena();   // Martina vinculada a Camila, Diego solo
+       const r = await e.pedirComo(martina, { method: 'GET', url: '/v1/exercises' });
+       expect(r.status).toBe(200);
+     });
+   });
+   ```
+
+   También: `e.crear('rodrigo')`, `vincular` y `desvincular`, `e.reloj.avanzar('7d')`, `idEjercicioBase('press-de-banca')` y `e.prisma` para preparar datos. Cada persona tiene 60 llamadas por minuto (el límite se vacía antes de cada caso).
+
+El esquema completo de la base está en `prisma/schema.prisma` (las 22 tablas de §Datos, con nombres en español en el código y en snake_case en la base). Una tabla o un campo nuevo: cambia el esquema y corre `pnpm --filter api db:nueva-migracion`.
+
 ## Dónde tocar
 
 | Quiero cambiar | Archivo |
 | --- | --- |
-| La forma de una entrada o una respuesta | `packages/shared/src/api/cuentas.ts` (cambia la API y la app a la vez) |
-| Un código de error | `packages/shared/src/api/errores.ts` |
+| La forma de una entrada o una respuesta | `packages/shared/src/api/<módulo>.ts` (cambia la API y la app a la vez) |
+| Un código de error | `packages/shared/src/api/errores.ts` y la tabla de CON-005 |
+| Una regla de un módulo | `src/modulos/<módulo>/` (servicio, consultas o vista) |
+| Quién puede hacer qué | `src/compartido/permisos.ts` (matriz) y `src/compartido/vinculo.ts` (alcance) |
 | Una regla de cuentas (reuso, vencimientos, qué se revoca) | `src/cuentas/servicio.ts` |
-| Qué rutas existen y sus límites | `src/cuentas/rutas.ts` |
-| Cómo se valida el access en las rutas privadas | `src/cuentas/autenticacion.ts` |
+| Cómo se valida el access en las rutas privadas | `src/cuentas/autenticacion.ts` y `src/compartido/autenticacion.ts` |
 | Duración de los tokens o el algoritmo | `src/seguridad/tokens.ts` |
-| Parámetros de Argon2id | `src/seguridad/contrasenas.ts` |
 | Topes de intentos | `src/seguridad/limitador.ts` |
+| Una tabla o un campo | `prisma/schema.prisma` y `pnpm --filter api db:nueva-migracion` |
+| Los ejercicios base y los consejos | `packages/shared/src/exercises.seed.ts` y `prisma/semilla.ts` |
+| Las alertas y sus umbrales | `src/modulos/alertas/deteccion.ts` y `umbrales.ts` |
+| La detección nocturna o la purga | `src/worker/tareas.ts` y `purga.ts` |
 | El texto de un correo | `src/correo/plantillas.ts` |
-| Cómo sale un correo | `src/correo/resend.ts`, `src/correo/desarrollo.ts` |
 | Una variable de entorno | `src/config.ts` (y `.env.ejemplo`) |
-| Una tabla | `prisma/schema.prisma` y luego `pnpm --filter api db:nueva-migracion` |
-| El worker | `src/worker.ts` (hoy solo el punto de entrada) |
-
-## Lo que falta
-
-- Rutas de §API que no están todavía: `PATCH /me`, `POST /me/push-tokens` (la tabla `push_tokens` ya existe), `DELETE /me`, `GET /me/export`, encuesta, vínculo con el entrenador y todo lo de rutinas y sesiones. `GET /me` devuelve `entrenador: null` y `encuesta_pendiente: true` para todo alumno hasta que existan esas tablas.
-- `/v1/docs` (OpenAPI desde los esquemas Zod) y la comparación con oasdiff (CON-003).
-- El límite de intentos vive en la memoria del proceso: sirve para una instancia por entorno. Con dos o más, hay que moverlo a la base o a Redis.
-- El registro no tiene límite de intentos propio (el PRD no lo fija).
-- El worker no tiene tareas.
-- La imagen pesa unos 2 GB: con `nodeLinker: hoisted`, `pnpm install --prod --filter api...` igual instala las dependencias de la app móvil. `pnpm deploy --legacy` dejó `node_modules` vacío. Hay que adelgazarla (por ejemplo con `inject-workspace-packages` y `pnpm deploy`) antes de subirla a GHCR.
-- La semilla `piloto` y las fábricas de `datos-de-prueba.md`: hoy las pruebas crean a las personas por la API en cada caso.

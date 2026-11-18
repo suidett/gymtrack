@@ -4,7 +4,8 @@
 // Qué hace: arma todas las respuestas de error con el sobre único de §API
 // (`{ error: { code, message, details } }`) y los códigos del paquete compartido. Traduce los
 // errores de validación de Zod (400 con el campo y el motivo), los de serialización (la salida
-// no cumplió su esquema: CON-002) y cualquier error inesperado (500, sin filtrar detalles).
+// no cumplió su esquema: CON-002) y cualquier error inesperado (500, sin filtrar detalles). De un
+// error inesperado el log guarda solo el tipo y el código (resumenError), nunca el mensaje.
 // Tócalo cuando: haya un tipo de error nuevo que traducir.
 // No lo toques para: agregar un código (va en packages/shared/src/api/errores.ts).
 // Depende de: @gymtrack/shared (CODIGOS_ERROR) y fastify-type-provider-zod.
@@ -36,6 +37,21 @@ export function sobre(codigo: CodigoError, detalles?: Record<string, unknown>, m
       message: mensaje ?? CODIGOS_ERROR[codigo].mensaje,
       ...(detalles ? { details: detalles } : {}),
     },
+  };
+}
+
+// ── Lo que se loguea de un error ─────────────────────────────────────────────
+/**
+ * El tipo y el código de un error, y nada más. El mensaje y la pila de un error de Prisma o de pg
+ * pueden traer los valores de los campos (un correo, un nombre: «Key (email)=(...) already
+ * exists»), así que nunca van al log (§Seguridad, SEG-018).
+ */
+export function resumenError(err: unknown): { nombre: string; codigo?: string } {
+  if (typeof err !== 'object' || err === null) return { nombre: typeof err };
+  const { name, code } = err as { name?: unknown; code?: unknown };
+  return {
+    nombre: typeof name === 'string' ? name : 'Error',
+    ...(typeof code === 'string' || typeof code === 'number' ? { codigo: String(code) } : {}),
   };
 }
 
@@ -76,8 +92,9 @@ export function crearManejadorDeErrores(opciones: { detallarSerializacion: boole
       return reply.status(400).send(sobre('VALIDATION_ERROR', { campo: '(cuerpo)', motivo: error.code ?? 'inválido' }));
     }
 
-    // Lo inesperado se loguea con su pila (sin el cuerpo de la petición) y sale como 500 genérico.
-    req.log.error({ err: error }, 'error inesperado');
+    // Lo inesperado se loguea con el tipo, el código y la ruta (sin mensaje, pila ni cuerpo) y sale
+    // como 500 genérico.
+    req.log.error({ error: resumenError(error), ruta: req.routeOptions.url }, 'error inesperado');
     return reply.status(500).send(sobre('INTERNAL_ERROR'));
   };
 }

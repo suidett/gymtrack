@@ -1,11 +1,13 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Servicio de cuentas · Zona: Cuentas (API)
 //
-// Qué hace: la lógica de las cuentas, sin nada de HTTP: registrar (Argon2id, correo de
-// bienvenida), ingresar (mensaje genérico, cuenta marcada para borrado), emitir el par de tokens,
-// rotar el refresh con detección de reuso (un refresh revocado que vuelve revoca todos los del
-// usuario), cerrar la sesión de un dispositivo, pedir el enlace de recuperación (1 hora, un solo
-// uso) y guardar la contraseña nueva (revoca todos los refresh).
+// Qué hace: la lógica de las cuentas, sin nada de HTTP: registrar (Argon2id, usuario y refresh en
+// una sola transacción, correo de bienvenida), ingresar (mensaje genérico, cuenta marcada para
+// borrado), emitir el par de tokens, rotar el refresh con detección de reuso (un refresh que ya
+// fue reemplazado y vuelve revoca todos los del usuario; uno cerrado con logout solo da 401),
+// cerrar la sesión de un dispositivo, pedir el enlace de recuperación (1 hora, un solo uso, todo
+// en segundo plano) y guardar la contraseña nueva (revoca todos los refresh; los access viejos
+// caen por el sello de la contraseña, ver src/seguridad/tokens.ts).
 // Tócalo cuando: cambie una regla de §API «Cuentas y perfil» o de §Seguridad.
 // No lo toques para: la forma de la entrada o la salida (packages/shared/src/api/cuentas.ts), ni
 // para los límites de intentos (src/seguridad/limitador.ts, aplicados en rutas.ts).
@@ -44,20 +46,42 @@ export function aUsuarioApi(u: Usuario): UsuarioApi {
     unidades: u.unidades,
     descanso_default_s: u.descansoDefaultS,
     modo_gimnasio: u.modoGimnasio,
-    // PENDIENTE (trainer_clients): el vínculo con el entrenador llega con su tabla.
+    // Sin consultar la base: el vínculo y la encuesta los completa usuarioApiCompleto().
     entrenador: null,
-    // PENDIENTE (survey_responses): hoy todo alumno figura con la encuesta pendiente.
     encuesta_pendiente: u.rol === 'client',
     created_at: u.createdAt.toISOString(),
   };
 }
 
+/**
+ * La forma pública con el entrenador del vínculo activo (trainer_clients) y si el alumno todavía
+ * no responde la encuesta (survey_responses). La usan GET /v1/me, el ingreso y el registro, para
+ * que la app decida al tiro si manda al alumno a la Encuesta (INT-002).
+ */
+export async function usuarioApiCompleto(prisma: BaseDeDatos, u: Usuario): Promise<UsuarioApi> {
+  const base = aUsuarioApi(u);
+  if (u.rol !== 'client') return { ...base, entrenador: null, encuesta_pendiente: false };
+  const [vinculo, encuestas] = await Promise.all([
+    prisma.vinculoEntrenador.findFirst({
+      where: { alumnoId: u.id, estado: 'activo' },
+      select: { entrenador: { select: { id: true, nombre: true, apellido: true } } },
+    }),
+    prisma.respuestaEncuesta.count({ where: { alumnoId: u.id } }),
+  ]);
+  return { ...base, entrenador: vinculo?.entrenador ?? null, encuesta_pendiente: encuestas === 0 };
+}
+
 export function crearServicioCuentas(d: DependenciasCuentas) {
   // ── Tokens ───────────────────────────────────────────────────────────────
   /** Emite un access y un refresh nuevo. Sin `familiaId` empieza una familia (un dispositivo nuevo). */
-  async function emitirTokens(u: Pick<Usuario, 'id' | 'rol'>, familiaId?: string, db: Pick<BaseDeDatos, 'refreshToken'> = d.prisma) {
+  async function emitirTokens(
+    u: Pick<Usuario, 'id' | 'rol' | 'passwordHash'>,
+    familiaId?: string,
+    db: Pick<BaseDeDatos, 'refreshToken'> = d.prisma,
+  ) {
     const ahora = d.reloj.ahora();
-    const access = await d.firmador.firmarAccess({ sub: u.id, rol: u.rol }, ahora);
+    const sello = d.firmador.selloDeContrasena(u.passwordHash);
+    const access = await d.firmador.firmarAccess({ sub: u.id, rol: u.rol, sello }, ahora);
     const refresh = tokenOpaco();
     const refreshVence = new Date(ahora.getTime() + DURACION_REFRESH_MS);
     const fila = await db.refreshToken.create({
@@ -83,21 +107,41 @@ export function crearServicioCuentas(d: DependenciasCuentas) {
     await db.refreshToken.updateMany({ where: { usuarioId, revocadoAt: null }, data: { revocadoAt: ahora } });
   }
 
+  /**
+   * Un refresh revocado que vuelve. Si ya había sido reemplazado (rotó a otro), es reuso: señal de
+   * robo, se cierran las sesiones del usuario en todos sus dispositivos (§Seguridad; INT-010,
+   * SEG-006). Si se revocó sin reemplazo (logout, reset, un reuso anterior) solo da 401: cerrar
+   * sesión en un teléfono no puede sacar a los demás.
+   */
+  async function rechazarRevocado(filaId: string, usuarioId: string, ahora: Date): Promise<never> {
+    const actual = await d.prisma.refreshToken.findUnique({ where: { id: filaId }, select: { reemplazadoPor: true } });
+    if (actual?.reemplazadoPor) {
+      await revocarTodos(usuarioId, ahora);
+      throw new ErrorApi('REFRESH_REUSED');
+    }
+    throw new ErrorApi('REFRESH_INVALID');
+  }
+
   return {
     // ── Registro ───────────────────────────────────────────────────────────
     async registrar(e: { rol: 'trainer' | 'client'; nombre: string; apellido: string; email: string; password: string }): Promise<Sesion> {
+      // El hash se calcula antes de abrir la transacción: no se tiene una conexión tomada 50 ms.
       const passwordHash = await hashearContrasena(e.password);
       let u: Usuario;
+      let tokens: Tokens;
       try {
-        u = await d.prisma.usuario.create({
-          data: { rol: e.rol, nombre: e.nombre, apellido: e.apellido, email: e.email, passwordHash, createdAt: d.reloj.ahora() },
-        });
+        // Usuario y refresh juntos: si falla el segundo no queda una cuenta sin sesión.
+        ({ u, tokens } = await d.prisma.$transaction(async (tx) => {
+          const creado = await tx.usuario.create({
+            data: { rol: e.rol, nombre: e.nombre, apellido: e.apellido, email: e.email, passwordHash, createdAt: d.reloj.ahora() },
+          });
+          return { u: creado, tokens: (await emitirTokens(creado, undefined, tx)).tokens };
+        }));
       } catch (err) {
         // P-36: el correo ya tiene cuenta. El índice único resuelve también dos registros a la vez.
         if (esDuplicado(err)) throw new ErrorApi('EMAIL_TAKEN');
         throw err;
       }
-      const { tokens } = await emitirTokens(u);
       const correo = plantillaBienvenida({ nombre: u.nombre, rol: u.rol });
       d.correo.enviarEnSegundoPlano({ ...correo, para: u.email, etiqueta: 'bienvenida', usuarioId: u.id });
       return { usuario: aUsuarioApi(u), tokens };
@@ -114,7 +158,7 @@ export function crearServicioCuentas(d: DependenciasCuentas) {
       // P-24: solo se dice que la cuenta está marcada si la contraseña era correcta.
       if (u.deletedAt) throw new ErrorApi('ACCOUNT_DELETED');
       const { tokens } = await emitirTokens(u);
-      return { usuario: aUsuarioApi(u), tokens };
+      return { usuario: await usuarioApiCompleto(d.prisma, u), tokens };
     },
 
     // ── Refresh con rotación ───────────────────────────────────────────────
@@ -122,34 +166,30 @@ export function crearServicioCuentas(d: DependenciasCuentas) {
       const ahora = d.reloj.ahora();
       const fila = await d.prisma.refreshToken.findUnique({
         where: { tokenHash: hashToken(refreshToken) },
-        include: { usuario: { select: { id: true, rol: true, deletedAt: true } } },
+        include: { usuario: { select: { id: true, rol: true, passwordHash: true, deletedAt: true } } },
       });
       if (!fila) throw new ErrorApi('REFRESH_INVALID');
-      // Reuso: un refresh ya revocado que vuelve es señal de robo. Se cierran todas las sesiones
-      // del usuario en todos sus dispositivos (§Seguridad; INT-010, SEG-006).
-      if (fila.revocadoAt) {
-        await revocarTodos(fila.usuarioId, ahora);
-        throw new ErrorApi('REFRESH_REUSED');
-      }
+      if (fila.revocadoAt) await rechazarRevocado(fila.id, fila.usuarioId, ahora);
       if (fila.expiresAt.getTime() <= ahora.getTime()) throw new ErrorApi('REFRESH_EXPIRED');
       if (fila.usuario.deletedAt) {
         await revocarTodos(fila.usuarioId, ahora);
         throw new ErrorApi('ACCOUNT_DELETED');
       }
-      return d.prisma.$transaction(async (tx) => {
-        // Solo uno de dos pedidos simultáneos con el mismo refresh gana; el otro es reuso.
+      const resultado = await d.prisma.$transaction(async (tx) => {
+        // Solo uno de varios pedidos simultáneos con el mismo refresh gana; los otros esperan el
+        // candado de la fila y vuelven con 0 filas. No se lanza aquí: un throw desharía la
+        // revocación, así que la transacción devuelve la marca y se revoca afuera.
         const marcado = await tx.refreshToken.updateMany({
           where: { id: fila.id, revocadoAt: null },
           data: { revocadoAt: ahora },
         });
-        if (marcado.count !== 1) {
-          await revocarTodos(fila.usuarioId, ahora, tx);
-          throw new ErrorApi('REFRESH_REUSED');
-        }
+        if (marcado.count !== 1) return 'perdio' as const;
         const { tokens, filaId } = await emitirTokens(fila.usuario, fila.familiaId, tx);
         await tx.refreshToken.update({ where: { id: fila.id }, data: { reemplazadoPor: filaId } });
         return { tokens };
       });
+      if (resultado === 'perdio') return rechazarRevocado(fila.id, fila.usuarioId, ahora);
+      return resultado;
     },
 
     // ── Cierre de sesión ───────────────────────────────────────────────────
@@ -162,20 +202,26 @@ export function crearServicioCuentas(d: DependenciasCuentas) {
     },
 
     // ── Recuperación ───────────────────────────────────────────────────────
-    /** Si el correo tiene cuenta activa, guarda el enlace (hash) y manda el correo. Si no, nada. */
+    /**
+     * Si el correo tiene cuenta activa, guarda el enlace (hash) y manda el correo. Si no, nada.
+     * Todo pasa en segundo plano: la ruta responde 202 en el mismo tiempo exista o no la cuenta
+     * (SEG-008), sin una búsqueda, un insert ni una plantilla que la delaten.
+     */
     async pedirRecuperacion(email: string): Promise<void> {
-      const u = await d.prisma.usuario.findUnique({ where: { email } });
-      if (!u || u.deletedAt) return;
       const ahora = d.reloj.ahora();
-      const token = tokenOpaco();
-      const venceAt = new Date(ahora.getTime() + DURACION_ENLACE_MS);
-      await d.prisma.passwordReset.create({
-        data: { usuarioId: u.id, tokenHash: hashToken(token), expiresAt: venceAt, createdAt: ahora },
+      d.correo.prepararEnSegundoPlano('recuperacion', async () => {
+        const u = await d.prisma.usuario.findUnique({ where: { email } });
+        if (!u || u.deletedAt) return undefined;
+        const token = tokenOpaco();
+        const venceAt = new Date(ahora.getTime() + DURACION_ENLACE_MS);
+        await d.prisma.passwordReset.create({
+          data: { usuarioId: u.id, tokenHash: hashToken(token), expiresAt: venceAt, createdAt: ahora },
+        });
+        const separador = d.config.enlaceRestablecer.includes('?') ? '&' : '?';
+        const enlace = `${d.config.enlaceRestablecer}${separador}token=${token}`;
+        const correo = plantillaRecuperacion({ nombre: u.nombre, enlace, venceAt, zona: u.timezone });
+        return { ...correo, para: u.email, etiqueta: 'recuperacion', usuarioId: u.id };
       });
-      const separador = d.config.enlaceRestablecer.includes('?') ? '&' : '?';
-      const enlace = `${d.config.enlaceRestablecer}${separador}token=${token}`;
-      const correo = plantillaRecuperacion({ nombre: u.nombre, enlace, venceAt, zona: u.timezone });
-      d.correo.enviarEnSegundoPlano({ ...correo, para: u.email, etiqueta: 'recuperacion', usuarioId: u.id });
     },
 
     async restablecer(token: string, password: string): Promise<void> {

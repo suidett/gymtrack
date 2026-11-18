@@ -6,6 +6,9 @@
 // esquemas Zod que usa la API. Valida lo que manda y lo que recibe, y convierte el sobre de error
 // en un ErrorDeApi con el código del catálogo. No guarda tokens ni reintenta: eso lo decide la
 // app (tokens en expo-secure-store, §Seguridad). Todavía no hay pantallas conectadas.
+// El refresh va de a uno: si la app pide renovar mientras ya hay una renovación en curso, espera
+// esa misma en vez de mandar otra. Dos refresh simultáneos con el mismo token son, para la API,
+// un reuso, y cierran la sesión en todos los dispositivos.
 // Tócalo cuando: agregues una ruta al catálogo de cuentas.ts o cambie cómo se arma una llamada.
 // No lo toques para: cambiar la forma de una respuesta (cuentas.ts) ni para guardar la sesión.
 // Depende de: ./cuentas y ./errores. No usa tipos del DOM: recibe un fetch mínimo por parámetro,
@@ -83,10 +86,27 @@ export function crearClienteCuentas(opciones: OpcionesCliente) {
     throw new ErrorDeApi(res.status, 'INTERNAL_ERROR', CODIGOS_ERROR.INTERNAL_ERROR.mensaje);
   }
 
+  // ── Refresh de a uno ─────────────────────────────────────────────────────
+  // Con el mismo token, todos reciben la promesa en curso. Con otro token (otra cuenta, o la app
+  // ya guardó el nuevo), se espera a que termine la que está en curso antes de salir.
+  let renovacion: { token: string; promesa: Promise<Respuesta<'renovar'>> } | undefined;
+  function renovar(refreshToken: string): Promise<Respuesta<'renovar'>> {
+    if (renovacion?.token === refreshToken) return renovacion.promesa;
+    const antes = renovacion?.promesa.then(() => undefined, () => undefined) ?? Promise.resolve();
+    const promesa: Promise<Respuesta<'renovar'>> = antes
+      .then(() => llamar('renovar', { refresh_token: refreshToken }))
+      .finally(() => {
+        if (renovacion?.promesa === promesa) renovacion = undefined;
+      });
+    renovacion = { token: refreshToken, promesa };
+    return promesa;
+  }
+
   return {
     registrar: (datos: Cuerpo<'registrar'>) => llamar('registrar', datos),
     ingresar: (datos: Cuerpo<'ingresar'>) => llamar('ingresar', datos),
-    renovar: (refreshToken: string) => llamar('renovar', { refresh_token: refreshToken }),
+    /** Una sola renovación a la vez: las llamadas que llegan mientras hay una en curso la esperan. */
+    renovar,
     cerrarSesion: (refreshToken: string) => llamar('cerrarSesion', { refresh_token: refreshToken }),
     olvideContrasena: (email: string) => llamar('olvideContrasena', { email }),
     restablecerContrasena: (datos: Cuerpo<'restablecerContrasena'>) => llamar('restablecerContrasena', datos),

@@ -33,8 +33,29 @@ export const CODIGOS_ERROR = {
   FORBIDDEN: { estado: 403, mensaje: 'No puedes hacer esto con tu cuenta.' },
   // 404: no existe o no es tuyo (mismo cuerpo en los dos casos).
   NOT_FOUND: { estado: 404, mensaje: 'No encontramos lo que buscas.' },
+  // Código de invitación inexistente o vencido: el mismo cuerpo en los dos casos (P-14, INT-034).
+  INVITATION_NOT_FOUND: { estado: 404, mensaje: 'Ese código no existe o ya venció.' },
   // 409: estado que no permite la acción.
   EMAIL_TAKEN: { estado: 409, mensaje: 'Ya hay una cuenta con este correo.' },
+  // El texto de SESSION_CLOSED es el del ejemplo de §API (INT-093).
+  SESSION_CLOSED: { estado: 409, mensaje: 'La sesión ya está cerrada y no se puede editar' },
+  SESSION_IN_PROGRESS: { estado: 409, mensaje: 'Ya tienes una sesión en curso.' },
+  SESSION_DISCARDED: { estado: 409, mensaje: 'Esta sesión se descartó.' },
+  INVITATION_USED: { estado: 409, mensaje: 'Ese código ya se usó.' },
+  ALREADY_LINKED: { estado: 409, mensaje: 'Ya tienes entrenador. Desvincúlate primero.' },
+  EXERCISE_IN_ACTIVE_ROUTINE: { estado: 409, mensaje: 'El ejercicio está en una rutina activa.' },
+  EXERCISE_HAS_HISTORY: { estado: 409, mensaje: 'El ejercicio ya tiene sesiones registradas.' },
+  SUGGESTION_USED: { estado: 409, mensaje: 'Esa sugerencia ya se usó en una sesión.' },
+  // 409 genérico, para un estado que no tiene código propio todavía.
+  CONFLICT: { estado: 409, mensaje: 'Ahora no se puede hacer esto.' },
+  // 422: regla de negocio; `details` dice qué regla y dónde.
+  CONSENT_REQUIRED: { estado: 422, mensaje: 'Necesitamos tu consentimiento para guardar esto.' },
+  REPS_RANGE_INVALID: { estado: 422, mensaje: 'El mínimo de repeticiones no puede pasar al máximo.' },
+  EXERCISE_NOT_OWNED: { estado: 422, mensaje: 'Ese ejercicio no es tuyo.' },
+  ACTIVE_ROUTINE_CONFLICT: { estado: 422, mensaje: 'Ya hay otra rutina activa.' },
+  ROUTINE_EMPTY: { estado: 422, mensaje: 'La rutina no tiene días con ejercicios.' },
+  // 422 genérico (edad mínima P-13, fechas del celular P-28, consejo de alguien que no entrena P-08).
+  BUSINESS_RULE: { estado: 422, mensaje: 'Esto no cumple una regla de la app.' },
   // 429: límite de intentos; la respuesta trae Retry-After en segundos (P-42).
   RATE_LIMITED: { estado: 429, mensaje: 'Demasiados intentos. Espera un momento.' },
   // 5xx.

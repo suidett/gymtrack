@@ -1,30 +1,48 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Punto de entrada del worker · Zona: Worker (API)
 //
-// Qué hace: HOY NADA. Deja creado el proceso que en la imagen corre como `node dist/worker.js`
-// (compose.yml lo levanta junto a la API, con la misma imagen). Se queda vivo sin tareas y se
-// apaga limpio con SIGTERM, así Docker no lo reinicia en bucle.
-// Lo que va a hacer (PRD §Arquitectura y plan de validación, sección WRK), en tareas separadas
-// dentro de src/worker/:
-//   - detección nocturna de estancamiento y de baja de rendimiento (umbrales por entorno, P-34);
-//   - recordatorios al alumno a su hora habitual (P-21) con tope de 2 push al día (P-20);
-//   - purga de cuentas marcadas para borrado hace 30 días (P-24), con `purga --ahora=<ISO>`
-//     solo fuera de producción (SEG-032, P-52);
-//   - latido opcional a HC_WORKER_URL al terminar la noche.
-// Cada tarea recibe el «ahora» por parámetro (src/reloj.ts) para probarla con reloj fijo.
-// Tócalo cuando: implementes la primera tarea (y su prueba WRK-).
-// No lo toques para: lógica de la API (src/app.ts).
-// Depende de: src/config.ts (cuando haya tareas usará también src/db.ts).
+// Qué hace: corre las tareas de src/worker/ (detección nocturna de estancamiento, baja y días sin
+// entrenar; purga de cuentas borradas hace 30 días, P-24). Tiene dos formas de correr:
+//   node dist/worker.js noche | deteccion | purga [--ahora=<ISO>]   una vez y termina (cron)
+//   node dist/worker.js                                              residente (compose)
+// Residente se queda vivo (así Docker no lo reinicia en bucle) y corre `noche` todos los días a
+// las 07:00 UTC (04:00 en Chile en horario de verano, 03:00 en invierno). Se apaga limpio con
+// SIGTERM. --ahora solo se acepta fuera de producción (SEG-032).
+// Falta (anotado en docs/ESTADO-DEL-CODIGO.md): push de recordatorios y avisos (P-20, P-21) y el
+// latido a HC_WORKER_URL.
+// Tócalo cuando: cambie la hora de la corrida residente o la forma de arrancar.
+// No lo toques para: qué hace cada tarea (src/worker/tareas.ts).
+// Depende de: src/worker/principal.ts.
 // ─────────────────────────────────────────────────────────────────────────────
-import { leerConfig } from './config';
+import { principal } from './worker/principal';
 
-const config = leerConfig();
-console.log(JSON.stringify({ level: 30, msg: 'worker sin tareas todavía', version: config.version }));
+const HORA_UTC = 7;
+const DIA_MS = 86_400_000;
 
-const latido = setInterval(() => {}, 60 * 60 * 1000);
-function apagar() {
-  clearInterval(latido);
-  process.exit(0);
+const argumentos = process.argv.slice(2);
+
+if (argumentos.length > 0) {
+  process.exit(await principal(argumentos));
+} else {
+  const ahora = new Date();
+  const proxima = new Date(Date.UTC(ahora.getUTCFullYear(), ahora.getUTCMonth(), ahora.getUTCDate(), HORA_UTC));
+  if (proxima.getTime() <= ahora.getTime()) proxima.setTime(proxima.getTime() + DIA_MS);
+  console.log(JSON.stringify({ level: 30, msg: 'worker residente', proxima_corrida: proxima.toISOString() }));
+
+  let intervalo: ReturnType<typeof setInterval> | undefined;
+  const correr = () => {
+    void principal(['noche']);
+  };
+  const espera = setTimeout(() => {
+    correr();
+    intervalo = setInterval(correr, DIA_MS);
+  }, proxima.getTime() - ahora.getTime());
+
+  const apagar = () => {
+    clearTimeout(espera);
+    if (intervalo) clearInterval(intervalo);
+    process.exit(0);
+  };
+  process.on('SIGTERM', apagar);
+  process.on('SIGINT', apagar);
 }
-process.on('SIGTERM', apagar);
-process.on('SIGINT', apagar);

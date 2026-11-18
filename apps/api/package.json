@@ -19,6 +19,7 @@
     "db:levantar": "docker compose -f compose.dev.yml up -d --wait db",
     "db:bajar": "docker compose -f compose.dev.yml down",
     "db:migrar": "prisma migrate deploy",
+    "db:sembrar": "prisma generate && node scripts/construir.mjs && node --env-file-if-exists=.env dist/semilla.js",
     "db:nueva-migracion": "prisma migrate dev"
   },
   "dependencies": {

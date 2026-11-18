@@ -3,17 +3,20 @@
 //
 // Qué hace: elige el adaptador según CORREO_DRIVER (resend en staging y producción; consola en
 // local; memoria en pruebas) y manda los correos en segundo plano: la ruta responde sin esperar
-// a Resend, así «olvidé mi contraseña» tarda lo mismo exista o no el correo (SEG-008). Si el
-// envío falla, se loguea con el tipo y el id del usuario, nunca con el correo.
+// a Resend. Con prepararEnSegundoPlano también la búsqueda, lo que se guarda y el armado del
+// correo pasan fuera del pedido, así «olvidé mi contraseña» hace el mismo trabajo exista o no el
+// correo (SEG-008). Si algo falla, se loguea el tipo de correo, el id del usuario y el tipo y
+// código del error, nunca el correo ni el mensaje del error.
 // Tócalo cuando: agregues un adaptador o cambie cómo se reintenta.
 // No lo toques para: el texto de los correos (plantillas.ts).
 // Depende de: ./resend, ./desarrollo, ./tipos y la configuración (src/config.ts).
 // ─────────────────────────────────────────────────────────────────────────────
 import type { FastifyBaseLogger } from 'fastify';
 import type { Config } from '../config';
+import { resumenError } from '../errores';
 import { crearAdaptadorConsola, crearAdaptadorMemoria, crearBuzon, type Buzon } from './desarrollo';
 import { crearAdaptadorResend } from './resend';
-import type { AdaptadorCorreo, CorreoSaliente } from './tipos';
+import type { AdaptadorCorreo, CorreoSaliente, EtiquetaCorreo } from './tipos';
 
 export type { CorreoSaliente } from './tipos';
 
@@ -23,6 +26,12 @@ export interface ServicioCorreo {
   readonly buzon?: Buzon;
   /** Encola el envío y vuelve de inmediato. */
   enviarEnSegundoPlano(correo: CorreoSaliente): void;
+  /**
+   * Corre `preparar` después de responder (buscar al usuario, guardar el enlace, armar el correo)
+   * y, si devuelve un correo, lo envía. Vuelve de inmediato: el pedido cuesta lo mismo haya o no
+   * correo que mandar.
+   */
+  prepararEnSegundoPlano(etiqueta: EtiquetaCorreo, preparar: () => Promise<CorreoSaliente | undefined>): void;
   /** Espera a que terminen los envíos encolados (lo usan las pruebas y el apagado ordenado). */
   esperarPendientes(): Promise<void>;
 }
@@ -33,21 +42,29 @@ export function crearServicioCorreo(opciones: {
   log: FastifyBaseLogger;
 }): ServicioCorreo {
   const pendientes = new Set<Promise<void>>();
+  function enFondo(etiqueta: EtiquetaCorreo, preparar: () => Promise<CorreoSaliente | undefined>) {
+    let usuarioId: string | undefined;
+    // setImmediate: el trabajo empieza después de que la respuesta salió.
+    const p = new Promise<void>((listo) => setImmediate(listo))
+      .then(preparar)
+      .then(async (correo) => {
+        if (!correo) return;
+        usuarioId = correo.usuarioId;
+        await opciones.adaptador.enviar(correo);
+      })
+      .catch((err: unknown) => {
+        opciones.log.error({ correo: etiqueta, usuario_id: usuarioId, error: resumenError(err) }, 'no se pudo enviar el correo');
+      })
+      .finally(() => pendientes.delete(p));
+    pendientes.add(p);
+  }
   return {
     adaptador: opciones.adaptador,
     buzon: opciones.buzon,
     enviarEnSegundoPlano(correo) {
-      const p = opciones.adaptador
-        .enviar(correo)
-        .catch((err: unknown) => {
-          opciones.log.error(
-            { correo: correo.etiqueta, usuario_id: correo.usuarioId, motivo: err instanceof Error ? err.message : 'desconocido' },
-            'no se pudo enviar el correo',
-          );
-        })
-        .finally(() => pendientes.delete(p));
-      pendientes.add(p);
+      enFondo(correo.etiqueta, async () => correo);
     },
+    prepararEnSegundoPlano: enFondo,
     async esperarPendientes() {
       await Promise.all([...pendientes]);
     },

@@ -1,27 +1,39 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Esquema de la base · Zona: Datos (API)
 //
-// Qué hace: las tablas de cuentas del PRD (§Datos): users, refresh_tokens, password_resets y
-// push_tokens. Ids UUID v7, fechas en UTC (timestamptz) y tokens guardados solo con hash.
-// Los nombres de tablas y columnas en la base van en snake_case como el PRD (@@map / @map);
-// en el código de la API se usan los nombres del modelo.
+// Qué hace: todas las tablas del modelo de datos del PRD (§Datos): cuentas, perfil del alumno,
+// vínculo con el entrenador, encuesta, ejercicios, rutinas, sesiones y series, observaciones,
+// medidas, fotos, récords, sugerencias, alertas, reportes de baja y consejos. Ids UUID v7, fechas
+// en UTC (timestamptz) y tokens guardados solo con hash. Los nombres de tablas y columnas en la
+// base van en snake_case como el PRD (@@map / @map); en el código de la API se usan los nombres
+// del modelo (en español, camelCase).
+// Borrado lógico (deleted_at) donde hay historial: usuarios, ejercicios, rutinas y, para que
+// PUT /routines/:id/days no rompa las sesiones viejas, también días y ejercicios de rutina.
+// Las reglas que Prisma no sabe escribir (al menos un destino en observations, intensidad de 1 a
+// 10) van como CHECK en la migración 20261117200000_modelo_completo.
 // Tócalo cuando: agregues una tabla o un campo. Después corre `pnpm --filter api db:nueva-migracion`
 // para crear la migración y commitéala junto con este archivo (el CI compara los dos).
-// No lo toques para: reglas que no son de la base (vencimientos, límites): esas viven en src/.
-// Depende de: prisma.config.ts (de ahí sale DATABASE_URL).
+// No lo toques para: reglas que no son de la base (vencimientos, límites, permisos): esas viven
+// en src/ (src/compartido para las comunes y src/modulos/<nombre> para las de cada área).
+// Depende de: prisma.config.ts (de ahí sale DATABASE_URL). Usa la función en vista previa
+// partialIndexes para los índices únicos parciales (una sesión en curso, un vínculo activo).
 // ─────────────────────────────────────────────────────────────────────────────
 
 generator client {
-  provider     = "prisma-client"
-  output       = "../src/generado/prisma"
-  moduleFormat = "esm"
+  provider        = "prisma-client"
+  output          = "../src/generado/prisma"
+  moduleFormat    = "esm"
+  previewFeatures = ["partialIndexes"]
 }
 
 datasource db {
   provider = "postgresql"
 }
 
-// ── Cuentas ──────────────────────────────────────────────────────────────────
+// ── Listas cerradas ──────────────────────────────────────────────────────────
+// Los valores son los del PRD y los de packages/shared/src/types.ts. Grupo muscular y equipo van
+// como texto (tienen tildes y espacios: «Máquina», «Peso corporal»); la API los valida con Zod
+// contra GRUPOS y EQUIPOS del paquete compartido.
 
 enum Rol {
   trainer
@@ -36,6 +48,142 @@ enum Unidades {
 
   @@map("unidades")
 }
+
+enum EstadoVinculo {
+  invitado
+  activo
+  terminado
+
+  @@map("estado_vinculo")
+}
+
+enum Patron {
+  empuje
+  tiron
+  rodilla
+  cadera
+  core
+  aislamiento
+
+  @@map("patron")
+}
+
+enum TipoCarga {
+  kg
+  peso_corporal
+  tiempo
+
+  @@map("tipo_carga")
+}
+
+enum TipoMedia {
+  video
+  foto
+
+  @@map("tipo_media")
+}
+
+enum MetodoProgresion {
+  doble_progresion
+  lineal
+  porcentual
+  por_rm
+  descendentes
+  cluster
+
+  @@map("metodo_progresion")
+}
+
+enum EstadoRutina {
+  borrador
+  activa
+  archivada
+
+  @@map("estado_rutina")
+}
+
+enum EsquemaSerie {
+  normal
+  descendente
+  cluster
+
+  @@map("esquema_serie")
+}
+
+enum EstadoSesion {
+  en_curso
+  cerrada
+  descartada
+
+  @@map("estado_sesion")
+}
+
+enum TipoObservacion {
+  observacion
+  dolor
+  consejo
+
+  @@map("tipo_observacion")
+}
+
+enum TipoFoto {
+  frente
+  lado
+  espalda
+
+  @@map("tipo_foto")
+}
+
+/// Los cuatro del PRD (peso_max, e1rm, reps_con_peso, volumen_sesion) más los de cierre.ts para
+/// peso corporal (reps) y tiempo (H-04, P-09).
+enum TipoRecord {
+  peso_max
+  e1rm
+  reps_con_peso
+  volumen_sesion
+  reps
+  tiempo
+
+  @@map("tipo_record")
+}
+
+enum EstadoSugerencia {
+  pendiente
+  aplicada
+  sobrescrita
+
+  @@map("estado_sugerencia")
+}
+
+enum TipoAlerta {
+  estancamiento
+  baja_rendimiento
+  sin_sesiones
+  dolor
+
+  @@map("tipo_alerta")
+}
+
+enum EstadoAlerta {
+  nueva
+  vista
+  resuelta
+
+  @@map("estado_alerta")
+}
+
+enum MotivoBaja {
+  sueno
+  estres
+  alimentacion
+  lesion
+  tiempo
+  otro
+
+  @@map("motivo_baja")
+}
+
+// ── Cuentas ──────────────────────────────────────────────────────────────────
 
 /// El rol no cambia después del registro. Borrar la cuenta marca deleted_at y el worker purga a
 /// los 30 días (P-24). email_verified_at queda nulo en la versión 1 (P-55).
@@ -59,20 +207,46 @@ model Usuario {
   passwordResets PasswordReset[]
   pushTokens     PushToken[]
 
+  // Como alumno.
+  perfilAlumno       PerfilAlumno?          @relation("PerfilDelAlumno")
+  encuestas          RespuestaEncuesta[]
+  vinculosAlumno     VinculoEntrenador[]    @relation("VinculoAlumno")
+  rutinasAsignadas   Rutina[]               @relation("RutinaAlumno")
+  sesiones           SesionEntreno[]
+  series             Serie[]
+  medidas            MedidaCorporal[]
+  fotos              FotoProgreso[]
+  records            RecordPersonal[]
+  sugerencias        SugerenciaProgresion[] @relation("SugerenciaAlumno")
+  alertas            Alerta[]               @relation("AlertaAlumno")
+  reportesBaja       ReporteBaja[]
+  observacionesSobre Observacion[]          @relation("ObservacionAlumno")
+
+  // Como entrenador.
+  perfilesEntrenados  PerfilAlumno[]         @relation("EntrenadorDelPerfil")
+  vinculosEntrenador  VinculoEntrenador[]    @relation("VinculoEntrenador")
+  alertasEntrenador   Alerta[]               @relation("AlertaEntrenador")
+  sugerenciasEditadas SugerenciaProgresion[] @relation("SugerenciaSobrescritaPor")
+
+  // De cualquiera.
+  ejerciciosPropios Ejercicio[]
+  rutinasPropias    Rutina[]      @relation("RutinaDueno")
+  observaciones     Observacion[] @relation("ObservacionAutor")
+
   @@map("users")
 }
 
 /// Un refresh por dispositivo. Rotar crea uno nuevo en la misma familia y revoca el usado.
 /// Reutilizar uno revocado revoca todos los del usuario (§Seguridad).
 model RefreshToken {
-  id            String    @id @default(uuid(7)) @db.Uuid
-  usuarioId     String    @map("user_id") @db.Uuid
-  tokenHash     String    @unique @map("token_hash")
-  familiaId     String    @map("familia_id") @db.Uuid
-  expiresAt     DateTime  @map("expires_at") @db.Timestamptz(3)
-  revocadoAt    DateTime? @map("revocado_at") @db.Timestamptz(3)
-  reemplazadoPor String?  @map("reemplazado_por") @db.Uuid
-  createdAt     DateTime  @map("created_at") @db.Timestamptz(3)
+  id             String    @id @default(uuid(7)) @db.Uuid
+  usuarioId      String    @map("user_id") @db.Uuid
+  tokenHash      String    @unique @map("token_hash")
+  familiaId      String    @map("familia_id") @db.Uuid
+  expiresAt      DateTime  @map("expires_at") @db.Timestamptz(3)
+  revocadoAt     DateTime? @map("revocado_at") @db.Timestamptz(3)
+  reemplazadoPor String?   @map("reemplazado_por") @db.Uuid
+  createdAt      DateTime  @map("created_at") @db.Timestamptz(3)
 
   usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
 
@@ -96,7 +270,7 @@ model PasswordReset {
   @@map("password_resets")
 }
 
-/// Token de Expo del dispositivo, guardado con hash. La ruta POST /me/push-tokens llega después.
+/// Token de Expo del dispositivo, guardado con hash (POST /me/push-tokens).
 model PushToken {
   id         String    @id @default(uuid(7)) @db.Uuid
   usuarioId  String    @map("user_id") @db.Uuid
@@ -109,4 +283,480 @@ model PushToken {
 
   @@index([usuarioId])
   @@map("push_tokens")
+}
+
+// ── Perfil del alumno, encuesta y vínculo ────────────────────────────────────
+
+/// Una fila por alumno (se crea con la encuesta o al vincularse). entrenador_id es una copia del
+/// vínculo activo para leer rápido; la fuente de verdad del permiso es trainer_clients con
+/// estado activo (src/compartido/vinculo.ts). Una sola rutina activa: rutina_activa_id.
+/// Consentimientos expresos de la Ley 21.719 (P-25): salud al responder la encuesta, fotos al
+/// subir la primera.
+model PerfilAlumno {
+  usuarioId             String    @id @map("user_id") @db.Uuid
+  entrenadorId          String?   @map("trainer_id") @db.Uuid
+  fechaNacimiento       DateTime? @map("fecha_nacimiento") @db.Date
+  alturaCm              Float?    @map("altura_cm")
+  objetivo              String?
+  experiencia           String?
+  diasSemana            Int?      @map("dias_semana")
+  lugar                 String?
+  minutosSesion         Int?      @map("minutos_sesion")
+  lesiones              Json?
+  rutinaActivaId        String?   @unique @map("rutina_activa_id") @db.Uuid
+  consentimientoSaludAt DateTime? @map("consentimiento_salud_at") @db.Timestamptz(3)
+  consentimientoFotosAt DateTime? @map("consentimiento_fotos_at") @db.Timestamptz(3)
+  politicaVersion       String?   @map("politica_version")
+  recordatorioActivo    Boolean   @default(true) @map("recordatorio_activo")
+  /// Hora habitual del recordatorio en la zona del alumno, «HH:MM» (P-21). Nula: se calcula.
+  recordatorioHora      String?   @map("recordatorio_hora")
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  usuario      Usuario  @relation("PerfilDelAlumno", fields: [usuarioId], references: [id], onDelete: Cascade)
+  entrenador   Usuario? @relation("EntrenadorDelPerfil", fields: [entrenadorId], references: [id], onDelete: SetNull)
+  rutinaActiva Rutina?  @relation("RutinaActivaDelPerfil", fields: [rutinaActivaId], references: [id], onDelete: SetNull)
+
+  @@index([entrenadorId])
+  @@map("client_profiles")
+}
+
+/// Invitación y vínculo en la misma fila: el entrenador pide un código (estado invitado,
+/// client_id nulo, vence a los 7 días); el alumno lo usa y la fila pasa a activo con su
+/// client_id. Terminar conserva la fila con terminado_at y corta el acceso al instante.
+/// Un solo vínculo activo por alumno (índice parcial). El código se guarda en mayúsculas.
+model VinculoEntrenador {
+  id            String        @id @default(uuid(7)) @db.Uuid
+  entrenadorId  String        @map("trainer_id") @db.Uuid
+  alumnoId      String?       @map("client_id") @db.Uuid
+  estado        EstadoVinculo @default(invitado)
+  codigo        String        @unique
+  codigoVenceAt DateTime      @map("codigo_vence_at") @db.Timestamptz(3)
+  aceptadoAt    DateTime?     @map("aceptado_at") @db.Timestamptz(3)
+  terminadoAt   DateTime?     @map("terminado_at") @db.Timestamptz(3)
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  entrenador Usuario  @relation("VinculoEntrenador", fields: [entrenadorId], references: [id], onDelete: Cascade)
+  alumno     Usuario? @relation("VinculoAlumno", fields: [alumnoId], references: [id], onDelete: Cascade)
+
+  @@unique([alumnoId], map: "trainer_clients_un_activo_por_alumno", where: raw("estado = 'activo'"))
+  @@index([entrenadorId, estado])
+  @@index([alumnoId, estado])
+  @@map("trainer_clients")
+}
+
+/// Se guarda entera y no se edita; cada envío crea otra fila y la vigente es la más reciente.
+/// version es la del cuestionario (1) (P-12).
+model RespuestaEncuesta {
+  id           String   @id @default(uuid(7)) @db.Uuid
+  alumnoId     String   @map("client_id") @db.Uuid
+  version      Int      @default(1)
+  respuestas   Json
+  completadaAt DateTime @map("completada_at") @db.Timestamptz(3)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  alumno Usuario @relation(fields: [alumnoId], references: [id], onDelete: Cascade)
+
+  @@index([alumnoId, completadaAt])
+  @@map("survey_responses")
+}
+
+// ── Ejercicios ───────────────────────────────────────────────────────────────
+
+/// owner_id nulo: biblioteca base (sembrada desde packages/shared/src/exercises.seed.ts, con el
+/// id de la app como slug y un UUID v7 fijo; P-29). Los de la base no se editan; los propios los
+/// edita su dueño. Borrar es lógico y no se permite si está en una rutina activa.
+model Ejercicio {
+  id                  String    @id @default(uuid(7)) @db.Uuid
+  duenoId             String?   @map("owner_id") @db.Uuid
+  slug                String?   @unique
+  nombre              String
+  grupoMuscular       String    @map("grupo_muscular")
+  equipo              String
+  patron              Patron
+  tipoCarga           TipoCarga @map("tipo_carga")
+  incrementoDefaultKg Float     @map("incremento_default_kg")
+  instrucciones       String?
+  deletedAt           DateTime? @map("deleted_at") @db.Timestamptz(3)
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  dueno         Usuario?          @relation(fields: [duenoId], references: [id], onDelete: Cascade)
+  media         MediaEjercicio[]
+  enRutinas     EjercicioRutina[]
+  series        Serie[]
+  records       RecordPersonal[]
+  alertas       Alerta[]
+  observaciones Observacion[]
+
+  @@index([duenoId])
+  @@index([grupoMuscular])
+  @@map("exercises")
+}
+
+/// Videos propios de hasta 50 MB (storage_key, se confirma con PUT al subir); los de la base son
+/// enlaces (url).
+model MediaEjercicio {
+  id          String    @id @default(uuid(7)) @db.Uuid
+  ejercicioId String    @map("exercise_id") @db.Uuid
+  tipo        TipoMedia
+  url         String?
+  storageKey  String?   @unique @map("storage_key")
+  bytes       Int?
+  orden       Int       @default(0)
+  subidaAt    DateTime? @map("subida_at") @db.Timestamptz(3)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  ejercicio Ejercicio @relation(fields: [ejercicioId], references: [id], onDelete: Cascade)
+
+  @@index([ejercicioId, orden])
+  @@map("exercise_media")
+}
+
+// ── Rutinas ──────────────────────────────────────────────────────────────────
+
+/// owner_id: quien la escribió. client_id: a quién se asigna (nulo: plantilla del entrenador).
+/// La rutina propia de un alumno tiene owner_id = client_id. Activar sube version; las sesiones
+/// guardan la version con la que se hicieron. origen_id: de cuál se copió (duplicar, asignar una
+/// plantilla: P-43).
+model Rutina {
+  id               String           @id @default(uuid(7)) @db.Uuid
+  duenoId          String           @map("owner_id") @db.Uuid
+  alumnoId         String?          @map("client_id") @db.Uuid
+  origenId         String?          @map("origen_id") @db.Uuid
+  nombre           String
+  descripcion      String?
+  semanas          Int
+  metodoProgresion MetodoProgresion @default(doble_progresion) @map("metodo_progresion")
+  estado           EstadoRutina     @default(borrador)
+  version          Int              @default(1)
+  activadaAt       DateTime?        @map("activada_at") @db.Timestamptz(3)
+  deletedAt        DateTime?        @map("deleted_at") @db.Timestamptz(3)
+  createdAt        DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  dueno         Usuario         @relation("RutinaDueno", fields: [duenoId], references: [id], onDelete: Cascade)
+  alumno        Usuario?        @relation("RutinaAlumno", fields: [alumnoId], references: [id], onDelete: Cascade)
+  dias          DiaRutina[]
+  sesiones      SesionEntreno[]
+  observaciones Observacion[]
+  perfilActiva  PerfilAlumno?   @relation("RutinaActivaDelPerfil")
+
+  @@index([duenoId])
+  @@index([alumnoId, estado])
+  @@map("routines")
+}
+
+/// El orden define el ciclo cuando no hay día fijo. dia_semana: 1 lunes a 7 domingo (ISO), nulo
+/// sin día fijo. deleted_at: PUT /routines/:id/days marca los días viejos en vez de borrarlos si
+/// ya tienen sesiones.
+model DiaRutina {
+  id        String    @id @default(uuid(7)) @db.Uuid
+  rutinaId  String    @map("routine_id") @db.Uuid
+  orden     Int
+  nombre    String
+  diaSemana Int?      @map("dia_semana")
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  rutina     Rutina            @relation(fields: [rutinaId], references: [id], onDelete: Cascade)
+  ejercicios EjercicioRutina[]
+  sesiones   SesionEntreno[]
+
+  @@index([rutinaId, orden])
+  @@map("routine_days")
+}
+
+/// Lo prescrito para un ejercicio dentro de un día. porcentajes_semana (Porcentual) y
+/// objetivo_rm (Por RM) son los campos de P-10. El método es de la rutina; el esquema define
+/// cómo se cuentan las series.
+model EjercicioRutina {
+  id                String       @id @default(uuid(7)) @db.Uuid
+  diaRutinaId       String       @map("routine_day_id") @db.Uuid
+  ejercicioId       String       @map("exercise_id") @db.Uuid
+  orden             Int
+  series            Int
+  repsMin           Int          @map("reps_min")
+  repsMax           Int          @map("reps_max")
+  rirObjetivo       Int          @default(2) @map("rir_objetivo")
+  descansoS         Int          @default(90) @map("descanso_s")
+  incrementoKg      Float        @map("incremento_kg")
+  pesoInicialKg     Float?       @map("peso_inicial_kg")
+  esquema           EsquemaSerie @default(normal)
+  grupoSuperserie   String?      @map("grupo_superserie")
+  notaEntrenador    String?      @map("nota_entrenador")
+  porcentajesSemana Float[]      @default([]) @map("porcentajes_semana")
+  objetivoRm        Int?         @map("objetivo_rm")
+  deletedAt         DateTime?    @map("deleted_at") @db.Timestamptz(3)
+  createdAt         DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  dia          DiaRutina              @relation(fields: [diaRutinaId], references: [id], onDelete: Cascade)
+  ejercicio    Ejercicio              @relation(fields: [ejercicioId], references: [id], onDelete: Restrict)
+  seriesHechas Serie[]
+  sugerencias  SugerenciaProgresion[]
+
+  @@index([diaRutinaId, orden])
+  @@index([ejercicioId])
+  @@map("routine_exercises")
+}
+
+// ── Sesiones y series ────────────────────────────────────────────────────────
+
+/// El id lo genera el celular (UUID v7): crear con un id que ya existe devuelve la sesión tal
+/// como está. Cerrada no se edita (solo se agregan observaciones). Una sola en_curso por alumno
+/// (índice parcial; P-17).
+model SesionEntreno {
+  id             String       @id @db.Uuid
+  alumnoId       String       @map("client_id") @db.Uuid
+  rutinaId       String?      @map("routine_id") @db.Uuid
+  diaRutinaId    String?      @map("routine_day_id") @db.Uuid
+  routineVersion Int?         @map("routine_version")
+  iniciadaAt     DateTime     @map("iniciada_at") @db.Timestamptz(3)
+  cerradaAt      DateTime?    @map("cerrada_at") @db.Timestamptz(3)
+  estado         EstadoSesion @default(en_curso)
+  duracionS      Int?         @map("duracion_s")
+  volumenKg      Float?       @map("volumen_kg")
+  kcalEstimadas  Float?       @map("kcal_estimadas")
+  observacion    String?
+  dolorGeneral   Json?        @map("dolor_general")
+  deviceId       String?      @map("device_id")
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  alumno        Usuario                @relation(fields: [alumnoId], references: [id], onDelete: Cascade)
+  rutina        Rutina?                @relation(fields: [rutinaId], references: [id], onDelete: SetNull)
+  dia           DiaRutina?             @relation(fields: [diaRutinaId], references: [id], onDelete: SetNull)
+  series        Serie[]
+  observaciones Observacion[]
+  records       RecordPersonal[]
+  sugerencias   SugerenciaProgresion[]
+
+  @@unique([alumnoId], map: "workout_sessions_un_en_curso_por_alumno", where: raw("estado = 'en_curso'"))
+  @@index([alumnoId, cerradaAt])
+  @@index([diaRutinaId])
+  @@map("workout_sessions")
+}
+
+/// El id lo genera el celular. rpe = 10 - rir; e1rm (Epley, hasta 12 reps; si no, nulo) se
+/// calcula al guardar con las fórmulas de packages/shared. client_id va copiado para el índice
+/// de historial por ejercicio que pide §Rendimiento.
+model Serie {
+  id                String   @id @db.Uuid
+  sesionId          String   @map("session_id") @db.Uuid
+  alumnoId          String   @map("client_id") @db.Uuid
+  ejercicioRutinaId String?  @map("routine_exercise_id") @db.Uuid
+  ejercicioId       String   @map("exercise_id") @db.Uuid
+  serieN            Int      @map("serie_n")
+  pesoKg            Float    @map("peso_kg")
+  reps              Int
+  rir               Int?
+  rpe               Float?
+  completada        Boolean  @default(false)
+  fallo             Boolean  @default(false)
+  tiempoS           Int?     @map("tiempo_s")
+  descansoRealS     Int?     @map("descanso_real_s")
+  e1rm              Float?
+  nota              String?
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  sesion          SesionEntreno    @relation(fields: [sesionId], references: [id], onDelete: Cascade)
+  alumno          Usuario          @relation(fields: [alumnoId], references: [id], onDelete: Cascade)
+  ejercicioRutina EjercicioRutina? @relation(fields: [ejercicioRutinaId], references: [id], onDelete: SetNull)
+  ejercicio       Ejercicio        @relation(fields: [ejercicioId], references: [id], onDelete: Restrict)
+  observaciones   Observacion[]
+  records         RecordPersonal[]
+
+  @@index([sesionId])
+  @@index([alumnoId, ejercicioId, createdAt])
+  @@map("workout_sets")
+}
+
+// ── Observaciones ────────────────────────────────────────────────────────────
+
+/// El alumno y el entrenador escriben; nadie edita la ajena (no hay ruta de edición). Va sobre
+/// un ejercicio, una sesión, una serie o una rutina (al menos uno: CHECK en la migración).
+/// client_id: el alumno de quien es el dato (el autor puede ser su entrenador), para listar y
+/// para la regla de vínculo. Intensidad de dolor de 1 a 10 (CHECK).
+model Observacion {
+  id              String          @id @default(uuid(7)) @db.Uuid
+  autorId         String          @map("autor_id") @db.Uuid
+  alumnoId        String          @map("client_id") @db.Uuid
+  tipo            TipoObservacion
+  ejercicioId     String?         @map("exercise_id") @db.Uuid
+  sesionId        String?         @map("session_id") @db.Uuid
+  serieId         String?         @map("set_id") @db.Uuid
+  rutinaId        String?         @map("routine_id") @db.Uuid
+  texto           String
+  dolorZona       String?         @map("dolor_zona")
+  dolorIntensidad Int?            @map("dolor_intensidad")
+  createdAt       DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  autor     Usuario        @relation("ObservacionAutor", fields: [autorId], references: [id], onDelete: Cascade)
+  alumno    Usuario        @relation("ObservacionAlumno", fields: [alumnoId], references: [id], onDelete: Cascade)
+  ejercicio Ejercicio?     @relation(fields: [ejercicioId], references: [id], onDelete: Cascade)
+  sesion    SesionEntreno? @relation(fields: [sesionId], references: [id], onDelete: Cascade)
+  serie     Serie?         @relation(fields: [serieId], references: [id], onDelete: Cascade)
+  rutina    Rutina?        @relation(fields: [rutinaId], references: [id], onDelete: Cascade)
+
+  @@index([alumnoId, createdAt])
+  @@index([sesionId])
+  @@index([ejercicioId])
+  @@index([rutinaId])
+  @@map("observations")
+}
+
+// ── Progreso ─────────────────────────────────────────────────────────────────
+
+/// Una fila por día y alumno: la segunda del mismo día reemplaza (upsert por client_id y fecha).
+model MedidaCorporal {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  alumnoId  String   @map("client_id") @db.Uuid
+  fecha     DateTime @db.Date
+  pesoKg    Float?   @map("peso_kg")
+  cinturaCm Float?   @map("cintura_cm")
+  caderaCm  Float?   @map("cadera_cm")
+  pechoCm   Float?   @map("pecho_cm")
+  brazoCm   Float?   @map("brazo_cm")
+  musloCm   Float?   @map("muslo_cm")
+  grasaPct  Float?   @map("grasa_pct")
+  nota      String?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  alumno Usuario @relation(fields: [alumnoId], references: [id], onDelete: Cascade)
+
+  @@unique([alumnoId, fecha])
+  @@map("body_metrics")
+}
+
+/// Privadas: se sirven con URL firmada de 15 minutos. La fila se crea al pedir la URL de subida y
+/// subida_at se marca cuando el objeto existe en el bucket (P-53).
+model FotoProgreso {
+  id         String    @id @default(uuid(7)) @db.Uuid
+  alumnoId   String    @map("client_id") @db.Uuid
+  fecha      DateTime  @db.Date
+  tipo       TipoFoto
+  storageKey String    @unique @map("storage_key")
+  bytes      Int?
+  subidaAt   DateTime? @map("subida_at") @db.Timestamptz(3)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  alumno Usuario @relation(fields: [alumnoId], references: [id], onDelete: Cascade)
+
+  @@index([alumnoId, fecha])
+  @@map("progress_photos")
+}
+
+/// Se recalculan al cerrar cada sesión; el récord anterior queda con superado_at. El vigente de
+/// cada (client_id, exercise_id, tipo) es el que tiene superado_at nulo.
+model RecordPersonal {
+  id          String     @id @default(uuid(7)) @db.Uuid
+  alumnoId    String     @map("client_id") @db.Uuid
+  ejercicioId String     @map("exercise_id") @db.Uuid
+  tipo        TipoRecord
+  valor       Float
+  serieId     String?    @map("set_id") @db.Uuid
+  sesionId    String?    @map("session_id") @db.Uuid
+  fecha       DateTime   @db.Timestamptz(3)
+  superadoAt  DateTime?  @map("superado_at") @db.Timestamptz(3)
+  createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  alumno    Usuario        @relation(fields: [alumnoId], references: [id], onDelete: Cascade)
+  ejercicio Ejercicio      @relation(fields: [ejercicioId], references: [id], onDelete: Cascade)
+  serie     Serie?         @relation(fields: [serieId], references: [id], onDelete: SetNull)
+  sesion    SesionEntreno? @relation(fields: [sesionId], references: [id], onDelete: SetNull)
+
+  @@index([alumnoId, ejercicioId])
+  @@index([alumnoId, ejercicioId, tipo, superadoAt])
+  @@map("personal_records")
+}
+
+/// Una por ejercicio de rutina por sesión cerrada (session_id es la sesión base). El entrenador
+/// (o el alumno solo) la sobrescribe hasta que se usa: se usa al iniciar la sesión que la precarga
+/// y pasa a aplicada (P-19). Queda quién y cuándo (sobrescrita_por, sobrescrita_at).
+model SugerenciaProgresion {
+  id                String           @id @default(uuid(7)) @db.Uuid
+  alumnoId          String           @map("client_id") @db.Uuid
+  ejercicioRutinaId String           @map("routine_exercise_id") @db.Uuid
+  sesionId          String           @map("session_id") @db.Uuid
+  metodo            MetodoProgresion
+  sugerencia        Json
+  texto             String
+  motivo            String?
+  estado            EstadoSugerencia @default(pendiente)
+  sobrescritaPorId  String?          @map("sobrescrita_por") @db.Uuid
+  sobrescritaAt     DateTime?        @map("sobrescrita_at") @db.Timestamptz(3)
+  valorFinal        Json?            @map("valor_final")
+  aplicadaAt        DateTime?        @map("aplicada_at") @db.Timestamptz(3)
+  createdAt         DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  alumno          Usuario         @relation("SugerenciaAlumno", fields: [alumnoId], references: [id], onDelete: Cascade)
+  ejercicioRutina EjercicioRutina @relation(fields: [ejercicioRutinaId], references: [id], onDelete: Cascade)
+  sesion          SesionEntreno   @relation(fields: [sesionId], references: [id], onDelete: Cascade)
+  sobrescritaPor  Usuario?        @relation("SugerenciaSobrescritaPor", fields: [sobrescritaPorId], references: [id], onDelete: SetNull)
+
+  @@unique([sesionId, ejercicioRutinaId])
+  @@index([alumnoId, estado])
+  @@index([ejercicioRutinaId, createdAt])
+  @@map("progression_suggestions")
+}
+
+// ── Alertas, reportes de baja y consejos ─────────────────────────────────────
+
+/// trainer_id nulo: alumno solo (P-23). No se repite la misma alerta abierta (nueva o vista) para
+/// el mismo alumno, tipo y ejercicio: índice único parcial. Ojo: con exercise_id nulo (sin
+/// sesiones) PostgreSQL no compara nulos, así que esa revisión la hace el módulo.
+model Alerta {
+  id           String       @id @default(uuid(7)) @db.Uuid
+  alumnoId     String       @map("client_id") @db.Uuid
+  entrenadorId String?      @map("trainer_id") @db.Uuid
+  tipo         TipoAlerta
+  ejercicioId  String?      @map("exercise_id") @db.Uuid
+  detalle      Json         @default("{}")
+  estado       EstadoAlerta @default(nueva)
+  vistaAt      DateTime?    @map("vista_at") @db.Timestamptz(3)
+  resueltaAt   DateTime?    @map("resuelta_at") @db.Timestamptz(3)
+  createdAt    DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime     @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  alumno     Usuario      @relation("AlertaAlumno", fields: [alumnoId], references: [id], onDelete: Cascade)
+  entrenador Usuario?     @relation("AlertaEntrenador", fields: [entrenadorId], references: [id], onDelete: SetNull)
+  ejercicio  Ejercicio?   @relation(fields: [ejercicioId], references: [id], onDelete: SetNull)
+  reporte    ReporteBaja?
+
+  @@unique([alumnoId, tipo, ejercicioId], map: "alerts_un_abierta", where: raw("estado <> 'resuelta'"))
+  @@index([entrenadorId, estado])
+  @@index([alumnoId, estado])
+  @@map("alerts")
+}
+
+/// Un reporte por alerta. consejos_mostrados guarda los ids de tips que se le mostraron.
+model ReporteBaja {
+  id                String       @id @default(uuid(7)) @db.Uuid
+  alumnoId          String       @map("client_id") @db.Uuid
+  alertaId          String       @unique @map("alert_id") @db.Uuid
+  motivos           MotivoBaja[]
+  comentario        String?
+  consejosMostrados String[]     @default([]) @map("consejos_mostrados")
+  createdAt         DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  alumno Usuario @relation(fields: [alumnoId], references: [id], onDelete: Cascade)
+  alerta Alerta  @relation(fields: [alertaId], references: [id], onDelete: Cascade)
+
+  @@index([alumnoId])
+  @@map("drop_reports")
+}
+
+/// Contenido sembrado (docs/pantallas/motivos.html): hasta 3 consejos por motivo.
+model Consejo {
+  id     String     @id @default(uuid(7)) @db.Uuid
+  motivo MotivoBaja
+  texto  String
+  orden  Int
+
+  @@unique([motivo, orden])
+  @@map("tips")
 }

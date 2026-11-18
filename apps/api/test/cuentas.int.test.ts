@@ -163,6 +163,25 @@ describeConBase('Cuentas: refresh y cierre de sesión', () => {
     const fila = await e.prisma.refreshToken.findUniqueOrThrow({ where: { tokenHash: hashToken(uno.refresh_token) } });
     expect(fila.revocadoAt).not.toBeNull();
   });
+
+  it('un refresh cerrado con logout que vuelve da 401 REFRESH_INVALID y no saca a los otros dispositivos', async () => {
+    const uno = (await e.registrar('martina')).tokens;
+    const dos = (await e.ingresar('martina')).json.tokens;
+    await e.pedir({ method: 'POST', url: '/v1/auth/logout', payload: { refresh_token: uno.refresh_token } });
+    const r = await renovar(uno.refresh_token);
+    expect(r.status).toBe(401);
+    expect(r.json.error.code).toBe('REFRESH_INVALID');
+    // No fue reuso de uno reemplazado: el otro teléfono sigue con su sesión.
+    expect(await e.prisma.refreshToken.count({ where: { revocadoAt: null } })).toBe(1);
+    expect((await renovar(dos.refresh_token)).status).toBe(200);
+  });
+
+  it('el registro guarda al usuario y su refresh en una sola transacción', async () => {
+    const { usuario, tokens } = await e.registrar('martina');
+    const fila = await e.prisma.refreshToken.findUniqueOrThrow({ where: { tokenHash: hashToken(tokens.refresh_token) } });
+    expect(fila.usuarioId).toBe(usuario.id);
+    expect(fila.createdAt.toISOString()).toBe(AHORA);
+  });
 });
 
 describeConBase('Cuentas: recuperación de contraseña', () => {
@@ -191,6 +210,8 @@ describeConBase('Cuentas: recuperación de contraseña', () => {
   it('INT-014 un correo sin cuenta da 202 con el mismo cuerpo, sin correo ni fila', async () => {
     await e.registrar('martina');
     const existe = await pedirEnlace(PERSONAS.martina.email);
+    // El enlace se guarda y se manda en segundo plano: se espera antes de limpiar.
+    await e.esperarCorreos();
     e.buzon.vaciar();
     await e.prisma.passwordReset.deleteMany();
     const nadie = await pedirEnlace('nadie@gymtrack.test');
@@ -298,7 +319,8 @@ describeConBase('Perfil, salud y reglas transversales', () => {
       SELECT tc.table_name AS tabla FROM information_schema.table_constraints tc
       JOIN information_schema.constraint_column_usage ccu ON ccu.constraint_name = tc.constraint_name
       WHERE tc.constraint_type = 'FOREIGN KEY' AND ccu.table_name = 'users'`;
-    expect(fks.map((f) => f.tabla).sort()).toEqual(['password_resets', 'push_tokens', 'refresh_tokens']);
+    // Las de cuentas cuelgan de users; el resto del modelo (rutinas, sesiones, alertas) también.
+    expect(fks.map((f) => f.tabla)).toEqual(expect.arrayContaining(['password_resets', 'push_tokens', 'refresh_tokens']));
     const borrado = await e.prisma.$queryRaw<{ n: bigint }[]>`
       SELECT count(*) AS n FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'deleted_at'`;
     expect(Number(borrado[0]!.n)).toBe(1);

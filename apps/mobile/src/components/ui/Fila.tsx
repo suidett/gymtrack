@@ -1,44 +1,57 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Fila · Zona: Kit de interfaz
+// Filas de lista · Zona: Kit de interfaz
 //
-// Qué hace: una fila de lista dentro de una tarjeta (una rutina, una sesión, un récord): lo
-// principal a la izquierda, algo chico a la derecha (una flecha, una cifra) y una línea abajo que
-// la separa de la siguiente. Si le pasas onPress, se vuelve tocable.
-// Tócalo cuando: quieras cambiar el alto, la separación o el efecto de toque de todas las filas.
-// No lo toques para: decidir qué va en cada fila (eso lo arma cada pantalla) ni el estilo del
-// texto de adentro (Txt.tsx).
-// Depende de: nada propio (solo React Native). La clase border-line sale del preset de
-// packages/tokens.
+// Qué hace: la fila de sistema.css (.lista-filas > li): alto mínimo de 56 dp, contenido a la
+// izquierda y a la derecha, línea de 1 dp en superficie alta entre filas. Con `onPress` se vuelve
+// tocable, se oscurece al presionar y muestra la flecha a la derecha si no pasas `derecha`.
+// Tócalo cuando: cambie cómo se ve una fila de lista en toda la app.
+// No lo toques para: la fila de una serie en el registro (eso es del área Sesión).
+// Depende de: ./Icono y ./Txt.
 // ─────────────────────────────────────────────────────────────────────────────
 import type { ReactNode } from 'react';
 import { Pressable, View } from 'react-native';
+import { Icono } from './Icono';
+import { Txt } from './Txt';
 
 /**
- * Fila de lista con contenido a la izquierda y a la derecha.
- * Recibe `izquierda` (ocupa todo el ancho que sobra), `derecha` opcional, `onPress` opcional (sin
- * él la fila no reacciona al toque ni se atenúa) y `ultimo`, que quita la línea de abajo para que
- * la última fila no dibuje un borde doble con el de la tarjeta. Es la pantalla la que marca cuál
- * es la última, con el índice del map.
+ * Fila. `izquierda` ocupa lo que sobra; `derecha` opcional. `ultimo` quita la línea de abajo
+ * (la pantalla marca cuál es la última con el índice del map). `titulo` y `detalle` son un
+ * atajo para el caso común de dos líneas de texto.
  */
 export function Fila({
   onPress,
   izquierda,
+  titulo,
+  detalle,
   derecha,
   ultimo = false,
+  etiqueta,
 }: {
   onPress?: () => void;
-  izquierda: ReactNode;
+  izquierda?: ReactNode;
+  titulo?: string;
+  detalle?: string;
   derecha?: ReactNode;
   ultimo?: boolean;
+  /** Lo que lee el lector de pantalla (por defecto el título). */
+  etiqueta?: string;
 }) {
+  const contenido = izquierda ?? (
+    <View className="gap-0.5">
+      {titulo ? <Txt v="cuerpoMedio">{titulo}</Txt> : null}
+      {detalle ? <Txt v="sec">{detalle}</Txt> : null}
+    </View>
+  );
   return (
     <Pressable
       onPress={onPress}
       disabled={!onPress}
-      className={`flex-row items-center gap-3 py-3 ${ultimo ? '' : 'border-b border-line'} ${onPress ? 'active:opacity-70' : ''}`}
+      accessibilityRole={onPress ? 'button' : undefined}
+      accessibilityLabel={etiqueta ?? titulo}
+      className={`min-h-[56px] flex-row items-center gap-3 py-2 ${ultimo ? '' : 'border-b border-sup-alta'} ${onPress ? 'active:bg-fantasma-pres' : ''}`}
     >
-      <View className="flex-1">{izquierda}</View>
-      {derecha}
+      <View className="flex-1">{contenido}</View>
+      {derecha ?? (onPress ? <Icono nombre="adelante" tamano={20} /> : null)}
     </Pressable>
   );
 }

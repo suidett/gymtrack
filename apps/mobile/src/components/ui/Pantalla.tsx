@@ -1,98 +1,150 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Pantalla · Zona: Kit de interfaz
+// Marco de pantalla · Zona: Kit de interfaz
 //
-// Qué hace: el marco de toda pantalla. Pantalla pone el fondo, respeta la barra de estado y el
-// notch, y decide si el contenido hace scroll; Cabecera es la fila de arriba con el título, un
-// subtítulo opcional, el botón de volver y espacio para un botón a la derecha.
-// Tócalo cuando: quieras cambiar los márgenes de todas las pantallas, cómo se lleva el scroll con
-// el teclado, o cómo se ve y adónde vuelve el botón de atrás.
-// No lo toques para: las pestañas de abajo (src/app/(tabs)/_layout.tsx) ni el contenido de cada
-// pantalla (cada archivo de src/app).
-// Depende de: Txt (./Txt).
+// Qué hace: el marco de cada pantalla (sistema.css, .tel-contenido y .tel-accion): fondo del
+// tema hasta arriba, margen lateral de 16, scroll con aire abajo y, si hace falta, la barra de
+// acción fija abajo (relleno 12/16, línea de 1 dp arriba) para el botón principal. Más la
+// cabecera con el botón de volver de 48 dp, ceja, título y lo que vaya a la derecha, y el
+// marcador «En construcción» que usan las rutas que todavía no se arman.
+// Tócalo cuando: cambie el margen, el fondo o la cabecera de todas las pantallas.
+// No lo toques para: el contenido de una pantalla.
+// Depende de: expo-router (volver), ./Boton, ./Txt y react-native-safe-area-context.
 // ─────────────────────────────────────────────────────────────────────────────
 import { router } from 'expo-router';
 import type { ReactNode } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Txt } from './Txt';
+import { BotonIcono } from './Boton';
+import { Simbolo } from './Simbolo';
+import { Ceja, Txt } from './Txt';
 
-// ── Marco de pantalla ────────────────────────────────────────────────────────
+// ── Marco ────────────────────────────────────────────────────────────────────
 /**
- * Contenedor de una pantalla completa.
- * Recibe `children`, `scroll` (por defecto true: el contenido va en un ScrollView con aire abajo,
- * para que lo último no quede pegado al borde) y `sinPadding`, que quita el margen lateral cuando
- * la pantalla arma su propia lista de borde a borde.
- * Con scroll en false el contenido va en un View de alto completo: úsalo cuando adentro hay una
- * FlatList u otra cosa que hace su propio scroll, porque un scroll dentro de otro se pelea.
+ * Pantalla completa. `scroll` (por defecto true) pone el contenido en un ScrollView; en false
+ * va en un View de alto completo (para una FlatList propia). `sinPadding` quita el margen de 16.
+ * `accion` es lo que va fijo abajo (por ejemplo <Boton alto ancho titulo="Guardar" />).
+ * `sinBordeSuperior` es para pantallas dentro de las pestañas, donde el inset ya lo pone la barra.
  */
 export function Pantalla({
   children,
   scroll = true,
   sinPadding = false,
+  accion,
+  cabecera,
 }: {
   children: ReactNode;
   scroll?: boolean;
   sinPadding?: boolean;
+  accion?: ReactNode;
+  /** Lo que va fijo arriba, fuera del scroll (por ejemplo una <Cabecera>). */
+  cabecera?: ReactNode;
 }) {
-  // El alto de la barra de estado se pone a mano y no con SafeAreaView, para que el fondo llegue
-  // hasta arriba y solo baje el contenido.
   const insets = useSafeAreaInsets();
-  const padding = sinPadding ? '' : 'px-5';
-  // keyboardShouldPersistTaps: con el teclado abierto, el primer toque a un botón lo aprieta en
-  // vez de solo cerrar el teclado.
+  const padding = sinPadding ? '' : 'px-4';
   return (
-    <View className="flex-1 bg-bg" style={{ paddingTop: insets.top }}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      className="flex-1 bg-fondo"
+      style={{ paddingTop: insets.top }}
+    >
+      {cabecera ? <View className={padding}>{cabecera}</View> : null}
       {scroll ? (
         <ScrollView
           keyboardShouldPersistTaps="handled"
-          contentContainerClassName={`${padding} pb-12 pt-3`}
+          contentContainerClassName={`${padding} pb-6 pt-2`}
           showsVerticalScrollIndicator={false}
+          className="flex-1"
         >
           {children}
         </ScrollView>
       ) : (
-        <View className={`flex-1 ${padding} pt-3`}>{children}</View>
+        <View className={`flex-1 ${padding} pt-2`}>{children}</View>
       )}
+      {accion ? <BarraAccion>{accion}</BarraAccion> : null}
+    </KeyboardAvoidingView>
+  );
+}
+
+// ── Barra de acción ──────────────────────────────────────────────────────────
+/** La franja fija de abajo con el botón principal. Respeta la barra de gestos del teléfono. */
+export function BarraAccion({ children, enPestanas = false }: { children: ReactNode; enPestanas?: boolean }) {
+  const insets = useSafeAreaInsets();
+  return (
+    <View
+      className="gap-2 border-t border-sup-alta bg-fondo px-4 pt-3"
+      style={{ paddingBottom: 12 + (enPestanas ? 0 : insets.bottom) }}
+    >
+      {children}
     </View>
   );
 }
 
 // ── Cabecera ─────────────────────────────────────────────────────────────────
 /**
- * Fila de título de una pantalla.
- * Recibe `titulo`, `subtitulo` opcional, `atras` (muestra el botón de volver) y `derecha`, un
- * nodo que va al final de la fila (un Boton chico, por ejemplo).
- * El botón de volver va a la pantalla anterior; si no hay historial (se abrió la app directo en
- * esta ruta, por ejemplo desde un enlace en web) manda a Hoy para no dejar al alumno pegado.
+ * Fila de título. `titulo`, `ceja` (arriba, chica), `subtitulo` (abajo, secundario), `atras`
+ * (muestra Volver) y `derecha` (un BotonIcono o un Boton fantasma). `alVolver` reemplaza lo que
+ * hace Volver (por ejemplo, pedir confirmación antes de salir).
+ * Sin historial (se abrió directo en esta ruta) Volver lleva al inicio.
  */
 export function Cabecera({
   titulo,
   subtitulo,
+  ceja,
   atras = false,
+  cerrar = false,
+  alVolver,
   derecha,
 }: {
-  titulo: string;
+  titulo?: string;
   subtitulo?: string;
+  ceja?: string;
   atras?: boolean;
+  /** Muestra una X en vez de la flecha (pantallas que se abren encima, como Nueva rutina). */
+  cerrar?: boolean;
+  alVolver?: () => void;
   derecha?: ReactNode;
 }) {
+  const volver = alVolver ?? (() => (router.canGoBack() ? router.back() : router.replace('/')));
   return (
-    <View className="mb-4 flex-row items-center gap-3">
-      {atras ? (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="volver"
-          onPress={() => (router.canGoBack() ? router.back() : router.dismissTo('/'))}
-          className="h-10 w-10 items-center justify-center rounded-full bg-surface border border-line"
-        >
-          <Text className="font-sans-bold text-xl text-ink">‹</Text>
-        </Pressable>
+    <View className="mb-2 min-h-[56px] flex-row items-center gap-2">
+      {atras || cerrar ? (
+        <View className="-ml-3">
+          <BotonIcono icono={cerrar ? 'cerrar' : 'atras'} etiqueta={cerrar ? 'Cerrar' : 'Volver'} onPress={volver} />
+        </View>
       ) : null}
       <View className="flex-1">
-        <Txt v="titulo">{titulo}</Txt>
-        {subtitulo ? <Txt v="secundario" className="mt-0.5">{subtitulo}</Txt> : null}
+        {ceja ? <Ceja>{ceja}</Ceja> : null}
+        {titulo ? (
+          <Txt v={atras || cerrar ? 'h3' : 'titulo'} accessibilityRole="header">
+            {titulo}
+          </Txt>
+        ) : null}
+        {subtitulo ? (
+          <Txt v="sec" className="mt-0.5">
+            {subtitulo}
+          </Txt>
+        ) : null}
       </View>
       {derecha}
     </View>
+  );
+}
+
+// ── Marcador ─────────────────────────────────────────────────────────────────
+/**
+ * Lo que muestran las rutas que todavía no se construyen. `titulo` es el nombre de la pantalla
+ * y `area` quién la arma. `atras` muestra Volver (para las de pantalla completa).
+ */
+export function EnConstruccion({ titulo, area, atras = false }: { titulo: string; area: string; atras?: boolean }) {
+  return (
+    <Pantalla cabecera={<Cabecera atras={atras} ceja={area} titulo={titulo} />}>
+      <View className="mt-10 items-center gap-4">
+        <Simbolo tamano={48} />
+        <Txt v="h3">En construcción</Txt>
+        <Txt v="sec" className="text-center">
+          Esta pantalla todavía no está lista.
+        </Txt>
+      </View>
+    </Pantalla>
   );
 }
