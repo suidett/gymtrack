@@ -6,7 +6,9 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "node": "22.14.0",
+      "pnpm": "12.6.0"
     },
     "preview": {
       "distribution": "internal",
@@ -15,13 +17,17 @@
       },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://gymtrack-api.64.176.27.203.sslip.io"
-      }
+      },
+      "node": "22.14.0",
+      "pnpm": "12.6.0"
     },
     "production": {
       "autoIncrement": true,
       "env": {
         "EXPO_PUBLIC_API_URL": "https://gymtrack-api.64.176.27.203.sslip.io"
-      }
+      },
+      "node": "22.14.0",
+      "pnpm": "12.6.0"
     }
   },
   "submit": {
