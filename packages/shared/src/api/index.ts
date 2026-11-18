@@ -3,7 +3,7 @@
 //
 // Qué hace: junta los esquemas Zod de la API, los códigos de error, las piezas comunes
 // (definición de ruta, paginación) y el cliente tipado, más un archivo por módulo de la API
-// (perfil, ejercicios, rutinas, sesiones, progreso, alertas, entrenador). La API los importa
+// (perfil, ejercicios, rutinas, sesiones, progreso, alertas, entrenador, notificaciones). La API los importa
 // desde '@gymtrack/shared' y la app también: así validan con el mismo objeto.
 // También arma CATALOGO_API y LISTA_RUTAS_API: todas las rutas de todos los módulos, que
 // CON-001 compara con las que Fastify tiene registradas.
@@ -17,6 +17,7 @@ import type { DefinicionRuta } from './comun';
 import { RUTAS_CUENTAS } from './cuentas';
 import { RUTAS_EJERCICIOS } from './ejercicios';
 import { RUTAS_ENTRENADOR } from './entrenador';
+import { RUTAS_NOTIFICACIONES } from './notificaciones';
 import { RUTAS_PERFIL } from './perfil';
 import { RUTAS_PROGRESO } from './progreso';
 import { RUTAS_RUTINAS } from './rutinas';
@@ -35,6 +36,7 @@ export * from './sesiones';
 export * from './progreso';
 export * from './alertas';
 export * from './entrenador';
+export * from './notificaciones';
 
 // ── Catálogo completo ────────────────────────────────────────────────────────
 /** Las rutas de la API por área. CON-001 revisa que Fastify registre exactamente estas. */
@@ -47,6 +49,7 @@ export const CATALOGO_API = {
   progreso: RUTAS_PROGRESO,
   alertas: RUTAS_ALERTAS,
   entrenador: RUTAS_ENTRENADOR,
+  notificaciones: RUTAS_NOTIFICACIONES,
 } as const;
 
 /** Todas las rutas en una lista (para CON-001 y para generar el OpenAPI). */

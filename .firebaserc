@@ -1,5 +1,13 @@
 {
   "projects": {
     "default": "gymtrack-5dd46"
+  },
+  "targets": {
+    "gymtrack-5dd46": {
+      "hosting": {
+        "maquetas": ["gymtrack-5dd46"],
+        "app": ["gymtrack-app-5dd46"]
+      }
+    }
   }
 }

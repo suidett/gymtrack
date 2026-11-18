@@ -4,11 +4,12 @@
 // Qué hace: la pestaña Perfil del entrenador (pantalla 15 con rol entrenador, docs/pantallas/
 // perfil.html): quién es, cuántos clientes tiene, cuántos con rutina activa y la adherencia de la
 // semana; el código para invitar (vigente o vencido, con Copiar, Compartir y Generar otro);
-// preferencias (modo gimnasio y unidades, que se guardan con PATCH /me); avisos; exportar sus
+// preferencias (modo gimnasio y unidades, que se guardan con PATCH /me); avisos (si llegan a este
+// teléfono, con Activar avisos y Probar avisos, que también manda un correo); exportar sus
 // datos (GET /me/export); borrar la cuenta (escribiendo BORRAR, DELETE /me) y cerrar sesión.
 // Tócalo cuando: cambie la maqueta de Perfil en su versión de entrenador.
 // No lo toques para: el Perfil del alumno ((alumno)/perfil.tsx, área Perfil).
-// Depende de: @/components/ui, @/lib/sesion, @/lib/tema, ./CodigoInvitacion, ./instancia,
+// Depende de: @/components/ui, @/components/AvisosDelTelefono, @/lib/sesion, @/lib/tema, ./CodigoInvitacion, ./instancia,
 // ./logica y ./piezas.
 // ─────────────────────────────────────────────────────────────────────────────
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -31,6 +32,7 @@ import {
   Txt,
   useAviso,
 } from '@/components/ui';
+import { AvisosDelTelefono } from '@/components/AvisosDelTelefono';
 import { esSinConexion, useSesion } from '@/lib/sesion';
 import { useTema } from '@/lib/tema';
 import { BloqueCodigo, useCodigoInvitacion } from './CodigoInvitacion';
@@ -147,7 +149,8 @@ function Preferencias() {
 }
 
 // ── Avisos ───────────────────────────────────────────────────────────────────
-// Todavía no hay campo en la API para esto (§API, PATCH /me): se guarda en el teléfono.
+// Arriba, si los avisos llegan a este teléfono (con Activar avisos y Probar avisos). Los dos
+// interruptores todavía no tienen campo en la API (§API, PATCH /me): se guardan en el teléfono.
 function SeccionAvisos() {
   const [a, setA] = useState<Avisos>({ alertas: true, notas: true });
   useEffect(() => {
@@ -170,12 +173,15 @@ function SeccionAvisos() {
     <>
       <CabezaSeccion titulo="Avisos" />
       <Tarjeta className="py-1">
-        <Interruptor
-          etiqueta="Alertas de tus clientes"
-          detalle="Cuando alguien no avanza, baja su rendimiento o anota un dolor."
-          valor={a.alertas}
-          onCambiar={(v) => cambiar('alertas', v)}
-        />
+        <AvisosDelTelefono conPrueba />
+        <View className="border-t border-sup-alta">
+          <Interruptor
+            etiqueta="Alertas de tus clientes"
+            detalle="Cuando alguien no avanza, baja su rendimiento o anota un dolor."
+            valor={a.alertas}
+            onCambiar={(v) => cambiar('alertas', v)}
+          />
+        </View>
         <View className="border-t border-sup-alta">
           <Interruptor etiqueta="Notas nuevas" detalle="Cuando un cliente deja una observación." valor={a.notas} onCambiar={(v) => cambiar('notas', v)} />
         </View>

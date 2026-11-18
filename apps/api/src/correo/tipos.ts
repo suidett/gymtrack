@@ -8,7 +8,8 @@
 // Depende de: nada.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type EtiquetaCorreo = 'bienvenida' | 'recuperacion';
+// aviso: los correos de src/modulos/notificaciones (alertas y dolor para el entrenador, la prueba).
+export type EtiquetaCorreo = 'bienvenida' | 'recuperacion' | 'aviso';
 
 export interface CorreoSaliente {
   para: string;
@@ -21,6 +22,6 @@ export interface CorreoSaliente {
 }
 
 export interface AdaptadorCorreo {
-  readonly nombre: 'resend' | 'consola' | 'memoria';
+  readonly nombre: 'resend' | 'smtp' | 'consola' | 'memoria';
   enviar(correo: CorreoSaliente): Promise<void>;
 }

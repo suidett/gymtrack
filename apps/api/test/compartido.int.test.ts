@@ -64,7 +64,7 @@ describe('Cimientos sin base', () => {
   });
 
   it('CON-014 cada carpeta de src/modulos se registra sola bajo /v1', () => {
-    const esperados = ['alertas', 'ejercicios', 'entrenador', 'perfil', 'progreso', 'rutinas', 'sesiones'];
+    const esperados = ['alertas', 'ejercicios', 'entrenador', 'notificaciones', 'perfil', 'progreso', 'rutinas', 'sesiones'];
     expect(nombresDeModulos()).toEqual(esperados);
     expect(a.app.gymtrack.modulos).toEqual(esperados);
     expect(a.app.hasRoute({ method: 'GET', url: '/v1/prueba/sesion' })).toBe(true);

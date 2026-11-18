@@ -5,16 +5,19 @@
 // cifras. El alumno ve a su entrenador (o «¿Entrenas con alguien?» con la hoja para ingresar el
 // código de 6 caracteres) y puede desvincularse; el entrenador ve su código para invitar, con
 // Compartir y Generar otro. Después las preferencias (modo gimnasio, que cambia el tema al tiro;
-// unidades; descanso entre series de 30 s a 5 min, APP-038), los avisos, y la cuenta: datos
+// unidades; descanso entre series de 30 s a 5 min, APP-038), los avisos (si llegan a este
+// teléfono, con «Activar avisos»; el recordatorio va a la API como recordatorio_activo), y la cuenta: datos
 // personales, exportar mis datos (GET /me/export, APP-036), borrar la cuenta con su pantalla de
 // confirmación (escribir BORRAR, fecha a 30 días, APP-035) y cerrar sesión.
 // Tócalo cuando: cambie el perfil, un ajuste o una de sus hojas.
 // No lo toques para: cómo se guarda el tema (@/lib/tema) ni cómo se cierra la sesión (@/lib/sesion).
-// Depende de: ./api, ./logica, ./piezas, ./useCarga, @/components/ui, @/lib/sesion y @/lib/tema.
+// Depende de: ./api, ./logica, ./piezas, ./useCarga, @/components/ui, @/components/AvisosDelTelefono,
+// @/lib/sesion y @/lib/tema.
 // ─────────────────────────────────────────────────────────────────────────────
 import { useRef, useState, type ReactNode } from 'react';
 import { Linking, Pressable, Share, Text, TextInput, View } from 'react-native';
 import { BarraAccion, Boton, Cabecera, CampoTexto, Chip, Hoja, Icono, Interruptor, Pantalla, Separador, Simbolo, Tarjeta, Txt, useAviso } from '@/components/ui';
+import { AvisosDelTelefono } from '@/components/AvisosDelTelefono';
 import { ErrorDeApi, useSesion } from '@/lib/sesion';
 import { useTema } from '@/lib/tema';
 import {
@@ -88,13 +91,16 @@ function Perfil({ abrirVincular, onBorrar }: { abrirVincular: boolean; onBorrar:
   }
 
   function cambiarAviso(k: string, v: boolean) {
-    preferencias.poner((a) => {
-      const n = { ...(a ?? {}), [k]: v };
-      guardarCache(`${usuario?.id}.avisos-locales`, n);
-      return n;
-    });
-    // Se manda aparte para que un campo que la API todavía no conoce no tumbe los demás ajustes.
-    cambiarPerfil({ avisos: { [k]: v } }).catch(() => {});
+    const poner = (valor: boolean) =>
+      preferencias.poner((a) => {
+        const n = { ...(a ?? {}), [k]: valor };
+        guardarCache(`${usuario?.id}.avisos-locales`, n);
+        return n;
+      });
+    poner(v);
+    // El recordatorio vive en la API (recordatorio_activo: el worker lo lee cada 5 minutos). Los
+    // demás todavía no tienen campo en PATCH /me y quedan en el teléfono.
+    if (k === 'recordatorio' && !ent) patch({ recordatorio_activo: v }, () => poner(!v));
   }
 
   async function exportar() {
@@ -236,6 +242,7 @@ function Perfil({ abrirVincular, onBorrar }: { abrirVincular: boolean; onBorrar:
 
       <Separador titulo="Avisos" />
       <Tarjeta className="py-1">
+        <AvisosDelTelefono conPrueba={ent} />
         {(ent
           ? [
               ['alertas', 'Alertas de tus clientes', 'Cuando alguien no avanza, baja su rendimiento o anota un dolor.'],
@@ -246,8 +253,8 @@ function Perfil({ abrirVincular, onBorrar }: { abrirVincular: boolean; onBorrar:
               ['recordatorio', 'Recordatorio para entrenar', '30 minutos antes de tu hora habitual.'],
               ...(entrenador ? [['entrenador', 'Mensajes de tu entrenador', `Cuando ${entrenador.nombre} te deja un consejo o responde una nota.`]] : []),
             ]
-        ).map(([k, t, d], i) => (
-          <View key={k} className={`py-2 ${i ? 'border-t border-sup-alta' : ''}`}>
+        ).map(([k, t, d]) => (
+          <View key={k} className="border-t border-sup-alta py-2">
             <Interruptor etiqueta={t} detalle={d} valor={avisos[k as string] !== false} onCambiar={(v) => cambiarAviso(k as string, v)} />
           </View>
         ))}

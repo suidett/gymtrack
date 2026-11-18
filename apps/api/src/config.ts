@@ -14,6 +14,9 @@ import { BlockList, isIP, isIPv4, isIPv6 } from 'node:net';
 import { z } from 'zod';
 
 // ── Esquema de variables ─────────────────────────────────────────────────────
+/** Una variable vacía en el .env (`SMTP_CLAVE=`) cuenta como no definida. */
+const vacioComoNada = <T extends z.ZodType>(esquema: T) => z.preprocess((v) => (v === '' ? undefined : v), esquema);
+
 const esquemaEntorno = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(3000),
@@ -21,7 +24,8 @@ const esquemaEntorno = z.object({
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
   DATABASE_URL: z.string().min(1).optional(),
   // HS256: al menos 32 bytes de azar (`openssl rand -hex 32`).
-  JWT_SECRET: z.string().min(32).optional(),
+  // Vacía (`JWT_SECRET=` como en .env.ejemplo) cuenta como no puesta: fuera de producción se inventa una.
+  JWT_SECRET: vacioComoNada(z.string().min(32).optional()),
   // Lo que /health devuelve. VERSION la fija compose (sha-<commit> o v1.2.3); COMMIT_SHA la
   // graba el Dockerfile al construir la imagen.
   VERSION: z.string().min(1).default('dev'),
@@ -30,8 +34,13 @@ const esquemaEntorno = z.object({
   // contaría a todos como la IP de Caddy. Se lee con leerConfiarProxy (abajo): saltos, IPs o false.
   CONFIAR_PROXY: z.string().trim().optional(),
   // Correo.
-  CORREO_DRIVER: z.enum(['resend', 'consola', 'memoria']).optional(),
-  RESEND_API_KEY: z.string().min(1).optional(),
+  CORREO_DRIVER: z.enum(['resend', 'smtp', 'consola', 'memoria']).optional(),
+  RESEND_API_KEY: vacioComoNada(z.string().min(1).optional()),
+  // Con CORREO_DRIVER=smtp (Gmail): la cuenta y su clave de aplicación de Google (src/correo/smtp.ts).
+  SMTP_HOST: vacioComoNada(z.string().trim().min(1).default('smtp.gmail.com')),
+  SMTP_PUERTO: vacioComoNada(z.coerce.number().int().refine((p) => p === 465 || p === 587, 'SMTP_PUERTO va 465 (TLS) o 587 (STARTTLS)').default(465)),
+  SMTP_USUARIO: vacioComoNada(z.string().trim().min(3).optional()),
+  SMTP_CLAVE: vacioComoNada(z.string().min(1).optional()),
   CORREO_REMITENTE: z.string().min(3).default('GymTrack <hola@gymtrack.test>'),
   CORREO_RESPONDER_A: z.string().optional(),
   // Base del enlace del correo de recuperación; se le agrega ?token=... Puede ser el esquema de
@@ -43,6 +52,9 @@ const esquemaEntorno = z.object({
   // separados por coma. La app nativa no lo necesita. Fuera de producción, sin valor, se aceptan
   // http://localhost:* y http://127.0.0.1:* (Expo web).
   CORS_ORIGENES: z.string().trim().optional(),
+  // Client ID de OAuth de Google que pueden pedir un id_token para POST /v1/auth/google (web y
+  // Android), separados por coma. Se lee con leerClientIdsGoogle (abajo). Sin valor: 503.
+  GOOGLE_CLIENT_IDS: z.string().optional(),
 });
 
 export type Entorno = z.infer<typeof esquemaEntorno>;
@@ -59,8 +71,10 @@ export interface Config {
   /** Va tal cual a `trustProxy` de Fastify: false, la función de saltos o las IPs/redes del proxy. */
   confiarProxy: ConfiarProxy;
   correo: {
-    driver: 'resend' | 'consola' | 'memoria';
+    driver: 'resend' | 'smtp' | 'consola' | 'memoria';
     resendApiKey?: string;
+    /** Solo con driver smtp. `clave` es la clave de aplicación sin espacios: nunca va a un log. */
+    smtp?: { host: string; puerto: number; usuario: string; clave: string };
     remitente: string;
     responderA?: string;
   };
@@ -68,6 +82,8 @@ export interface Config {
   relojFijo?: string;
   /** Orígenes web con permiso (CORS). `localhost`: cualquier http://localhost:* o 127.0.0.1:*. */
   cors: { origenes: string[]; localhost: boolean };
+  /** Ingreso con Google: los client ID aceptados. Vacío: POST /v1/auth/google responde 503. */
+  google: { clientIds: string[] };
 }
 
 // ── Proxy de confianza ───────────────────────────────────────────────────────
@@ -130,6 +146,27 @@ export function leerConfiarProxy(valor: string | undefined, produccion: boolean)
   return new Error('CONFIAR_PROXY tiene que ser un número de saltos (1), IPs o redes del proxy separadas por coma, o false');
 }
 
+// ── Google ───────────────────────────────────────────────────────────────────
+/** Un client ID de OAuth de Google: `<número>-<letras y números>.apps.googleusercontent.com`. */
+const FORMA_CLIENT_ID_GOOGLE = /^\d+-[a-z0-9]+\.apps\.googleusercontent\.com$/;
+
+/**
+ * GOOGLE_CLIENT_IDS: los client ID que pueden pedir un token para esta API, separados por coma
+ * (el de web y el de Android). Sin valor, el ingreso con Google responde 503. Un valor con otra
+ * forma no deja arrancar la API: mejor un contenedor que no sube que uno que rechaza a todos.
+ */
+export function leerClientIdsGoogle(env: Record<string, string | undefined> = process.env): string[] {
+  const crudo = env.GOOGLE_CLIENT_IDS?.trim();
+  if (!crudo) return [];
+  const ids = crudo.split(',').map((s) => s.trim()).filter(Boolean);
+  for (const id of ids) {
+    if (!FORMA_CLIENT_ID_GOOGLE.test(id)) {
+      throw new Error(`GOOGLE_CLIENT_IDS: «${id}» no tiene la forma <número>-<código>.apps.googleusercontent.com`);
+    }
+  }
+  return [...new Set(ids)];
+}
+
 // ── Lectura ──────────────────────────────────────────────────────────────────
 /** Lee la configuración desde `env` (por defecto process.env). Lanza un Error con la lista de problemas. */
 export function leerConfig(env: Record<string, string | undefined> = process.env): Config {
@@ -156,12 +193,30 @@ export function leerConfig(env: Record<string, string | undefined> = process.env
 
   const driver = e.CORREO_DRIVER ?? (e.NODE_ENV === 'production' ? 'resend' : e.NODE_ENV === 'test' ? 'memoria' : 'consola');
   if (driver === 'resend' && !e.RESEND_API_KEY) problemas.push('CORREO_DRIVER=resend necesita RESEND_API_KEY');
-  if (e.NODE_ENV === 'production' && driver !== 'resend') {
-    problemas.push('en producción los correos salen por Resend (CORREO_DRIVER=resend)');
+  if (e.NODE_ENV === 'production' && driver !== 'resend' && driver !== 'smtp') {
+    problemas.push('en producción los correos salen por Resend o por SMTP (CORREO_DRIVER=resend o smtp)');
   }
+  // Gmail: la clave de aplicación son 16 letras (Google la muestra en grupos de 4 con espacios).
+  const claveSmtp = e.SMTP_CLAVE?.replace(/\s+/g, '');
+  if (driver === 'smtp') {
+    if (!e.SMTP_USUARIO) problemas.push('CORREO_DRIVER=smtp necesita SMTP_USUARIO (la cuenta de Gmail)');
+    if (!claveSmtp) problemas.push('CORREO_DRIVER=smtp necesita SMTP_CLAVE (la clave de aplicación de Google)');
+    else if (e.SMTP_HOST === 'smtp.gmail.com' && !/^[a-z]{16}$/i.test(claveSmtp)) {
+      problemas.push('SMTP_CLAVE tiene que ser la clave de aplicación de Google (16 letras), no la contraseña de la cuenta');
+    }
+  }
+  // Con Gmail el remitente tiene que ser la cuenta (o un alias verificado): si no se fijó, es la cuenta.
+  const remitente = driver === 'smtp' && !env.CORREO_REMITENTE && e.SMTP_USUARIO ? `GymTrack <${e.SMTP_USUARIO}>` : e.CORREO_REMITENTE;
 
   const confiarProxy = leerConfiarProxy(e.CONFIAR_PROXY, e.NODE_ENV === 'production');
   if (confiarProxy instanceof Error) problemas.push(confiarProxy.message);
+
+  let clientIdsGoogle: string[] = [];
+  try {
+    clientIdsGoogle = leerClientIdsGoogle({ GOOGLE_CLIENT_IDS: e.GOOGLE_CLIENT_IDS });
+  } catch (err) {
+    problemas.push((err as Error).message);
+  }
 
   if (problemas.length) throw new Error(`Configuración inválida: ${problemas.join('; ')}`);
 
@@ -178,7 +233,8 @@ export function leerConfig(env: Record<string, string | undefined> = process.env
     correo: {
       driver,
       resendApiKey: e.RESEND_API_KEY,
-      remitente: e.CORREO_REMITENTE,
+      ...(driver === 'smtp' ? { smtp: { host: e.SMTP_HOST, puerto: e.SMTP_PUERTO, usuario: e.SMTP_USUARIO!, clave: claveSmtp! } } : {}),
+      remitente,
       responderA: e.CORREO_RESPONDER_A,
     },
     enlaceRestablecer: e.ENLACE_RESTABLECER_URL,
@@ -187,5 +243,6 @@ export function leerConfig(env: Record<string, string | undefined> = process.env
       origenes: (e.CORS_ORIGENES ?? '').split(',').map((o) => o.trim()).filter(Boolean),
       localhost: e.NODE_ENV !== 'production' && !e.CORS_ORIGENES,
     },
+    google: { clientIds: clientIdsGoogle },
   };
 }

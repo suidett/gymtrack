@@ -32,7 +32,8 @@ export function fmtVencimiento(fecha: Date, zona: string): string {
   return `${p('weekday')} ${p('day')} de ${p('month')}, ${p('hour')}:${p('minute')}`;
 }
 
-function marco(titulo: string, cuerpoHtml: string): string {
+/** El marco con la marca: lo usan estas plantillas y las de los avisos (src/modulos/notificaciones). */
+export function marco(titulo: string, cuerpoHtml: string): string {
   return `<!doctype html>
 <html lang="es-CL">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escaparHtml(titulo)}</title></head>
@@ -56,7 +57,7 @@ function marco(titulo: string, cuerpoHtml: string): string {
 </html>`;
 }
 
-function boton(texto: string, url: string): string {
+export function boton(texto: string, url: string): string {
   return `<p style="margin:24px 0;"><a href="${escaparHtml(url)}" style="display:inline-block;background:${colors.primary.DEFAULT};color:${colors.ink.DEFAULT};text-decoration:none;font-weight:700;padding:14px 22px;border-radius:12px;">${escaparHtml(texto)}</a></p>`;
 }
 

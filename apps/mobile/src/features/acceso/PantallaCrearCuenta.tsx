@@ -5,21 +5,27 @@
 // cliente» o «Como entrenador»), que no se puede cambiar después; nombre y apellido lado a lado,
 // correo y contraseña con la regla visible de 8 caracteres. Los errores salen al tocar
 // «Registrarme», bajo cada campo, y se van al corregir. Si el correo ya tiene cuenta, ofrece
-// ingresar o recuperar la contraseña ahí mismo. Con éxito no navega: el layout raíz lleva al
-// cliente a la Encuesta y al entrenador a Clientes (APP-008).
+// ingresar o recuperar la contraseña ahí mismo. Abajo, «Continuar con Google» (BotonGoogle.tsx):
+// si el correo de Google no tiene cuenta, la pantalla pasa a «Completa tu cuenta» con el rol que
+// estaba marcado. Con éxito no navega: el layout raíz lleva al cliente a la Encuesta y al
+// entrenador a Clientes (APP-008).
 // Tócalo cuando: cambie la maqueta de Crear cuenta.
 // No lo toques para: la regla de la contraseña (validacion.ts y packages/shared).
-// Depende de: @/components/ui, @/lib/sesion (useSesion), expo-router, expo-constants (URL de
-// términos y privacidad), ./componentes, ./validacion y ./errores.
+// Depende de: @/components/ui, @/lib/sesion (useSesion), expo-router, ./componentes,
+// ./validacion, ./errores, ./legal y lo de Google (./BotonGoogle, ./useIngresoGoogle,
+// ./PasoCuentaGoogle).
 // ─────────────────────────────────────────────────────────────────────────────
-import Constants from 'expo-constants';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useRef, useState } from 'react';
-import { Linking, Text, View, type TextInput } from 'react-native';
+import { Text, View, type TextInput } from 'react-native';
 import { BotonIcono, Boton, CampoTexto, Ceja, Pantalla, Titulo, Txt, useAviso } from '@/components/ui';
 import { useSesion } from '@/lib/sesion';
+import { SeccionGoogle } from './BotonGoogle';
 import { BarraCarga, Mensaje, OpcionGrande, ReglaContrasena, useCuentaRegresiva } from './componentes';
 import { errorDeRegistro, formatoReloj, TEXTO_CORREO_USADO, type MensajePantalla } from './errores';
+import { abrirLegal } from './legal';
+import { PasoCuentaGoogle } from './PasoCuentaGoogle';
+import { useIngresoGoogle } from './useIngresoGoogle';
 import {
   limpiarCorreo,
   ORDEN_REGISTRO,
@@ -34,15 +40,8 @@ import {
   type RolAcceso,
 } from './validacion';
 
-/** Abre una página legal si app.json la define en `extra`; si no, avisa que todavía no está. */
-export function abrirLegal(clave: 'urlTerminos' | 'urlPrivacidad', avisar: (t: string) => void) {
-  const url = (Constants.expoConfig?.extra as Record<string, unknown> | undefined)?.[clave];
-  if (typeof url === 'string' && url) {
-    Linking.openURL(url).catch(() => avisar('No pudimos abrir la página. Intenta de nuevo.'));
-    return;
-  }
-  avisar(clave === 'urlTerminos' ? 'Los términos de uso se publican antes de la primera prueba.' : 'La política de privacidad se publica antes de la primera prueba.');
-}
+// La Encuesta lo importa desde aquí; vive en ./legal para que «Completa tu cuenta» lo use sin ciclos.
+export { abrirLegal };
 
 export function PantallaCrearCuenta() {
   const { registrar } = useSesion();
@@ -56,6 +55,7 @@ export function PantallaCrearCuenta() {
   const [cargando, setCargando] = useState(false);
   const [mensaje, setMensaje] = useState<MensajePantalla | null>(null);
   const bloqueo = useCuentaRegresiva();
+  const google = useIngresoGoogle({ rol: form.rol });
   const nombreRef = useRef<TextInput>(null);
   const apellidoRef = useRef<TextInput>(null);
   const correoRef = useRef<TextInput>(null);
@@ -103,6 +103,7 @@ export function PantallaCrearCuenta() {
     }
     setCargando(true);
     setMensaje(null);
+    google.limpiarMensaje();
     try {
       await registrar({
         rol: rolApi(form.rol as RolAcceso),
@@ -130,14 +131,19 @@ export function PantallaCrearCuenta() {
 
   const regla = reglaContrasena(form.clave, !!err.clave);
   const resta = bloqueo.resta;
+  const ocupado = cargando || google.cargando;
+  const mensajeVisible = mensaje ?? google.mensaje;
+
+  // El correo de Google no tiene cuenta: se piden rol, nombre y apellido.
+  if (google.paso) return <PasoCuentaGoogle google={google} paso={google.paso} />;
 
   return (
     <Pantalla
       cabecera={
         <View>
-          <BarraCarga etiqueta="Creando tu cuenta" visible={cargando} />
+          <BarraCarga etiqueta={google.cargando ? 'Conectando con Google' : 'Creando tu cuenta'} visible={ocupado} />
           <View className="-ml-3 h-14 flex-row items-center">
-            <BotonIcono icono="atras" etiqueta="Volver al ingreso" disabled={cargando} onPress={ingresoConRol} />
+            <BotonIcono icono="atras" etiqueta="Volver al ingreso" disabled={ocupado} onPress={ingresoConRol} />
           </View>
         </View>
       }
@@ -148,15 +154,15 @@ export function PantallaCrearCuenta() {
             alto
             ancho
             cargando={cargando ? 'Creando tu cuenta…' : false}
-            disabled={resta > 0}
+            disabled={resta > 0 || google.cargando}
             onPress={enviar}
           />
-          <Boton titulo="¿Ya tienes cuenta? Ingresa" variante="fantasma" ancho disabled={cargando} onPress={ingresoConRol} />
+          <Boton titulo="¿Ya tienes cuenta? Ingresa" variante="fantasma" ancho disabled={ocupado} onPress={ingresoConRol} />
         </View>
       }
     >
       <Titulo className="mt-1">Crea tu cuenta</Titulo>
-      {mensaje ? <Mensaje mensaje={mensaje} /> : null}
+      {mensajeVisible ? <Mensaje mensaje={mensajeVisible} /> : null}
 
       <Ceja className="mb-2 mt-5">¿Cómo vas a usar GymTrack?</Ceja>
       <View accessibilityRole="radiogroup" accessibilityLabel="¿Cómo vas a usar GymTrack?" className="gap-2">
@@ -164,14 +170,14 @@ export function PantallaCrearCuenta() {
           titulo="Como cliente"
           detalle="Registras tus entrenamientos y ves tu avance."
           activa={form.rol === 'cliente'}
-          disabled={cargando}
+          disabled={ocupado}
           onPress={() => elegirRol('cliente')}
         />
         <OpcionGrande
           titulo="Como entrenador"
           detalle="Armas rutinas y sigues a tus clientes."
           activa={form.rol === 'entrenador'}
-          disabled={cargando}
+          disabled={ocupado}
           onPress={() => elegirRol('entrenador')}
         />
       </View>
@@ -191,7 +197,7 @@ export function PantallaCrearCuenta() {
             valor={form.nombre}
             onCambiar={(v) => cambiar('nombre', v)}
             error={err.nombre}
-            editable={!cargando}
+            editable={!ocupado}
             autoComplete="given-name"
             textContentType="givenName"
             autoCapitalize="words"
@@ -207,7 +213,7 @@ export function PantallaCrearCuenta() {
             valor={form.apellido}
             onCambiar={(v) => cambiar('apellido', v)}
             error={err.apellido}
-            editable={!cargando}
+            editable={!ocupado}
             autoComplete="family-name"
             textContentType="familyName"
             autoCapitalize="words"
@@ -225,7 +231,7 @@ export function PantallaCrearCuenta() {
           valor={form.correo}
           onCambiar={(v) => cambiar('correo', v)}
           error={err.correo}
-          editable={!cargando}
+          editable={!ocupado}
           keyboardType="email-address"
           autoComplete="email"
           textContentType="emailAddress"
@@ -250,7 +256,7 @@ export function PantallaCrearCuenta() {
           etiqueta="Contraseña"
           valor={form.clave}
           onCambiar={(v) => cambiar('clave', v)}
-          editable={!cargando}
+          editable={!ocupado}
           contrasena
           autoComplete="new-password"
           textContentType="newPassword"
@@ -268,6 +274,8 @@ export function PantallaCrearCuenta() {
           cuentaVoz={regla.cuentaVoz}
         />
       </View>
+
+      <SeccionGoogle google={google} rol={form.rol} disabled={cargando} />
 
       <Text className="mt-5 font-sans-medium text-[13px] leading-[19px] text-texto-2">
         Al registrarte aceptas los{' '}

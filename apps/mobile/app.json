@@ -3,7 +3,10 @@
     "name": "GymTrack",
     "slug": "gymtrack",
     "version": "0.1.0",
-    "scheme": "gymtrack",
+    "scheme": [
+      "gymtrack",
+      "com.gymtrack.app"
+    ],
     "orientation": "portrait",
     "icon": "./assets/marca/icono.png",
     "userInterfaceStyle": "dark",
@@ -26,7 +29,11 @@
     "web": {
       "bundler": "metro",
       "output": "single",
-      "favicon": "./assets/marca/favicon.png"
+      "favicon": "./assets/marca/favicon.png",
+      "name": "GymTrack",
+      "lang": "es-CL",
+      "description": "Arma, sigue y ajusta tus rutinas con tu entrenador.",
+      "themeColor": "#0F1113"
     },
     "plugins": [
       "expo-router",
@@ -41,7 +48,16 @@
       ],
       "expo-status-bar",
       "expo-font",
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-web-browser",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/marca/notificacion.png",
+          "color": "#F5B83D",
+          "defaultChannel": "avisos"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

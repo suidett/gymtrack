@@ -3,13 +3,13 @@
 //
 // Qué hace: registra en Fastify las rutas de §API «Cuentas y perfil» que existen hoy, cada una
 // con su esquema de entrada y de salida tomado tal cual de @gymtrack/shared (CON-001): registro,
-// ingreso, refresh, cierre de sesión, olvidé mi contraseña, restablecer y GET /v1/me. Aplica los
-// límites de intentos por IP (5 ingresos por minuto, 5 registros por hora, 30 refresh por minuto,
-// 10 enlaces y 10 restablecimientos por hora) y por correo (3 enlaces por hora), y delega la
-// lógica en servicio.ts. La IP es `req.ip`: detrás de Caddy sale de CONFIAR_PROXY (config.ts).
+// ingreso, ingreso con Google (./google.ts), refresh, cierre de sesión, olvidé mi contraseña,
+// restablecer y GET /v1/me. Aplica los límites de intentos por IP (5 ingresos y 5 con Google por
+// minuto, 5 registros por hora, 30 refresh por minuto, 10 enlaces y 10 restablecimientos por hora)
+// y por correo (3 enlaces por hora), y delega la lógica en servicio.ts. La IP es `req.ip`: detrás de Caddy sale de CONFIAR_PROXY (config.ts).
 // Tócalo cuando: agregues una ruta de cuentas (PATCH /me, push-tokens, DELETE /me, export).
 // No lo toques para: la lógica (servicio.ts) ni la forma de los datos (packages/shared).
-// Depende de: ./servicio, ./autenticacion, src/seguridad/limitador.ts y @gymtrack/shared.
+// Depende de: ./servicio, ./google, ./autenticacion, src/seguridad/limitador.ts y @gymtrack/shared.
 // ─────────────────────────────────────────────────────────────────────────────
 import { RESPUESTAS_ERROR, RUTAS_CUENTAS } from '@gymtrack/shared';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
@@ -17,6 +17,7 @@ import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import type { BaseDeDatos } from '../db';
 import { ErrorApi } from '../errores';
 import { claveDeIp, crearLimitador, LIMITES, type Limitador } from '../seguridad/limitador';
+import { rutaGoogle, type VerificadorGoogle } from './google';
 import { usuarioApiCompleto, type ServicioCuentas } from './servicio';
 
 export interface LimitadoresPorIp {
@@ -24,6 +25,7 @@ export interface LimitadoresPorIp {
   renovacion: Limitador;
   recuperacion: Limitador;
   restablecimiento: Limitador;
+  google: Limitador;
 }
 
 export interface OpcionesRutasCuentas {
@@ -35,6 +37,10 @@ export interface OpcionesRutasCuentas {
   limitadorRecuperacion: Limitador;
   /** Si no vienen, se crean aquí con el reloj de la app (app.gymtrack.reloj). */
   limitadoresPorIp?: Partial<LimitadoresPorIp>;
+  /** Los client ID de Google aceptados (config.google.clientIds). */
+  clientIdsGoogle: readonly string[];
+  /** Por defecto, el real con clientIdsGoogle (src/cuentas/google.ts). */
+  verificadorGoogle?: VerificadorGoogle;
 }
 
 const esquema = <C, E extends number, R>(r: { cuerpo: C; exito: E; respuesta: R }) => ({
@@ -56,6 +62,8 @@ export async function rutasCuentas(appBase: FastifyInstance, o: OpcionesRutasCue
     renovacion: o.limitadoresPorIp?.renovacion ?? crearLimitador({ ...LIMITES.renovacionPorIp, reloj }),
     recuperacion: o.limitadoresPorIp?.recuperacion ?? crearLimitador({ ...LIMITES.recuperacionPorIp, reloj }),
     restablecimiento: o.limitadoresPorIp?.restablecimiento ?? crearLimitador({ ...LIMITES.restablecimientoPorIp, reloj }),
+    // El ingreso con Google tiene el mismo tope que el ingreso con correo, en su propia cuenta.
+    google: o.limitadoresPorIp?.google ?? crearLimitador({ ...LIMITES.ingresoPorIp, reloj }),
   };
   // Junto a los demás límites de la app, así quien los vacía (las pruebas) vacía también estos.
   Object.assign(appBase.gymtrack.limitadores, {
@@ -63,6 +71,7 @@ export async function rutasCuentas(appBase: FastifyInstance, o: OpcionesRutasCue
     renovacionPorIp: porIp.renovacion,
     recuperacionPorIp: porIp.recuperacion,
     restablecimientoPorIp: porIp.restablecimiento,
+    googlePorIp: porIp.google,
   });
 
   // ── Registro e ingreso ─────────────────────────────────────────────────────
@@ -75,6 +84,16 @@ export async function rutasCuentas(appBase: FastifyInstance, o: OpcionesRutasCue
   app.post(R.ingresar.ruta, { schema: esquema(R.ingresar) }, async (req) => {
     revisarLimite(o.limitadorIngreso, claveDeIp(req.ip));
     return o.cuentas.ingresar(req.body);
+  });
+
+  // POST /v1/auth/google: verifica el id_token y entra o crea la cuenta (./google.ts).
+  rutaGoogle(appBase, {
+    cuentas: o.cuentas,
+    prisma: o.prisma,
+    limitadorIntentos: porIp.google,
+    limitadorRegistro: porIp.registro,
+    verificador: o.verificadorGoogle,
+    clientIds: o.clientIdsGoogle,
   });
 
   // ── Refresh y cierre de sesión ─────────────────────────────────────────────

@@ -5,26 +5,28 @@
 // con la API y el aviso flotante; carga las fuentes de la marca, espera a que la sesión guardada
 // se restaure y recién ahí esconde el splash. Decide qué ve cada uno: sin sesión, (acceso); el
 // alumno, sus 5 pestañas (alumno) y sus pantallas completas; el entrenador, sus 5 pestañas
-// (entrenador/) y las suyas; las de rutina y ejercicio las ven los dos.
+// (entrenador/) y las suyas; las de rutina y ejercicio las ven los dos. Con sesión, renueva el
+// registro de los avisos del teléfono (si ya dio permiso) y abre la pantalla del aviso tocado.
 // Tócalo cuando: sumes una pantalla a pantalla completa, cambies quién puede entrar a una o
 // cómo se abre (modal, sin gesto de volver), o algo más deba estar listo antes de mostrar la app.
 // No lo toques para: las pestañas (alumno)/_layout.tsx y entrenador/_layout.tsx, ni el contenido
 // de una pantalla (su archivo).
-// Depende de: @/lib/tema, @/lib/sesion, @/lib/fuentes, @/components/ui (AvisoProvider),
+// Depende de: @/lib/tema, @/lib/sesion, @/lib/fuentes, @/lib/notificaciones, @/components/ui (AvisoProvider),
 // @/store/useStore (la bandera hidratado del store local de la 0.1) y global.css.
 // ─────────────────────────────────────────────────────────────────────────────
 
 // El css va primero que todo: NativeWind lo tiene que registrar antes de pintar nada.
 import '../../global.css';
 
-import { Stack } from 'expo-router';
+import { Stack, useRouter, type Href } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AvisoProvider } from '@/components/ui';
 import { useFuentes } from '@/lib/fuentes';
+import { renovarAvisos, useAbrirAvisos } from '@/lib/notificaciones';
 import { SesionProvider, useSesion } from '@/lib/sesion';
 import { TemaProvider, useTema } from '@/lib/tema';
 import { useStore } from '@/store/useStore';
@@ -54,7 +56,7 @@ function Navegacion() {
   // El store local de la 0.1 (rutinas y sesiones en el teléfono) sigue vivo mientras las áreas
   // deciden si lo usan; se espera que termine de leer para no pisar lo guardado.
   const hidratado = useStore((s) => s.hidratado);
-  const { estado, rol } = useSesion();
+  const { estado, rol, usuario } = useSesion();
   const { modo, c } = useTema();
   const listo = fuentes && hidratado && estado !== 'cargando';
 
@@ -102,6 +104,24 @@ function Navegacion() {
           <Stack.Screen name="ejercicio/[id]" options={{ animation: 'slide_from_right' }} />
         </Stack.Protected>
       </Stack>
+      {conSesion && usuario ? <AvisosConSesion usuarioId={usuario.id} /> : null}
     </>
   );
+}
+
+// ── Avisos al celular ────────────────────────────────────────────────────────
+/**
+ * Solo con sesión y con la navegación ya montada: al entrar (o al abrir la app con la sesión
+ * guardada) vuelve a registrar el teléfono si ya dio permiso, sin preguntar nada; y al tocar un
+ * aviso abre su pantalla (Alertas, la ficha del alumno, Hoy).
+ */
+function AvisosConSesion({ usuarioId }: { usuarioId: string }) {
+  const router = useRouter();
+  useEffect(() => {
+    void renovarAvisos();
+  }, [usuarioId]);
+  // En el turno siguiente: el Stack recién montado tiene que estar listo para navegar.
+  const abrir = useCallback((ruta: string) => setTimeout(() => router.push(ruta as Href), 0), [router]);
+  useAbrirAvisos(abrir);
+  return null;
 }

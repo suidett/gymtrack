@@ -3,8 +3,8 @@
 //
 // Qué hace: manda el correo por la API HTTPS de Resend (POST https://api.resend.com/emails) con
 // la clave RESEND_API_KEY y el remitente CORREO_REMITENTE, que tiene que ser de un dominio
-// verificado en Resend (ver apps/api/README.md). Es el adaptador de staging y producción; nunca
-// se usa SMTP directo desde el VPS (infraestructura-vps-firebase.md).
+// verificado en Resend (ver apps/api/README.md). Es uno de los dos adaptadores de staging y
+// producción; el otro es Gmail por SMTP con clave de aplicación (./smtp.ts, CORREO_DRIVER=smtp).
 // Cada intento tiene 10 s de tope (AbortSignal.timeout) y, si falla por red, por tiempo, por un
 // 5xx o por un 429, se reintenta una vez con la misma Idempotency-Key, así Resend no lo manda dos
 // veces si el primero sí llegó. Un 4xx (clave mala, remitente sin verificar) no se reintenta.

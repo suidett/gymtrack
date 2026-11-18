@@ -1,28 +1,29 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Servicio de correo · Zona: Correo (API)
 //
-// Qué hace: elige el adaptador según CORREO_DRIVER (resend en staging y producción; consola en
-// local; memoria en pruebas) y manda los correos en segundo plano: la ruta responde sin esperar
-// a Resend. Con prepararEnSegundoPlano también la búsqueda, lo que se guarda y el armado del
+// Qué hace: elige el adaptador según CORREO_DRIVER (resend o smtp, que es Gmail con clave de
+// aplicación, en staging y producción; consola en local; memoria en pruebas) y manda los correos
+// en segundo plano: la ruta responde sin esperar a Resend ni a Gmail. Con prepararEnSegundoPlano también la búsqueda, lo que se guarda y el armado del
 // correo pasan fuera del pedido, así «olvidé mi contraseña» hace el mismo trabajo exista o no el
 // correo (SEG-008). Si algo falla, se loguea el tipo de correo, el id del usuario y el tipo y
 // código del error, nunca el correo ni el mensaje del error.
 // Tócalo cuando: agregues un adaptador o cambie cómo se reintenta.
 // No lo toques para: el texto de los correos (plantillas.ts).
-// Depende de: ./resend, ./desarrollo, ./tipos y la configuración (src/config.ts).
+// Depende de: ./resend, ./smtp, ./desarrollo, ./tipos y la configuración (src/config.ts).
 // ─────────────────────────────────────────────────────────────────────────────
 import type { FastifyBaseLogger } from 'fastify';
 import type { Config } from '../config';
 import { resumenError } from '../errores';
 import { crearAdaptadorConsola, crearAdaptadorMemoria, crearBuzon, type Buzon } from './desarrollo';
 import { crearAdaptadorResend } from './resend';
+import { crearAdaptadorSmtp } from './smtp';
 import type { AdaptadorCorreo, CorreoSaliente, EtiquetaCorreo } from './tipos';
 
 export type { CorreoSaliente } from './tipos';
 
 export interface ServicioCorreo {
   readonly adaptador: AdaptadorCorreo;
-  /** El buzón en memoria (consola y memoria). Con Resend es undefined. */
+  /** El buzón en memoria (consola y memoria). Con Resend o SMTP es undefined. */
   readonly buzon?: Buzon;
   /** Encola el envío y vuelve de inmediato. */
   enviarEnSegundoPlano(correo: CorreoSaliente): void;
@@ -77,6 +78,16 @@ export function adaptadorDesdeConfig(config: Config, log: FastifyBaseLogger): { 
     return {
       adaptador: crearAdaptadorResend({
         apiKey: config.correo.resendApiKey!,
+        remitente: config.correo.remitente,
+        responderA: config.correo.responderA,
+      }),
+    };
+  }
+  // Gmail con clave de aplicación (src/correo/smtp.ts). config.ts ya exigió usuario y clave.
+  if (config.correo.driver === 'smtp' && config.correo.smtp) {
+    return {
+      adaptador: crearAdaptadorSmtp({
+        ...config.correo.smtp,
         remitente: config.correo.remitente,
         responderA: config.correo.responderA,
       }),

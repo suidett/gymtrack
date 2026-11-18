@@ -3,14 +3,16 @@
 //
 // Qué hace: al abrir la app restaura la sesión guardada y la deja disponible para todas las
 // pantallas con useSesion(): estado (cargando, sin sesión, con sesión), usuario, rol y las
-// acciones ingresar, registrar, cerrar sesión y refrescar el usuario. Si la API rechaza el
+// acciones ingresar, registrar, entrar con una sesión ya armada (Google), cerrar sesión y
+// refrescar el usuario. Al entrar o restaurar la sesión renueva el registro de los avisos del
+// teléfono (si ya dio permiso) y, antes de cerrar sesión, lo borra. Si la API rechaza el
 // refresh, pasa sola a «sin sesión» y la navegación lleva a Ingreso.
 // Tócalo cuando: necesites un dato más de la sesión en todas las pantallas.
 // No lo toques para: cambiar cómo se renueva un token (gestor.ts) ni a dónde va cada rol
 // (src/app/_layout.tsx).
-// Depende de: ./gestor, ./almacen, ./config y @gymtrack/shared (tipos).
+// Depende de: ./gestor, ./almacen, ./config, @/lib/notificaciones y @gymtrack/shared (tipos).
 // ─────────────────────────────────────────────────────────────────────────────
-import type { EntradaIngreso, EntradaRegistro, Usuario } from '@gymtrack/shared';
+import type { EntradaIngreso, EntradaRegistro, Sesion, Usuario } from '@gymtrack/shared';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { almacenSeguro } from './almacen';
 import { URL_API } from './config';
@@ -42,6 +44,8 @@ export interface ValorSesion {
   ultimoCierre: MotivoCierre | null;
   ingresar(datos: EntradaIngreso): Promise<Usuario>;
   registrar(datos: EntradaRegistro): Promise<Usuario>;
+  /** Entra con la sesión que entregó otra ruta (POST /v1/auth/google). */
+  entrarConSesion(s: Sesion): Promise<Usuario>;
   cerrarSesion(): Promise<void>;
   /** Vuelve a pedir GET /v1/me (por ejemplo después de terminar la encuesta). */
   refrescarUsuario(): Promise<Usuario | null>;
@@ -110,6 +114,15 @@ export function SesionProvider({ children }: { children: ReactNode }) {
     return u;
   }, []);
 
+  const entrarConSesion = useCallback(async (s: Sesion) => {
+    const u = await api.entrarConSesion(s);
+    setUsuario(u);
+    setSinConexion(false);
+    setUltimoCierre(null);
+    setEstado('con-sesion');
+    return u;
+  }, []);
+
   const cerrarSesion = useCallback(() => api.cerrarSesion(), []);
 
   const refrescarUsuario = useCallback(async () => {
@@ -136,12 +149,13 @@ export function SesionProvider({ children }: { children: ReactNode }) {
       ultimoCierre,
       ingresar,
       registrar,
+      entrarConSesion,
       cerrarSesion,
       refrescarUsuario,
       actualizarUsuario,
       api,
     }),
-    [estado, usuario, sinConexion, ultimoCierre, ingresar, registrar, cerrarSesion, refrescarUsuario, actualizarUsuario],
+    [estado, usuario, sinConexion, ultimoCierre, ingresar, registrar, entrarConSesion, cerrarSesion, refrescarUsuario, actualizarUsuario],
   );
 
   return <Contexto.Provider value={valor}>{children}</Contexto.Provider>;

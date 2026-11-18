@@ -27,6 +27,9 @@ import {
   type Usuario,
 } from '@gymtrack/shared';
 
+/** Tope para lo que corre antes de cerrar sesión (borrar el teléfono de los avisos). */
+export const ESPERA_ANTES_DE_CERRAR_MS = 5_000;
+
 // ── Tipos ────────────────────────────────────────────────────────────────────
 /** Dónde vive la sesión en el teléfono. Los tokens van siempre a expo-secure-store (APP-005). */
 export interface AlmacenSesion {
@@ -84,6 +87,9 @@ export function crearGestorSesion(opciones: OpcionesGestor) {
   // Una sola renovación a la vez: si diez llamadas ven el access vencido, renuevan una vez.
   let renovando: Promise<Tokens | null> | null = null;
   const oyentes = new Set<(motivo: MotivoCierre) => void>();
+  // Lo que otras partes de la app hacen con la sesión todavía abierta, justo antes de cerrarla
+  // (los avisos borran este teléfono en la API).
+  const previosAlCierre = new Set<() => Promise<unknown>>();
 
   const cliente: ClienteCuentas = crearClienteCuentas({
     urlBase,
@@ -209,8 +215,29 @@ export function crearGestorSesion(opciones: OpcionesGestor) {
     return s.usuario;
   }
 
-  /** Avisa a la API (si hay señal) y borra todo del teléfono. Nunca falla. */
+  /**
+   * Entra con una sesión que otra ruta ya entregó (POST /v1/auth/google): guarda los tokens y el
+   * usuario igual que ingresar y registrar.
+   */
+  async function entrarConSesion(s: { usuario: Usuario; tokens: Tokens }): Promise<Usuario> {
+    await establecer(s.tokens);
+    await almacen.guardarUsuario(s.usuario);
+    return s.usuario;
+  }
+
+  /**
+   * Avisa a la API (si hay señal) y borra todo del teléfono. Nunca falla. Antes corre lo que se
+   * pidió con antesDeCerrarSesion, con 5 s de tope: sin señal no hace esperar a nadie.
+   */
   async function cerrarSesion(): Promise<void> {
+    if (tokens && previosAlCierre.size) {
+      let reloj: ReturnType<typeof setTimeout> | undefined;
+      const tope = new Promise<void>((listo) => {
+        reloj = setTimeout(listo, ESPERA_ANTES_DE_CERRAR_MS);
+      });
+      await Promise.race([Promise.allSettled([...previosAlCierre].map((f) => Promise.resolve().then(f))), tope]);
+      clearTimeout(reloj);
+    }
     const refresh = tokens?.refresh_token;
     if (refresh) await cliente.cerrarSesion(refresh).catch(() => undefined);
     await limpiar('cerrada');
@@ -254,6 +281,14 @@ export function crearGestorSesion(opciones: OpcionesGestor) {
     }
   }
 
+  /** Algo que hacer con la sesión todavía abierta cuando la persona cierra sesión. Devuelve cómo quitarlo. */
+  function antesDeCerrarSesion(fn: () => Promise<unknown>): () => void {
+    previosAlCierre.add(fn);
+    return () => {
+      previosAlCierre.delete(fn);
+    };
+  }
+
   /** Avisa cuando la sesión termina (la persona salió o el refresh venció). Devuelve cómo dejar de escuchar. */
   function alCerrar(fn: (motivo: MotivoCierre) => void): () => void {
     oyentes.add(fn);
@@ -267,10 +302,12 @@ export function crearGestorSesion(opciones: OpcionesGestor) {
     llamar,
     ingresar,
     registrar,
+    entrarConSesion,
     cerrarSesion,
     refrescarUsuario,
     restaurar,
     alCerrar,
+    antesDeCerrarSesion,
     accessVigente,
     tieneSesion: () => tokens !== null,
   };

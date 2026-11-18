@@ -17,7 +17,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import { router } from 'expo-router';
 import { useEffect, useReducer } from 'react';
-import { AccessibilityInfo, BackHandler, Text, View } from 'react-native';
+import { AccessibilityInfo, BackHandler, Platform, Text, View } from 'react-native';
 import { Avance, Boton, CampoTexto, Pantalla, Tarjeta, Txt, useAviso } from '@/components/ui';
 import { useSesion } from '@/lib/sesion';
 import { vibrarConfirmar, vibrarLimite } from '@/lib/vibrar';
@@ -282,8 +282,10 @@ export function PantallaEncuesta() {
     AccessibilityInfo.announceForAccessibility(s.n < FINAL ? `Pregunta ${s.n + 1} de ${TOTAL_PREGUNTAS}. ${PREGUNTAS[s.n].titulo}` : 'Revisa tus respuestas');
   }, [s.n]);
 
-  // El botón atrás de Android vuelve a la pregunta anterior en vez de salir de la encuesta.
+  // El botón atrás de Android vuelve a la pregunta anterior en vez de salir de la encuesta. En la
+  // web no hay botón atrás del sistema (react-native-web avisa con un error en la consola).
   useEffect(() => {
+    if (Platform.OS === 'web') return;
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
       if (s.guardando) return true;
       if (s.n > 0 || s.editando) {

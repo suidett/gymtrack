@@ -2,8 +2,8 @@
 // Validación de los formularios de acceso · Zona: Acceso
 //
 // Qué hace: revisa en el teléfono, antes de llamar a la API, lo que se escribe en Ingreso,
-// Crear cuenta y Recuperar: correo (con los tres mensajes de las maquetas), contraseña,
-// nombre, apellido y rol. También arma la línea de la regla de la contraseña («Al menos 8
+// Crear cuenta, Recuperar y «Completa tu cuenta» (después de Google): correo (con los tres
+// mensajes de las maquetas), contraseña, nombre, apellido y rol. También arma la línea de la regla de la contraseña («Al menos 8
 // caracteres · te faltan 2») que se ve en Crear cuenta y en Nueva contraseña.
 // Es lógica pura, sin React: se prueba en Node (APP-001, APP-006).
 // Tócalo cuando: cambie un texto de error de las maquetas o una regla de los campos.
@@ -97,20 +97,47 @@ export interface FormRegistro {
 
 export type CampoRegistro = keyof FormRegistro;
 
+/** El error de un nombre o un apellido (1 a 80 caracteres sin contar los espacios de los bordes). */
+function errorNombre(texto: string, que: 'nombre' | 'apellido'): string | null {
+  const t = texto.trim();
+  if (!t) return `Escribe tu ${que}.`;
+  if (t.length > 80) return `Tu ${que} puede tener hasta 80 caracteres.`;
+  return null;
+}
+
 /** Crear cuenta. El error de la contraseña corta es 'corta': lo dibuja la regla, no un texto aparte. */
 export function validarRegistro(f: FormRegistro): Errores<CampoRegistro> {
   const err: Errores<CampoRegistro> = {};
   if (!f.rol) err.rol = 'Elige cómo vas a usar GymTrack.';
-  if (!f.nombre.trim()) err.nombre = 'Escribe tu nombre.';
-  else if (f.nombre.trim().length > 80) err.nombre = 'Tu nombre puede tener hasta 80 caracteres.';
-  if (!f.apellido.trim()) err.apellido = 'Escribe tu apellido.';
-  else if (f.apellido.trim().length > 80) err.apellido = 'Tu apellido puede tener hasta 80 caracteres.';
+  const n = errorNombre(f.nombre, 'nombre');
+  if (n) err.nombre = n;
+  const a = errorNombre(f.apellido, 'apellido');
+  if (a) err.apellido = a;
   const c = errorCorreo(f.correo);
   if (c) err.correo = c;
   const k = errorContrasenaNueva(f.clave);
   if (k) err.clave = k;
   return err;
 }
+
+/** «Completa tu cuenta» después de Google: el correo y la contraseña no se piden. */
+export interface FormCuentaGoogle {
+  rol: RolAcceso | null;
+  nombre: string;
+  apellido: string;
+}
+
+export function validarCuentaGoogle(f: FormCuentaGoogle): Errores<keyof FormCuentaGoogle> {
+  const err: Errores<keyof FormCuentaGoogle> = {};
+  if (!f.rol) err.rol = 'Elige cómo vas a usar GymTrack.';
+  const n = errorNombre(f.nombre, 'nombre');
+  if (n) err.nombre = n;
+  const a = errorNombre(f.apellido, 'apellido');
+  if (a) err.apellido = a;
+  return err;
+}
+
+export const ORDEN_CUENTA_GOOGLE: (keyof FormCuentaGoogle)[] = ['rol', 'nombre', 'apellido'];
 
 export const sinErrores = (e: object) => Object.keys(e).length === 0;
 

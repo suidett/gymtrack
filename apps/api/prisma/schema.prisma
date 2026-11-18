@@ -186,11 +186,14 @@ enum MotivoBaja {
 // ── Cuentas ──────────────────────────────────────────────────────────────────
 
 /// El rol no cambia después del registro. Borrar la cuenta marca deleted_at y el worker purga a
-/// los 30 días (P-24). email_verified_at queda nulo en la versión 1 (P-55).
+/// los 30 días (P-24). email_verified_at queda nulo al registrarse con correo (P-55) y se marca al
+/// entrar con Google, que confirma el correo. google_sub es el id estable de la cuenta de Google
+/// vinculada (POST /v1/auth/google): una cuenta de Google entra a una sola cuenta de GymTrack.
 model Usuario {
   id               String    @id @default(uuid(7)) @db.Uuid
   email            String    @unique
   passwordHash     String    @map("password_hash")
+  googleSub        String?   @unique @map("google_sub")
   rol              Rol
   nombre           String
   apellido         String
@@ -206,6 +209,7 @@ model Usuario {
   refreshTokens  RefreshToken[]
   passwordResets PasswordReset[]
   pushTokens     PushToken[]
+  avisosEnviados AvisoEnviado[]
 
   // Como alumno.
   perfilAlumno       PerfilAlumno?          @relation("PerfilDelAlumno")
@@ -270,19 +274,49 @@ model PasswordReset {
   @@map("password_resets")
 }
 
-/// Token de Expo del dispositivo, guardado con hash (POST /me/push-tokens).
+/// Un teléfono o navegador que recibe avisos (POST /v1/notificaciones/dispositivos).
+/// tipo: expo (token de Expo de la app Android) o web (suscripción push de la app web del iPhone).
+/// token_hash es el SHA-256 de «aviso:<tipo>:<token o endpoint>» (no se duplica).
+/// destino_cifrado es el token o la suscripción con sus llaves, cifrado con AES-256-GCM
+/// (src/modulos/notificaciones/cifrado.ts): en la base no queda ningún token en claro (SEG-003).
+/// Las filas sin destino (las que dejaba POST /me/push-tokens antes) no sirven para mandar.
 model PushToken {
-  id         String    @id @default(uuid(7)) @db.Uuid
-  usuarioId  String    @map("user_id") @db.Uuid
-  tokenHash  String    @unique @map("token_hash")
-  plataforma String
-  revocadoAt DateTime? @map("revocado_at") @db.Timestamptz(3)
-  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  id             String    @id @default(uuid(7)) @db.Uuid
+  usuarioId      String    @map("user_id") @db.Uuid
+  tokenHash      String    @unique @map("token_hash")
+  tipo           String    @default("expo")
+  plataforma     String
+  destinoCifrado String?   @map("destino_cifrado")
+  revocadoAt     DateTime? @map("revocado_at") @db.Timestamptz(3)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
 
   usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
 
   @@index([usuarioId])
   @@map("push_tokens")
+}
+
+/// Cada aviso que se intentó mandar (src/modulos/notificaciones/registro.ts). Sirve para el tope
+/// de 2 push al día por persona (P-20), contado en el día de su zona (dia, AAAA-MM-DD), y para no
+/// repetir un aviso (clave única: recordatorio:<alumno>:<día>, cierre:<sesión>...). La API y el
+/// worker comparten esta tabla, así el tope vale para los dos.
+model AvisoEnviado {
+  id           String   @id @default(uuid(7)) @db.Uuid
+  usuarioId    String   @map("user_id") @db.Uuid
+  dia          String
+  tipo         String
+  clave        String   @unique
+  cuentaTope   Boolean  @map("cuenta_tope")
+  pushEnviados Int      @default(0) @map("push_enviados")
+  pushFallidos Int      @default(0) @map("push_fallidos")
+  correo       Boolean  @default(false)
+  omitido      String?
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId, dia])
+  @@map("avisos_enviados")
 }
 
 // ── Perfil del alumno, encuesta y vínculo ────────────────────────────────────

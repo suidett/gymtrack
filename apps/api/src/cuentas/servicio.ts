@@ -7,14 +7,15 @@
 // fue reemplazado y vuelve revoca todos los del usuario; uno cerrado con logout solo da 401),
 // cerrar la sesión de un dispositivo, pedir el enlace de recuperación (1 hora, un solo uso, todo
 // en segundo plano) y guardar la contraseña nueva (revoca todos los refresh; los access viejos
-// caen por el sello de la contraseña, ver src/seguridad/tokens.ts).
+// caen por el sello de la contraseña, ver src/seguridad/tokens.ts). Para el ingreso con Google
+// (src/cuentas/google.ts) abre una sesión sin contraseña y crea la cuenta sin contraseña conocida.
 // Tócalo cuando: cambie una regla de §API «Cuentas y perfil» o de §Seguridad.
 // No lo toques para: la forma de la entrada o la salida (packages/shared/src/api/cuentas.ts), ni
 // para los límites de intentos (src/seguridad/limitador.ts, aplicados en rutas.ts).
 // Depende de: la base (Prisma), el reloj inyectado, src/seguridad/* y el servicio de correo.
 // ─────────────────────────────────────────────────────────────────────────────
 import type { Sesion, Tokens, Usuario as UsuarioApi } from '@gymtrack/shared';
-import { randomUUID } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 import type { Config } from '../config';
 import { plantillaBienvenida, plantillaRecuperacion } from '../correo/plantillas';
 import type { ServicioCorreo } from '../correo';
@@ -122,29 +123,66 @@ export function crearServicioCuentas(d: DependenciasCuentas) {
     throw new ErrorApi('REFRESH_INVALID');
   }
 
+  /**
+   * Crea la cuenta y su primer refresh en una sola transacción y manda la bienvenida. La usan el
+   * registro (con la contraseña elegida) y el ingreso con Google (sin contraseña conocida).
+   */
+  async function crearCuenta(
+    e: { rol: 'trainer' | 'client'; nombre: string; apellido: string; email: string },
+    passwordHash: string,
+    emailVerifiedAt: Date | null,
+    googleSub: string | null = null,
+  ): Promise<Sesion> {
+    let u: Usuario;
+    let tokens: Tokens;
+    try {
+      // Usuario y refresh juntos: si falla el segundo no queda una cuenta sin sesión.
+      ({ u, tokens } = await d.prisma.$transaction(async (tx) => {
+        const creado = await tx.usuario.create({
+          data: { rol: e.rol, nombre: e.nombre, apellido: e.apellido, email: e.email, passwordHash, emailVerifiedAt, googleSub, createdAt: d.reloj.ahora() },
+        });
+        return { u: creado, tokens: (await emitirTokens(creado, undefined, tx)).tokens };
+      }));
+    } catch (err) {
+      // P-36: el correo ya tiene cuenta. El índice único resuelve también dos registros a la vez
+      // (con Google, el de google_sub también: el mismo doble toque).
+      if (esDuplicado(err)) throw new ErrorApi('EMAIL_TAKEN');
+      throw err;
+    }
+    const correo = plantillaBienvenida({ nombre: u.nombre, rol: u.rol });
+    d.correo.enviarEnSegundoPlano({ ...correo, para: u.email, etiqueta: 'bienvenida', usuarioId: u.id });
+    return { usuario: aUsuarioApi(u), tokens };
+  }
+
   return {
     // ── Registro ───────────────────────────────────────────────────────────
     async registrar(e: { rol: 'trainer' | 'client'; nombre: string; apellido: string; email: string; password: string }): Promise<Sesion> {
       // El hash se calcula antes de abrir la transacción: no se tiene una conexión tomada 50 ms.
       const passwordHash = await hashearContrasena(e.password);
-      let u: Usuario;
-      let tokens: Tokens;
-      try {
-        // Usuario y refresh juntos: si falla el segundo no queda una cuenta sin sesión.
-        ({ u, tokens } = await d.prisma.$transaction(async (tx) => {
-          const creado = await tx.usuario.create({
-            data: { rol: e.rol, nombre: e.nombre, apellido: e.apellido, email: e.email, passwordHash, createdAt: d.reloj.ahora() },
-          });
-          return { u: creado, tokens: (await emitirTokens(creado, undefined, tx)).tokens };
-        }));
-      } catch (err) {
-        // P-36: el correo ya tiene cuenta. El índice único resuelve también dos registros a la vez.
-        if (esDuplicado(err)) throw new ErrorApi('EMAIL_TAKEN');
-        throw err;
-      }
-      const correo = plantillaBienvenida({ nombre: u.nombre, rol: u.rol });
-      d.correo.enviarEnSegundoPlano({ ...correo, para: u.email, etiqueta: 'bienvenida', usuarioId: u.id });
-      return { usuario: aUsuarioApi(u), tokens };
+      return crearCuenta(e, passwordHash, null);
+    },
+
+    /**
+     * Cuenta creada desde otro proveedor que ya confirmó el correo (Google). La contraseña es un
+     * azar de 32 bytes que nadie conoce ni se guarda: el ingreso con correo da 401 hasta que la
+     * persona elige una con «olvidé mi contraseña». Igual es un hash Argon2id válido, así el
+     * resto del código (sello del access, restablecer) no necesita un caso aparte.
+     */
+    async registrarSinContrasena(
+      e: { rol: 'trainer' | 'client'; nombre: string; apellido: string; email: string; googleSub?: string },
+    ): Promise<Sesion> {
+      const passwordHash = await hashearContrasena(randomBytes(32).toString('base64url'));
+      return crearCuenta(e, passwordHash, d.reloj.ahora(), e.googleSub ?? null);
+    },
+
+    /**
+     * Abre una sesión nueva (un dispositivo nuevo) para alguien que ya se identificó por otro
+     * medio (Google). Las mismas reglas que el ingreso: una cuenta marcada para borrarse no entra.
+     */
+    async abrirSesion(u: Usuario): Promise<Sesion> {
+      if (u.deletedAt) throw new ErrorApi('ACCOUNT_DELETED');
+      const { tokens } = await emitirTokens(u);
+      return { usuario: await usuarioApiCompleto(d.prisma, u), tokens };
     },
 
     // ── Ingreso ────────────────────────────────────────────────────────────

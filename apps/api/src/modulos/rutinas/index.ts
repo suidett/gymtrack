@@ -27,6 +27,7 @@ import type { Usuario } from '../../generado/prisma/client';
 import {
   activarRutina, archivarRutina, copiarRutina, crearRutina, exigirConEjercicios, reemplazarDias, validarEstructura,
 } from './servicio';
+import { avisarRutina } from '../notificaciones/eventos';
 import { INCLUIR_RUTINA, puedeLeer, rutinaAApi, type RutinaCompleta } from './vista';
 
 type Quien = Pick<Usuario, 'id' | 'rol'>;
@@ -184,6 +185,8 @@ export default definirModulo(async (app, ctx) => {
     const ahora = ctx.reloj.ahora();
     const copia = await copiarRutina(prisma, rutina, { duenoId: usuario.id, alumnoId: clientId, nombre: rutina.nombre }, ahora);
     if (activar) await activarRutina(prisma, copia, clientId, ahora);
+    // Push al alumno: «Camila te asignó una rutina» (después de responder).
+    avisarRutina(ctx, copia.id, usuario.id, activar ? 'asignada_activa' : 'asignada');
     return reply.code(201).send(rutinaAApi(await recargar(copia.id), usuario, new Set([clientId]), ahora));
   });
 
@@ -200,6 +203,8 @@ export default definirModulo(async (app, ctx) => {
     exigirConEjercicios(rutina);
     const ahora = ctx.reloj.ahora();
     await activarRutina(prisma, rutina, alumnoId, ahora);
+    // Push al alumno si la activó su entrenador (el alumno que activa la suya no se avisa).
+    avisarRutina(ctx, rutina.id, usuario.id, 'activada');
     return rutinaAApi(await recargar(rutina.id), usuario, clientes, ahora);
   });
 

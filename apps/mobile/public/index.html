@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<!--
+  HTML raíz de la versión web · Zona: Rutas
+
+  Qué hace: es la plantilla de la única página de la app web (salida "single" de app.json). Expo
+  pone el idioma y el título de web.lang y web.name (las marcas con signo de porcentaje de abajo,
+  que no se pueden repetir en este comentario porque Expo cambia solo la primera), agrega el
+  theme-color y la descripción de app.json (web.themeColor, web.description), el favicon y el
+  paquete de la app.
+  Aquí va lo que el iPhone necesita para instalar GymTrack desde Safari («Agregar a pantalla de
+  inicio») y abrirla como app: el manifest, las etiquetas de Apple, el viewport con
+  viewport-fit=cover (las zonas seguras las respeta react-native-safe-area-context) y el fondo
+  grafito desde el primer cuadro, para que no haya destello blanco mientras carga.
+  Por qué no es src/app/+html.tsx: en el SDK 57 ese archivo solo se usa con la salida "static",
+  que pinta cada pantalla en Node al exportar, y el store guarda en AsyncStorage al importarse
+  (en Node no hay window). Con "single" la app es una página y Firebase reescribe todo a ella.
+  Tócalo cuando: cambie el nombre, el color de fondo o el ícono de la app web.
+  No lo toques para: los datos del manifest (manifest.json, que tiene que decir lo mismo).
+-->
+<html lang="%LANG_ISO_CODE%">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <!-- viewport-fit=cover: la app ocupa toda la pantalla y las zonas seguras van por env(). -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>%WEB_TITLE%</title>
+    <!-- Los pesos y las repeticiones no son teléfonos: Safari no los convierte en enlaces. -->
+    <meta name="format-detection" content="telephone=no" />
+
+    <!-- Instalable: Android y escritorio leen el manifest; el iPhone, las etiquetas de Apple. -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="GymTrack" />
+    <!-- black: barra negra con letras blancas y la app debajo; se lee igual en los dos temas. -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icono-192.png" />
+
+    <!--
+      El reset que recomienda react-native-web: las pantallas desplazan con ScrollView, como en el
+      teléfono, y el body no se desplaza. Más el fondo grafito (#0F1113) y sin el rebote de Safari.
+    -->
+    <style id="expo-reset">
+      html,
+      body {
+        height: 100%;
+        background-color: #0f1113;
+        overscroll-behavior: none;
+      }
+      body {
+        overflow: hidden;
+        -webkit-text-size-adjust: 100%;
+      }
+      #root {
+        display: flex;
+        height: 100%;
+        flex: 1;
+      }
+    </style>
+  </head>
+
+  <body>
+    <noscript>Para usar GymTrack, activa JavaScript en tu navegador.</noscript>
+    <div id="root"></div>
+  </body>
+</html>

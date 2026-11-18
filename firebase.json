@@ -1,17 +1,58 @@
 {
-  "hosting": {
-    "public": "docs/pantallas",
-    "ignore": ["firebase.json", "**/.*", "**/node_modules/**", "**/*.md"],
-    "cleanUrls": false,
-    "headers": [
-      {
-        "source": "**",
-        "headers": [{ "key": "X-Robots-Tag", "value": "noindex" }]
-      },
-      {
-        "source": "**/*.@(html|css|js)",
-        "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
-      }
-    ]
-  }
+  "hosting": [
+    {
+      "target": "maquetas",
+      "public": "docs/pantallas",
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**", "**/*.md"],
+      "cleanUrls": false,
+      "headers": [
+        {
+          "source": "**",
+          "headers": [{ "key": "X-Robots-Tag", "value": "noindex" }]
+        },
+        {
+          "source": "**/*.@(html|css|js)",
+          "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+        }
+      ]
+    },
+    {
+      "target": "app",
+      "public": "apps/mobile/dist/web",
+      "ignore": ["**/.*", "**/node_modules/**", "metadata.json"],
+      "cleanUrls": false,
+      "trailingSlash": false,
+      "rewrites": [{ "source": "**", "destination": "/index.html" }],
+      "headers": [
+        {
+          "source": "**",
+          "headers": [
+            { "key": "Cache-Control", "value": "no-cache" },
+            { "key": "X-Content-Type-Options", "value": "nosniff" },
+            { "key": "X-Frame-Options", "value": "DENY" },
+            { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+          ]
+        },
+        {
+          "source": "/_expo/static/**",
+          "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+        },
+        {
+          "source": "/assets/**",
+          "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+        },
+        {
+          "source": "/manifest.json",
+          "headers": [{ "key": "Content-Type", "value": "application/manifest+json; charset=utf-8" }]
+        },
+        {
+          "source": "/sw-avisos.js",
+          "headers": [
+            { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
+            { "key": "Service-Worker-Allowed", "value": "/" }
+          ]
+        }
+      ]
+    }
+  ]
 }

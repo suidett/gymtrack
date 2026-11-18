@@ -82,12 +82,19 @@ export async function construirApp(d: Dependencias): Promise<FastifyInstance> {
   app.setNotFoundHandler((_req, reply) => reply.status(404).send(sobre('NOT_FOUND')));
 
   // ── CORS para la versión web de la app (CORS_ORIGENES; en local, localhost) ─
+  // Solo los orígenes exactos de CORS_ORIGENES (en el VPS, https://gymtrack-app-5dd46.web.app);
+  // fuera de producción y sin la variable, también http://localhost:* y http://127.0.0.1:*.
+  // Un origen mal escrito no deja arrancar la API (leerOrigenesCors, WEB-004).
+  const origenesCors = leerOrigenesCors(config.cors.origenes, config.entorno === 'production');
   const origenLocal = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
-  const origenPermitido = (o: string) => config.cors.origenes.includes(o) || (config.cors.localhost && origenLocal.test(o));
+  const origenPermitido = (o: string) => origenesCors.has(o) || (config.cors.localhost && origenLocal.test(o));
   app.addHook('onRequest', async (req, reply) => {
     const origen = req.headers.origin;
-    if (!origen || !origenPermitido(origen)) return;
-    reply.header('access-control-allow-origin', origen).header('vary', 'Origin').header('access-control-expose-headers', 'retry-after');
+    if (!origen) return;
+    // La respuesta cambia según el origen: ningún caché intermedio la puede reusar para otro.
+    reply.header('vary', 'Origin');
+    if (!origenPermitido(origen)) return;
+    reply.header('access-control-allow-origin', origen).header('access-control-expose-headers', 'retry-after');
     if (req.method === 'OPTIONS') {
       reply
         .header('access-control-allow-methods', 'GET, POST, PUT, PATCH, DELETE')
@@ -141,10 +148,38 @@ export async function construirApp(d: Dependencias): Promise<FastifyInstance> {
     autenticar: app.exigirSesion,
     limitadorIngreso: limitadores.ingreso,
     limitadorRecuperacion: limitadores.recuperacion,
+    clientIdsGoogle: config.google.clientIds,
   });
 
   // Cada carpeta de src/modulos se registra sola bajo /v1 (src/compartido/modulos.ts).
   internos.modulos = await registrarModulos(app, contexto);
 
   return app;
+}
+
+// ── Orígenes de CORS ─────────────────────────────────────────────────────────
+/**
+ * Revisa y normaliza los orígenes de CORS_ORIGENES. Un origen es esquema, dominio y puerto, sin
+ * ruta: «https://gymtrack-app-5dd46.web.app». Se acepta la barra final (se quita) y el dominio en
+ * mayúsculas (el navegador lo manda en minúsculas). No se acepta el comodín, «null», una ruta,
+ * usuario o clave, ni http en producción. Lanza un Error con el origen que falló: la API no
+ * arranca con un CORS que no protege o que no deja pasar a nadie sin avisar.
+ */
+export function leerOrigenesCors(origenes: readonly string[], produccion: boolean): Set<string> {
+  const listos = new Set<string>();
+  for (const crudo of origenes) {
+    const motivo = `CORS_ORIGENES: «${crudo}» no es un origen válido; escríbelo como https://dominio[:puerto], sin ruta`;
+    let url: URL;
+    try {
+      url = new URL(crudo);
+    } catch {
+      throw new Error(motivo);
+    }
+    const esquemaValido = url.protocol === 'https:' || (!produccion && url.protocol === 'http:');
+    const soloOrigen = url.pathname === '/' && !url.search && !url.hash && !url.username && !url.password;
+    const sinRuta = crudo.replace(/\/$/, '').toLowerCase() === url.origin.toLowerCase();
+    if (!esquemaValido || !soloOrigen || !sinRuta || crudo.includes('*')) throw new Error(motivo);
+    listos.add(url.origin);
+  }
+  return listos;
 }

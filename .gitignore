@@ -16,3 +16,7 @@ apps/mobile/.expo-shared/
 # Los archivos de ejemplo sí van al repo: no traen secretos reales.
 !.env.ejemplo
 !**/.env.ejemplo
+
+# Llave de cuenta de servicio de Firebase (FCM V1): es secreta y va solo a EAS
+# (docs/CONFIGURAR-SERVICIOS.md, paso 3). google-services.json sí puede ir al repo.
+*-firebase-adminsdk-*.json

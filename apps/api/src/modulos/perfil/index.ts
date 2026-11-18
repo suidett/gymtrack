@@ -12,10 +12,13 @@
 // Tócalo cuando: agregues o cambies una ruta de perfil.
 // No lo toques para: las reglas (servicio.ts), los CSV y el ZIP (exportar.ts) ni la forma de la
 // entrada y la salida (packages/shared/src/api/perfil.ts).
-// Depende de: src/compartido, ./servicio, ./exportar y @gymtrack/shared.
+// POST /me/push-tokens guarda el token igual que POST /v1/notificaciones/dispositivos (cifrado,
+// sirve para mandar avisos); la app nueva usa la ruta de notificaciones.
+// Depende de: src/compartido, ./servicio, ./exportar, ../notificaciones/eventos y @gymtrack/shared.
 // ─────────────────────────────────────────────────────────────────────────────
 import { NOMBRE_ARCHIVO_EXPORTACION, RUTAS_PERFIL as R } from '@gymtrack/shared';
 import { definirModulo, esquemaDe, fallar, noEncontrado, urlDe, usuarioDe } from '../../compartido';
+import { avisosDe } from '../notificaciones/eventos';
 import { ARCHIVOS_ALUMNO, ARCHIVOS_ENTRENADOR, archivosDe, armarZip, firmarExportacion, leerExportacion } from './exportar';
 import {
   actualizarPerfil, borrarCuenta, crearInvitacion, desvincular, registrarPush, responderEncuesta, verEncuesta,
@@ -62,7 +65,15 @@ export default definirModulo(async (app, ctx) => {
   const esquemaPush = esquemaDe(R.registrarPush);
   app.post(urlDe(R.registrarPush), { schema: { ...esquemaPush, response: { ...esquemaPush.response, 200: R.registrarPush.respuesta } }, preHandler: app.exigirSesion },
     async (req, reply) => {
-      const { nuevo, token } = await registrarPush(prisma, usuarioDe(req), req.body);
+      const usuario = usuarioDe(req);
+      // Lo mismo que POST /v1/notificaciones/dispositivos con tipo expo: el token queda cifrado y
+      // sirve para mandar avisos. Sin el módulo notificaciones (no debería pasar) queda solo el hash.
+      const avisos = avisosDe(ctx);
+      if (avisos) {
+        const { nuevo, dispositivo } = await avisos.dispositivos.guardar(usuario.id, { tipo: 'expo', ...req.body });
+        return reply.code(nuevo ? 201 : 200).send({ id: dispositivo.id, plataforma: req.body.plataforma, created_at: dispositivo.created_at });
+      }
+      const { nuevo, token } = await registrarPush(prisma, usuario, req.body);
       return reply.code(nuevo ? 201 : 200).send(token);
     },
   );

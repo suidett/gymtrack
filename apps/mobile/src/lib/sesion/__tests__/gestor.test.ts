@@ -239,6 +239,48 @@ describe('restaurar y cerrar', () => {
     expect(avisos).toEqual(['cerrada']);
   });
 
+  it('GOO-028 entrar con la sesión que dio el ingreso con Google la guarda igual que ingresar', async () => {
+    const { fetch, llamadas } = crearFetch(() => ({ status: 200, body: usuario }));
+    const almacen = crearAlmacen();
+    const g = crearGestorSesion({ urlBase: URL, fetch, almacen, ahora: () => AHORA });
+    const u = await g.entrarConSesion({ usuario, tokens: tokens(7) });
+    expect(u.id).toBe(usuario.id);
+    expect(almacen.estado.tokens?.refresh_token).toBe('refresh-7');
+    expect(almacen.estado.usuario?.email).toBe(usuario.email);
+    expect(g.tieneSesion()).toBe(true);
+    await g.llamar('GET', '/v1/me');
+    expect(llamadas[0]?.headers.Authorization ?? llamadas[0]?.headers.authorization).toBe('Bearer access-7');
+  });
+
+  it('NOT-063 antes de cerrar sesión corre lo pedido con la sesión abierta; si se cuelga, cierra igual a los 5 s', async () => {
+    vi.useFakeTimers();
+    try {
+      const { fetch, llamadas } = crearFetch(() => ({ status: 204 }));
+      const almacen = crearAlmacen();
+      const g = crearGestorSesion({ urlBase: URL, fetch, almacen, ahora: () => AHORA });
+      await g.entrarConSesion({ usuario, tokens: tokens(1) });
+      const vistos: string[] = [];
+      g.antesDeCerrarSesion(async () => {
+        vistos.push(g.tieneSesion() ? 'con-sesion' : 'sin-sesion');
+        await g.llamar('DELETE', '/v1/notificaciones/dispositivos/abc');
+      });
+      const colgado = g.antesDeCerrarSesion(() => new Promise(() => {}));
+      const cerrando = g.cerrarSesion();
+      await vi.advanceTimersByTimeAsync(5_000);
+      await cerrando;
+      expect(vistos).toEqual(['con-sesion']);
+      expect(llamadas.map((l) => `${l.method} ${l.url.replace(URL, '')}`)).toEqual(['DELETE /v1/notificaciones/dispositivos/abc', 'POST /v1/auth/logout']);
+      expect(almacen.estado.tokens).toBeNull();
+      // Lo quitado ya no corre.
+      colgado();
+      await g.entrarConSesion({ usuario, tokens: tokens(2) });
+      await g.cerrarSesion();
+      expect(vistos).toEqual(['con-sesion', 'con-sesion']);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('APP-003 un 429 trae los segundos de Retry-After en el error', async () => {
     const { fetch } = crearFetch(() => ({ status: 429, body: error('RATE_LIMITED'), headers: { 'retry-after': '48' } }));
     const g = crearGestorSesion({ urlBase: URL, fetch, almacen: crearAlmacen(), ahora: () => AHORA });

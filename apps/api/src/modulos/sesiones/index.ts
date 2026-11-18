@@ -18,6 +18,7 @@ import {
 } from '../../compartido';
 import { detectarTrasCierre } from '../alertas/deteccion';
 import { leerUmbrales } from '../alertas/umbrales';
+import { avisarCierreDeSesion, avisarObservacionNueva } from '../notificaciones/eventos';
 import { armarHoy } from './hoy';
 import { crearObservacion, listarObservaciones } from './observaciones';
 import {
@@ -41,6 +42,8 @@ export default definirModulo(async (app, ctx) => {
     } catch (err) {
       app.log.error({ err, sesionId }, 'No se pudo revisar las alertas del cierre');
     }
+    // Push y correo al entrenador con las alertas que dejó el cierre (después de responder).
+    avisarCierreDeSesion(ctx, sesionId);
   };
 
   // ── Hoy ────────────────────────────────────────────────────────────────────
@@ -158,6 +161,8 @@ export default definirModulo(async (app, ctx) => {
     preHandler: escribir,
   }, async (req, reply) => {
     const { creada, observacion } = await crearObservacion(prisma, usuarioDe(req), req.body);
+    // Dolor fuerte o nota del alumno al entrenador; respuesta o consejo del entrenador al alumno.
+    if (creada) avisarObservacionNueva(ctx, observacion.id);
     return reply.code(creada ? 201 : 200).send(observacion);
   });
 
