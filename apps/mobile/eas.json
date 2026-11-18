@@ -16,7 +16,9 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://gymtrack-api.64.176.27.203.sslip.io"
+        "EXPO_PUBLIC_API_URL": "https://gymtrack-api.64.176.27.203.sslip.io",
+        "EXPO_PUBLIC_GOOGLE_CLIENT_ID_WEB": "418851324476-u6blg7n5cun1fv258pvjei6gt0hgdrlu.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID": "418851324476-9p72jjdjgv51tcdufmnfj0k1uujf7d0m.apps.googleusercontent.com"
       },
       "node": "22.14.0",
       "pnpm": "12.6.0"
@@ -24,7 +26,9 @@
     "production": {
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://gymtrack-api.64.176.27.203.sslip.io"
+        "EXPO_PUBLIC_API_URL": "https://gymtrack-api.64.176.27.203.sslip.io",
+        "EXPO_PUBLIC_GOOGLE_CLIENT_ID_WEB": "418851324476-u6blg7n5cun1fv258pvjei6gt0hgdrlu.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID": "418851324476-9p72jjdjgv51tcdufmnfj0k1uujf7d0m.apps.googleusercontent.com"
       },
       "node": "22.14.0",
       "pnpm": "12.6.0"
