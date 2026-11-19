@@ -12,7 +12,9 @@
 //                          al entrenador (INT-150). Del entrenador: push al alumno (P-41).
 //   avisarRutina           (rutinas, asignar o activar) push al alumno, si lo hizo su entrenador.
 //   avisarAlertasDeLaNoche (worker) un correo por entrenador con las alertas que creó la corrida
-//                          de la noche. Sin push: son las 4 de la mañana en Chile; quedan en Alertas.
+//                          de la noche. Sin push: son las 4 de la mañana en Chile; quedan en Alertas
+//                          y en la campana (armarAvisosDeLaNoche arma los avisos sin mandarlos).
+// Cada aviso deja además su notificación en la campana de quien lo recibe (./servicio.ts, ./bandeja.ts).
 // El alumno solo (sin vínculo) no le avisa a nadie (INT-145, WRK-017). Los recordatorios están en
 // ./recordatorios.ts.
 // Tócalo cuando: un evento nuevo tenga que avisar, o cambie a quién.
@@ -25,7 +27,7 @@ import { leerUmbrales } from '../alertas/umbrales';
 import type { Aviso, ServicioAvisos } from './servicio';
 import {
   avisoAlertas, avisoObservacionDelAlumno, avisoObservacionDelEntrenador, avisoRutina, correoAlertasDeLaNoche,
-  type AlertaParaAviso,
+  notificacionAlertasDeLaNoche, type AlertaParaAviso,
 } from './textos';
 
 // ── El servicio de cada API armada ───────────────────────────────────────────
@@ -126,11 +128,12 @@ export function avisarRutina(ctx: ContextoModulo, rutinaId: string, actorId: str
 
 // ── La noche (worker) ────────────────────────────────────────────────────────
 /**
- * Las alertas que acaba de crear la corrida de la noche: crearAlertaSiFalta las fecha con el
- * mismo «ahora» de la corrida, así que son las de created_at igual a ese instante. Un correo por
- * entrenador; el alumno solo no avisa a nadie (WRK-017).
+ * Los avisos de las alertas que acaba de crear la corrida de la noche: crearAlertaSiFalta las
+ * fecha con el mismo «ahora» de la corrida, así que son las de created_at igual a ese instante. Uno
+ * por entrenador, solo correo y su notificación en la campana; el alumno solo no avisa a nadie
+ * (WRK-017). La demo (prisma/demo.ts) los arma igual para dejar la notificación.
  */
-export async function avisarAlertasDeLaNoche(prisma: BaseDeDatos, avisos: ServicioAvisos, ahora: Date): Promise<{ alertas: number; correos: number }> {
+export async function armarAvisosDeLaNoche(prisma: BaseDeDatos, ahora: Date, urlApp: string | null): Promise<Aviso[]> {
   const alertas = await prisma.alerta.findMany({
     where: { createdAt: ahora, entrenadorId: { not: null }, estado: 'nueva' },
     include: { alumno: true, entrenador: true, ejercicio: { select: { nombre: true } } },
@@ -138,7 +141,7 @@ export async function avisarAlertasDeLaNoche(prisma: BaseDeDatos, avisos: Servic
   });
   const porEntrenador = new Map<string, typeof alertas>();
   for (const a of alertas) porEntrenador.set(a.entrenadorId!, [...(porEntrenador.get(a.entrenadorId!) ?? []), a]);
-  let correos = 0;
+  const avisos: Aviso[] = [];
   for (const [entrenadorId, suyas] of porEntrenador) {
     const entrenador = suyas[0]!.entrenador!;
     const porAlumno = new Map<string, { alumno: (typeof suyas)[number]['alumno']; alertas: AlertaParaAviso[] }>();
@@ -147,11 +150,23 @@ export async function avisarAlertasDeLaNoche(prisma: BaseDeDatos, avisos: Servic
       g.alertas.push({ tipo: a.tipo, ejercicio: a.ejercicio?.nombre ?? null, detalle: esObjeto(a.detalle) ? a.detalle : {} });
       porAlumno.set(a.alumnoId, g);
     }
-    const r = await avisos.enviar({
+    const alumnos = [...porAlumno.values()];
+    avisos.push({
       tipo: 'alertas_noche', clave: `noche:${entrenadorId}:${ahora.toISOString()}`, para: entrenador, push: null, cuentaTope: false,
-      correo: correoAlertasDeLaNoche(entrenador, [...porAlumno.values()], avisos.config.urlApp),
+      correo: correoAlertasDeLaNoche(entrenador, alumnos, urlApp),
+      notificacion: notificacionAlertasDeLaNoche(alumnos),
     });
+  }
+  return avisos;
+}
+
+/** Manda los avisos de la noche: un correo por entrenador (y su notificación). Cuenta las alertas y los correos. */
+export async function avisarAlertasDeLaNoche(prisma: BaseDeDatos, avisos: ServicioAvisos, ahora: Date): Promise<{ alertas: number; correos: number }> {
+  const alertas = await prisma.alerta.count({ where: { createdAt: ahora, entrenadorId: { not: null }, estado: 'nueva' } });
+  let correos = 0;
+  for (const aviso of await armarAvisosDeLaNoche(prisma, ahora, avisos.config.urlApp)) {
+    const r = await avisos.enviar(aviso);
     if (r.correo) correos += 1;
   }
-  return { alertas: alertas.length, correos };
+  return { alertas, correos };
 }

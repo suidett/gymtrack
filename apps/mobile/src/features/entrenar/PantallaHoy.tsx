@@ -16,6 +16,7 @@ import { useCallback, useState, type ReactNode } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BarraAccion, Boton, Ceja, Cifra, Hoja, Icono, Separador, Simbolo, Tarjeta, Titulo, Txt, useAviso } from '@/components/ui';
+import { Campana } from '@/features/notificaciones';
 import { useSesion } from '@/lib/sesion';
 import { useTema } from '@/lib/tema';
 import { cargarHoy, sincronizar, useDatosEntrenar, useEntrenar } from './almacen';
@@ -94,7 +95,10 @@ export function PantallaHoy() {
       <ScrollView className="flex-1" contentContainerClassName="px-4 pb-6" showsVerticalScrollIndicator={false}>
         <View className="h-14 flex-row items-center justify-between">
           <Simbolo tamano={24} />
-          {hoy && hoy.racha_dias > 0 ? <Racha dias={hoy.racha_dias} /> : null}
+          <View className="flex-row items-center gap-1">
+            {hoy && hoy.racha_dias > 0 ? <Racha dias={hoy.racha_dias} /> : null}
+            <Campana />
+          </View>
         </View>
         <View className="mb-5 mt-1">
           <Ceja>{fechaLarga(new Date(momento))}</Ceja>

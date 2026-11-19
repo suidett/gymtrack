@@ -1,8 +1,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Textos de los avisos · Zona: Notificaciones (API)
 //
-// Qué hace: arma el título, el cuerpo y la pantalla que abre cada push, y el correo de las alertas
-// al entrenador, en español de Chile con tuteo. El correo usa el mismo marco con la marca que la
+// Qué hace: arma el título, el cuerpo y la pantalla que abre cada push (los mismos que quedan en la
+// campana de la app), y el correo de las alertas al entrenador, en español de Chile con tuteo. El correo usa el mismo marco con la marca que la
 // bienvenida y la recuperación (src/correo/plantillas.ts) y escapa todo lo que viene de un usuario.
 // Privacidad (Ley 21.719): el push se ve en la pantalla bloqueada y pasa por Google o Apple, así
 // que lo que escribe el alumno (sus observaciones) no va en el push: solo que dejó una y sobre qué.
@@ -126,11 +126,27 @@ export function avisoAlertas(d: { entrenador: Persona; alumno: Persona; alumnoId
   return { push, correo: correoDeAlertas(d.entrenador, [{ alumno: d.alumno, alertas: d.alertas }], d.urlApp, asunto) };
 }
 
+/** El asunto del correo de la noche, que también es el título de su notificación en la campana. */
+function asuntoDeLaNoche(alumnos: { alumno: Persona; alertas: AlertaParaAviso[] }[]): string {
+  const total = alumnos.reduce((n, a) => n + a.alertas.length, 0);
+  return total === 1 ? `${alumnos[0]!.alumno.nombre} tiene una alerta nueva` : `Tienes ${total} alertas nuevas de tus alumnos`;
+}
+
 /** El resumen de la corrida de la noche: un solo correo por entrenador con todo lo nuevo. */
 export function correoAlertasDeLaNoche(entrenador: Persona, alumnos: { alumno: Persona; alertas: AlertaParaAviso[] }[], urlApp: string | null): CorreoAviso {
-  const total = alumnos.reduce((n, a) => n + a.alertas.length, 0);
-  const asunto = total === 1 ? `${alumnos[0]!.alumno.nombre} tiene una alerta nueva` : `Tienes ${total} alertas nuevas de tus alumnos`;
-  return correoDeAlertas(entrenador, alumnos, urlApp, asunto);
+  return correoDeAlertas(entrenador, alumnos, urlApp, asuntoDeLaNoche(alumnos));
+}
+
+/**
+ * Lo mismo para la campana del entrenador (la noche no manda push): el asunto del correo como
+ * título y las alertas en una línea, como el push de alertas. Abre Alertas.
+ */
+export function notificacionAlertasDeLaNoche(alumnos: { alumno: Persona; alertas: AlertaParaAviso[] }[]): { titulo: string; cuerpo: string; ruta: string } {
+  const [uno] = alumnos;
+  const cuerpo = alumnos.length === 1 && uno!.alertas.length === 1
+    ? `${describirAlerta(uno!.alertas[0]!)} Toca para revisarla.`
+    : cortar(alumnos.map(({ alumno, alertas }) => `${alumno.nombre}: ${alertas.map(describirAlerta).join(' ')}`).join(' '), 160);
+  return { titulo: asuntoDeLaNoche(alumnos), cuerpo, ruta: '/entrenador/alertas' };
 }
 
 /** El alumno dejó una observación (no un dolor fuerte): solo push, sin el texto (INT-150). */
