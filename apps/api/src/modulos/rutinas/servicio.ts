@@ -18,7 +18,7 @@
 // Depende de: el cliente de Prisma, src/compartido (errores), ../ejercicios/consultas
 // (ejerciciosUsables) y ./vista (INCLUIR_RUTINA).
 // ─────────────────────────────────────────────────────────────────────────────
-import type { esquemaDiaRutinaEdicion } from '@gymtrack/shared';
+import { errorRepsSegun, maxRepsSegun, type esquemaDiaRutinaEdicion } from '@gymtrack/shared';
 import type { z } from 'zod';
 import { campoInvalido, fallar } from '../../compartido';
 import type { BaseDeDatos } from '../../db';
@@ -29,7 +29,7 @@ import { INCLUIR_RUTINA, type RutinaCompleta } from './vista';
 /** Un día como llega (POST o PUT; en POST nunca trae id). */
 export type DiaEntrada = z.output<typeof esquemaDiaRutinaEdicion>;
 type EjercicioEntrada = DiaEntrada['ejercicios'][number];
-type Usables = Map<string, { incrementoDefaultKg: number }>;
+type Usables = Map<string, { incrementoDefaultKg: number; tipoCarga?: string }>;
 
 // ── Validar ──────────────────────────────────────────────────────────────────
 /**
@@ -51,8 +51,17 @@ export async function validarEstructura(
   const usables = await ejerciciosUsables(prisma, dias.flatMap((x) => x.ejercicios.map((e) => e.exercise_id)), d);
   dias.forEach((dia, i) =>
     dia.ejercicios.forEach((e, j) => {
-      if (!usables.has(e.exercise_id)) {
+      const ej = usables.get(e.exercise_id);
+      if (!ej) {
         fallar('EXERCISE_NOT_OWNED', { campo: `dias.${i}.ejercicios.${j}.exercise_id`, dia: i, posicion: j, exercise_id: e.exercise_id });
+      }
+      // Fondo: el tope depende de cómo se registra el ejercicio (60 repeticiones o 600 segundos).
+      const motivo = errorRepsSegun(ej.tipoCarga ?? 'kg', e.reps_max);
+      if (motivo) {
+        fallar('BUSINESS_RULE', {
+          campo: `dias.${i}.ejercicios.${j}.reps_max`, dia: i, posicion: j, exercise_id: e.exercise_id,
+          regla: 'reps_maximas', maximo: maxRepsSegun(ej.tipoCarga ?? 'kg'), motivo,
+        }, motivo);
       }
     }),
   );

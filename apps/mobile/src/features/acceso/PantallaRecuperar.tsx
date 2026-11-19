@@ -30,7 +30,7 @@ import {
   venceEnlace,
   type Envios,
 } from './recuperar';
-import { errorCorreo, limpiarCorreo } from './validacion';
+import { errorCorreo, limpiarCorreo, LARGO_MAXIMO } from './validacion';
 
 type Paso = 'pedir' | 'enviado' | 'limite';
 
@@ -234,6 +234,7 @@ export function PantallaRecuperar() {
         <CampoTexto
           ref={correoRef}
           etiqueta="Correo"
+          maxLength={LARGO_MAXIMO.correo}
           valor={correo}
           onCambiar={(v) => {
             setCorreo(v);

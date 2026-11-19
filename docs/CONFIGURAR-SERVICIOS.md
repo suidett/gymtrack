@@ -131,7 +131,9 @@ La API y el worker usan la misma imagen (`apps/api/Dockerfile`): la API con el c
 | `EXPO_ACCESS_TOKEN` | vacío, salvo que actives «Enhanced push security» en expo.dev | sí |
 | `ALMACENAMIENTO_DIR` | una carpeta montada como volumen (fotos de progreso) | no |
 
-### Worker (otro servicio, misma imagen)
+### Worker
+
+En este Dokploy corre dentro del contenedor de la API (ver el comando de arranque más abajo), así que no hay que crear nada aparte. Si algún día se separa en otro servicio con la misma imagen:
 
 - Comando: `node dist/worker.js` (residente: `noche` a las 07:00 UTC y `recordatorios` cada 5 minutos). Si prefieres un cron de Dokploy: `*/5 * * * *` con `node dist/worker.js recordatorios` y otro diario con `node dist/worker.js noche`.
 - Variables: `NODE_ENV`, `DATABASE_URL`, **el mismo `JWT_SECRET` que la API** (de él sale la llave que cifra los dispositivos; con otro, el worker no puede mandar ningún push), todas las de correo (`CORREO_DRIVER`, `SMTP_*`, `CORREO_REMITENTE`) y las de avisos (`PUSH_DRIVER`, `VAPID_*`, `AVISOS_URL_APP`).
@@ -140,7 +142,7 @@ La API y el worker usan la misma imagen (`apps/api/Dockerfile`): la API con el c
 
 Esta versión trae la migración `20261118000000_google_y_avisos` (columna `users.google_sub`, columnas `tipo` y `destino_cifrado` en `push_tokens` y la tabla `avisos_enviados`). **Sin ella la API no puede leer usuarios y falla el ingreso.**
 
-En el Dokploy del proyecto ya es automática: el servicio de la API tiene como comando de arranque (Advanced > Run Command) `/bin/sh -c "npx prisma migrate deploy && node dist/semilla.js && exec node dist/servidor.js"`, que aplica las migraciones pendientes y carga el catálogo de ejercicios antes de atender. Si la API usa el comando por defecto de la imagen, hay que correrla a mano después de desplegar y antes de abrir la app, en la terminal del contenedor de la API (Dokploy > el servicio > Terminal):
+En el Dokploy del proyecto ya es automática: el servicio de la API tiene como comando de arranque (Advanced > Run Command) `/bin/sh -c "npx prisma migrate deploy && node dist/semilla.js && { (while true; do node dist/worker.js; sleep 30; done) & exec node dist/servidor.js; }"`. Aplica las migraciones pendientes, carga el catálogo de ejercicios y deja el worker residente corriendo en el mismo contenedor (si se cae, vuelve a partir a los 30 s), así comparte las variables y el `JWT_SECRET` con la API sin un segundo servicio. Si falla la migración, no arranca nada. Si la API usa el comando por defecto de la imagen, hay que correrla a mano después de desplegar y antes de abrir la app, en la terminal del contenedor de la API (Dokploy > el servicio > Terminal):
 
 ```bash
 npx prisma migrate deploy

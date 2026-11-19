@@ -11,7 +11,7 @@
 // No lo toques para: los textos de validación local (validacion.ts).
 // Depende de: @gymtrack/shared (ErrorDeApi, CodigoError).
 // ─────────────────────────────────────────────────────────────────────────────
-import { ErrorDeApi, type CodigoError } from '@gymtrack/shared';
+import { detalleDeError, ErrorDeApi, type CodigoError } from '@gymtrack/shared';
 
 /** Espera por defecto si un 429 llega sin Retry-After: el límite de ingreso es por minuto. */
 export const ESPERA_POR_DEFECTO_S = 60;
@@ -153,7 +153,9 @@ export function errorDeRegistro(e: unknown): ResultadoErrorRegistro {
   if (codigo === 'EMAIL_TAKEN') return { tipo: 'correo-usado' };
   if (forma !== null || codigo === 'VALIDATION_ERROR') {
     const campo = CAMPOS_API[forma ?? String((e as ErrorDeApi).detalles?.campo ?? '')];
-    if (campo) return { tipo: 'campo', campo, mensaje: campo === 'correo' ? TEXTO_CORREO_FORMATO : 'Revisa este dato.' };
+    // El motivo es el mismo texto de la regla (nombre con números, contraseña fácil de adivinar).
+    const motivo = detalleDeError(e).motivo;
+    if (campo) return { tipo: 'campo', campo, mensaje: campo === 'correo' ? TEXTO_CORREO_FORMATO : (motivo ?? 'Revisa este dato.') };
   }
   if (codigo === 'RATE_LIMITED') {
     return {
@@ -195,7 +197,7 @@ export function errorDeRestablecer(e: unknown): ResultadoErrorRestablecer {
   if (codigo === 'VALIDATION_ERROR' || forma !== null) {
     const campo = forma ?? String((e as ErrorDeApi).detalles?.campo ?? '');
     if (campo === 'token') return { tipo: 'vencido' };
-    return { tipo: 'clave', mensaje: 'Revisa la contraseña: necesita entre 8 y 128 caracteres.' };
+    return { tipo: 'clave', mensaje: detalleDeError(e).motivo ?? 'Revisa la contraseña: necesita entre 8 y 128 caracteres.' };
   }
   return { tipo: 'otro' };
 }

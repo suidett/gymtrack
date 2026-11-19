@@ -254,10 +254,10 @@ describeConBase('Sesiones', () => {
     const obs = (payload: Record<string, unknown>, p = martina) => e.pedirComo(p, { method: 'POST', url: '/v1/observations', payload });
     expect((await obs({ texto: 'Buen agarre', exercise_id: PRESS })).status).toBe(201);
     expect((await obs({ texto: 'Pesada', session_id: s.id })).status).toBe(201);
-    expect((await obs({ tipo: 'dolor', texto: 'Hombro', set_id: setId, dolor_intensidad: 4 })).status).toBe(201);
+    expect((await obs({ tipo: 'dolor', dolor_zona: 'hombro', texto: 'Hombro', set_id: setId, dolor_intensidad: 4 })).status).toBe(201);
     expect((await obs({ texto: 'Sin destino' })).status).toBe(400);
-    expect((await obs({ tipo: 'dolor', texto: 'x', exercise_id: PRESS, dolor_intensidad: 0 })).status).toBe(400);
-    expect((await obs({ tipo: 'dolor', texto: 'x', exercise_id: PRESS, dolor_intensidad: 11 })).status).toBe(400);
+    expect((await obs({ tipo: 'dolor', dolor_zona: 'hombro', texto: 'x', exercise_id: PRESS, dolor_intensidad: 0 })).status).toBe(400);
+    expect((await obs({ tipo: 'dolor', dolor_zona: 'hombro', texto: 'x', exercise_id: PRESS, dolor_intensidad: 11 })).status).toBe(400);
     expect((await obs({ texto: 'Sobre la rutina', routine_id: rutina.id })).status).toBe(403);
     expect((await obs({ tipo: 'consejo', texto: 'Hazlo así', exercise_id: PRESS })).status).toBe(422);
     expect((await obs({ tipo: 'consejo', texto: 'Cuida el hombro', exercise_id: PRESS, client_id: martina.id }, camila)).status).toBe(201);
@@ -265,9 +265,9 @@ describeConBase('Sesiones', () => {
     await e.pedirComo(martina, { method: 'POST', url: `/v1/sessions/${s.id}/finish`, payload: { cerrada_at: '2026-11-17T13:00:00.000Z' } });
     expect((await obs({ texto: 'Después del cierre', session_id: s.id })).status).toBe(201);
 
-    expect((await obs({ tipo: 'dolor', texto: 'Fuerte', exercise_id: PRESS, dolor_intensidad: 6 })).status).toBe(201);
+    expect((await obs({ tipo: 'dolor', dolor_zona: 'hombro', texto: 'Fuerte', exercise_id: PRESS, dolor_intensidad: 6 })).status).toBe(201);
     expect(await e.prisma.alerta.count({ where: { tipo: 'dolor' } })).toBe(0);
-    expect((await obs({ tipo: 'dolor', texto: 'Muy fuerte', exercise_id: PRESS, dolor_intensidad: 7 })).status).toBe(201);
+    expect((await obs({ tipo: 'dolor', dolor_zona: 'hombro', texto: 'Muy fuerte', exercise_id: PRESS, dolor_intensidad: 7 })).status).toBe(201);
     expect(await e.prisma.alerta.count({ where: { tipo: 'dolor', entrenadorId: camila.id, ejercicioId: PRESS } })).toBe(1);
 
     const lista = await e.pedirComo(camila, { method: 'GET', url: '/v1/observations', query: { client_id: martina.id, exercise_id: PRESS } });

@@ -6,8 +6,10 @@
 // ejercicios, se renombra, se le fija día de la semana, se duplica, se quita y se reordena. Los
 // ejercicios se agregan desde la biblioteca (hoja con buscador, grupos y varias casillas) y se
 // ajustan en su hoja (series, rango de repeticiones, RIR, descanso, incremento, carga inicial,
-// esquema y, para el entrenador, la nota). Al guardar revisa lo que falta (APP-021) y, si la API
-// responde 422, marca el día o el ejercicio del error sin perder nada (APP-022). Nueva hace
+// esquema y, para el entrenador, la nota). Al guardar revisa lo que falta o está mal con las mismas
+// reglas de la API (APP-021: largos, días repetidos, un día de la semana por día, hasta 14 días y
+// 30 ejercicios, repeticiones hasta 60 o segundos hasta 600 en los de tiempo) y, si la API
+// responde 400 o 422, marca el día o el ejercicio del error sin perder nada (APP-022). Nueva hace
 // POST /routines (y la asigna si llegó ?cliente=); editar hace PATCH y PUT /routines/:id/days.
 // Tócalo cuando: cambie el editor de rutinas o una de sus hojas.
 // No lo toques para: las reglas (./logica.ts) ni el detalle (./DetalleRutina.tsx).
@@ -17,6 +19,7 @@ import { router } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { DESCANSO_RUTINA_MAX_S, DIAS_RUTINA_MAX, maxRepsSegun, PESO_MAX_KG, SEMANAS_MAX, SERIES_MAX } from '@gymtrack/shared';
 import { BarraAccion, Boton, Cabecera, CampoTexto, Chip, Hoja, Icono, Paso, Simbolo, Txt, useAviso } from '@/components/ui';
 import { ErrorDeApi, useSesion } from '@/lib/sesion';
 import { activarRutina, cambiarRutina, crearRutina, leerRutina, listarEjercicios, mensajeDeError, reemplazarDias } from './api';
@@ -32,6 +35,7 @@ import {
   ESQUEMAS,
   GRUPOS_FILTRO,
   INCREMENTOS,
+  LARGO_RUTINA,
   LETRAS_DIA,
   metodoDe,
   METODOS_RUTINA,
@@ -102,7 +106,7 @@ function Editor({ rutina, clienteId }: { rutina: Rutina | null; clienteId?: stri
 
   const errs = intento ? erroresRutina(b) : [];
   const todos = erroresApi ?? errs;
-  const errNombre = todos.some((x) => x.campo === 'nombre');
+  const errNombre = todos.find((x) => x.campo === 'nombre');
   const errDia = (i: number) => todos.find((x) => x.campo === 'dia' && x.dia === i);
   const errEj = (i: number, k: number) => todos.find((x) => x.campo === 'ejercicio' && x.dia === i && x.ejercicio === k);
 
@@ -118,6 +122,10 @@ function Editor({ rutina, clienteId }: { rutina: Rutina | null; clienteId?: stri
 
   function agregarDia() {
     const n = b.dias.length;
+    if (n >= DIAS_RUTINA_MAX) {
+      aviso.mostrar(`La rutina va hasta ${DIAS_RUTINA_MAX} días.`);
+      return;
+    }
     cambiar((x) => ({ ...x, dias: [...x.dias, diaNuevo(n + 1)] }));
     setAbierto(n);
     setHoja({ tipo: 'dia', d: n });
@@ -330,7 +338,8 @@ function Editor({ rutina, clienteId }: { rutina: Rutina | null; clienteId?: stri
           valor={b.nombre}
           onCambiar={(v) => cambiar((x) => ({ ...x, nombre: v }))}
           placeholder="Por ejemplo: Fuerza 4 días"
-          error={errNombre ? 'Ponle un nombre para encontrarla después.' : null}
+          error={errNombre ? (errNombre.texto === 'Ponle nombre a la rutina.' ? 'Ponle un nombre para encontrarla después.' : errNombre.texto) : null}
+          maxLength={LARGO_RUTINA.nombre}
           autoCapitalize="sentences"
         />
 
@@ -351,7 +360,7 @@ function Editor({ rutina, clienteId }: { rutina: Rutina | null; clienteId?: stri
         </Pressable>
 
         <FilaControl rotulo="Semanas" ayuda="Cuánto dura antes de cambiarla">
-          <Paso valor={b.semanas} onCambiar={(v) => cambiar((x) => ({ ...x, semanas: v }))} min={1} max={24} etiqueta="semanas" />
+          <Paso valor={b.semanas} onCambiar={(v) => cambiar((x) => ({ ...x, semanas: v }))} min={1} max={SEMANAS_MAX} etiqueta="semanas" />
         </FilaControl>
 
         <View className="mb-2 mt-6 flex-row items-center justify-between">
@@ -435,6 +444,8 @@ function Editor({ rutina, clienteId }: { rutina: Rutina | null; clienteId?: stri
               valor={b.dias[hoja.d]?.nombre ?? ''}
               onCambiar={(v) => cambiarDia(hoja.d, (d) => ({ ...d, nombre: v }))}
               placeholder="Por ejemplo: Pierna A"
+              maxLength={LARGO_RUTINA.dia}
+              error={errDia(hoja.d)?.texto ?? null}
               autoCapitalize="sentences"
             />
           </View>
@@ -464,9 +475,21 @@ function Editor({ rutina, clienteId }: { rutina: Rutina | null; clienteId?: stri
               titulo="Duplicar día"
               onPress={() => {
                 const d = b.dias[hoja.d] as DiaDeRutina;
+                if (b.dias.length >= DIAS_RUTINA_MAX) {
+                  aviso.mostrar(`La rutina va hasta ${DIAS_RUTINA_MAX} días.`);
+                  return;
+                }
+                // La copia queda sin día fijo (dos días no pueden caer el mismo día de la semana) y
+                // con un nombre que no pasa de 40 caracteres.
+                const sufijo = ' (copia)';
+                const nombre = `${d.nombre.trim().slice(0, LARGO_RUTINA.dia - sufijo.length)}${sufijo}`;
                 cambiar((x) => ({
                   ...x,
-                  dias: [...x.dias.slice(0, hoja.d + 1), { ...d, id: null, nombre: `${d.nombre} (copia)`, ejercicios: d.ejercicios.map((e) => ({ ...e, id: null })) }, ...x.dias.slice(hoja.d + 1)],
+                  dias: [
+                    ...x.dias.slice(0, hoja.d + 1),
+                    { ...d, id: null, nombre, diaSemana: null, ejercicios: d.ejercicios.map((e) => ({ ...e, id: null })) },
+                    ...x.dias.slice(hoja.d + 1),
+                  ],
                 }));
                 setHoja(null);
                 aviso.mostrar(`Duplicaste ${d.nombre}.`);
@@ -580,6 +603,7 @@ function HojaEjercicio({
   const k = hoja.e;
   const set = (f: (x: EjercicioDeRutina) => EjercicioDeRutina) => cambiarEj(i, k, f);
   const corporal = e.tipoCarga !== 'kg';
+  const tiempo = e.tipoCarga === 'tiempo';
   const idxInc = Math.max(0, INCREMENTOS.indexOf(e.incrementoKg));
   const esquema = ESQUEMAS.find((x) => x.id === e.esquema) ?? ESQUEMAS[0];
   return (
@@ -597,13 +621,14 @@ function HojaEjercicio({
     >
       <ScrollView style={{ maxHeight: 440 }} className="mt-2" keyboardShouldPersistTaps="handled">
         <FilaControl rotulo="Series">
-          <Paso valor={e.series} onCambiar={(v) => set((x) => ({ ...x, series: v }))} min={1} max={10} etiqueta="series" />
+          <Paso valor={e.series} onCambiar={(v) => set((x) => ({ ...x, series: v }))} min={1} max={SERIES_MAX} etiqueta="series" />
         </FilaControl>
-        <FilaControl rotulo="Repeticiones mín.">
-          <Paso valor={e.repsMin} onCambiar={(v) => set((x) => ({ ...x, repsMin: v }))} min={1} max={e.repsMax} unidad="reps" etiqueta="repeticiones mínimas" />
+        {/* En los de tiempo la «repetición» son segundos: de 5 en 5 y hasta 600 (la misma regla de la API). */}
+        <FilaControl rotulo={tiempo ? 'Segundos mín.' : 'Repeticiones mín.'}>
+          <Paso valor={e.repsMin} onCambiar={(v) => set((x) => ({ ...x, repsMin: v }))} paso={tiempo ? 5 : 1} min={tiempo ? 5 : 1} max={e.repsMax} unidad={tiempo ? 's' : 'reps'} etiqueta={tiempo ? 'segundos mínimos' : 'repeticiones mínimas'} />
         </FilaControl>
-        <FilaControl rotulo="Repeticiones máx.">
-          <Paso valor={e.repsMax} onCambiar={(v) => set((x) => ({ ...x, repsMax: v }))} min={e.repsMin} max={50} unidad="reps" etiqueta="repeticiones máximas" />
+        <FilaControl rotulo={tiempo ? 'Segundos máx.' : 'Repeticiones máx.'}>
+          <Paso valor={e.repsMax} onCambiar={(v) => set((x) => ({ ...x, repsMax: v }))} paso={tiempo ? 5 : 1} min={e.repsMin} max={maxRepsSegun(e.tipoCarga)} unidad={tiempo ? 's' : 'reps'} etiqueta={tiempo ? 'segundos máximos' : 'repeticiones máximas'} />
         </FilaControl>
 
         <Txt v="etiquetaCampo" className="mt-5">
@@ -617,7 +642,7 @@ function HojaEjercicio({
         <Txt v="sec">0 es llegar al fallo; 4+ es terminar con mucho resto.</Txt>
 
         <FilaControl rotulo="Descanso" ayuda="Entre series">
-          <Paso valor={e.descansoS} onCambiar={(v) => set((x) => ({ ...x, descansoS: v }))} paso={15} min={0} max={600} formato={reloj} etiqueta="descanso" />
+          <Paso valor={e.descansoS} onCambiar={(v) => set((x) => ({ ...x, descansoS: v }))} paso={15} min={0} max={DESCANSO_RUTINA_MAX_S} formato={reloj} etiqueta="descanso" />
         </FilaControl>
         {corporal ? (
           <Txt v="sec" className="mt-4">
@@ -642,7 +667,7 @@ function HojaEjercicio({
                 onCambiar={(v) => set((x) => ({ ...x, pesoInicialKg: v }))}
                 paso={pasoCarga(e.equipo)}
                 min={0}
-                max={400}
+                max={PESO_MAX_KG}
                 unidad="kg"
                 etiqueta="carga inicial"
               />
@@ -662,7 +687,13 @@ function HojaEjercicio({
 
         {ent ? (
           <View className="mt-4">
-            <CampoTexto etiqueta="Nota para tus clientes" valor={e.nota} onCambiar={(v) => set((x) => ({ ...x, nota: v }))} placeholder="Por ejemplo: baja en 3 segundos" />
+            <CampoTexto
+              etiqueta="Nota para tus clientes"
+              valor={e.nota}
+              onCambiar={(v) => set((x) => ({ ...x, nota: v }))}
+              maxLength={LARGO_RUTINA.nota}
+              placeholder="Por ejemplo: baja en 3 segundos"
+            />
           </View>
         ) : null}
         <View className="h-2" />

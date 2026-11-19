@@ -13,7 +13,7 @@
 // Depende de: @gymtrack/shared (ErrorDeApi), ./encuesta y ./errores. Recibe el gestor de la
 // sesión por parámetro (solo usa `llamar`), así se prueba en Node con uno falso.
 // ─────────────────────────────────────────────────────────────────────────────
-import { ErrorDeApi } from '@gymtrack/shared';
+import { detalleDeError, ErrorDeApi } from '@gymtrack/shared';
 import {
   MENSAJE_CODIGO_INVALIDO,
   preguntaDeCampo,
@@ -92,12 +92,15 @@ export function falloDeEncuesta(e: unknown): Extract<AccionEncuesta, { tipo: 'fa
     return { tipo: 'falloGuardar', irA: INDICE_CODIGO, codigo: estadoCodigoDeError(e) };
   }
   const campo = typeof e.detalles?.campo === 'string' ? e.detalles.campo : '';
+  // El motivo de la API es el texto de la misma regla («la edad máxima es 100 años», «tu altura y
+  // tu peso no calzan»): va bajo la pregunta.
+  const motivo = detalleDeError(e).motivo;
   if (e.codigo === 'BUSINESS_RULE' && (campo === '' || campo.includes('fecha_nacimiento'))) {
-    return { tipo: 'falloGuardar', irA: INDICE_NACIMIENTO, err: `Para usar GymTrack necesitas tener ${EDAD_MINIMA} años o más.` };
+    return { tipo: 'falloGuardar', irA: INDICE_NACIMIENTO, err: motivo ?? `Para usar GymTrack necesitas tener ${EDAD_MINIMA} años o más.` };
   }
   if (e.codigo === 'VALIDATION_ERROR' || e.codigo === 'BUSINESS_RULE') {
     const i = preguntaDeCampo(campo);
-    if (i != null && i >= 0) return { tipo: 'falloGuardar', irA: i, err: 'Revisa esta respuesta: no la pudimos guardar así.' };
+    if (i != null && i >= 0) return { tipo: 'falloGuardar', irA: i, err: motivo ?? 'Revisa esta respuesta: no la pudimos guardar así.' };
   }
   return { tipo: 'falloGuardar' };
 }

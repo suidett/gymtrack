@@ -7,13 +7,15 @@
 // la lista de sesiones) y sus observaciones y dolores, con la hoja para anotar una. Sin señal, la
 // referencia avisa y lo demás sale de lo guardado (APP-025). Solo los propios muestran Editar.
 // Con id «nuevo» (o al tocar Editar) muestra el formulario de ejercicio propio de la maqueta
-// ejercicios.html: nombre, grupo, equipo, cómo se registra, referencia y pasos.
+// ejercicios.html: nombre, grupo, equipo, cómo se registra, referencia y pasos. El formulario y
+// la hoja de observación revisan lo mismo que la API antes de enviar (nombre con letras y sin
+// repetir, largos, un dolor con su zona y su intensidad de 1 a 10) y el error va junto al campo.
 // Tócalo cuando: cambie el detalle de un ejercicio, su hoja de observación o el formulario.
 // No lo toques para: la lista y la búsqueda (./Ejercicios.tsx).
 // Depende de: ./api, ./datos, ./logica, ./piezas, ./graficos, ./Ejercicios (Miniatura),
 // @gymtrack/shared (e1rm), @/components/ui y @/lib/sesion.
 // ─────────────────────────────────────────────────────────────────────────────
-import { e1rm as calcularE1rm } from '@gymtrack/shared';
+import { detalleDeError, e1rm as calcularE1rm } from '@gymtrack/shared';
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Image, KeyboardAvoidingView, Linking, Platform, ScrollView, Text, View } from 'react-native';
@@ -40,6 +42,7 @@ import {
   erroresEjercicio,
   fechaCorta,
   GRUPOS_FILTRO,
+  LARGO_EJERCICIO,
   OPCIONES_REGISTRO,
   puedeEditarEjercicio,
   registroDe,
@@ -50,6 +53,8 @@ import { useCarga } from './useCarga';
 
 const kg = (n: number) => String(Math.round(n * 100) / 100).replace('.', ',');
 const ZONAS = ['Hombro', 'Rodilla', 'Espalda baja', 'Muñeca', 'Cadera', 'Otra'];
+/** POST /observations: el texto va de 1 a 1000 caracteres. */
+const MAX_OBSERVACION = 1000;
 
 /** Ruta /ejercicio/:id. `id` «nuevo» abre el formulario; los params de búsqueda lo llenan. */
 export function PantallaEjercicio({ id, prellenado }: { id: string; prellenado?: Partial<BorradorEjercicio> }) {
@@ -503,21 +508,30 @@ function HojaObservar({
       setError('Escribe qué quieres anotar.');
       return;
     }
+    if (t.length > MAX_OBSERVACION) {
+      setError(`La observación va hasta ${MAX_OBSERVACION} caracteres.`);
+      return;
+    }
     setGuardando(true);
     try {
       const zonaApi = zona === 'Otra' ? 'Otra zona' : zona;
+      // Un dolor sin texto lleva uno armado con la zona y la intensidad (la API pide el texto,
+      // igual que la hoja de la sesión: cuerpoObservacion de entrenar/contrato.ts).
+      const textoFinal = t || `Dolor en ${zonaApi.toLowerCase()}, ${intensidad} de 10.`;
       const o = await crearObservacion({
         tipo,
         exercise_id: ej.id,
-        texto: t,
+        texto: textoFinal,
         ...(tipo === 'dolor' ? { dolor_zona: zonaApi, dolor_intensidad: intensidad } : {}),
       });
-      onGuardada({ ...o, tipo, texto: t, zona: tipo === 'dolor' ? zonaApi : null, intensidad: tipo === 'dolor' ? intensidad : null, autorNombre: 'Tú', fecha: o.fecha });
+      onGuardada({ ...o, tipo, texto: textoFinal, zona: tipo === 'dolor' ? zonaApi : null, intensidad: tipo === 'dolor' ? intensidad : null, autorNombre: 'Tú', fecha: o.fecha });
       setTexto('');
       setTipo('observacion');
       setError(null);
     } catch (e) {
-      aviso.mostrar(mensajeDeError(e));
+      const { motivo } = detalleDeError(e);
+      if (motivo) setError(motivo);
+      else aviso.mostrar(mensajeDeError(e));
     } finally {
       setGuardando(false);
     }
@@ -566,6 +580,7 @@ function HojaObservar({
             onCambiar={(v) => (setTexto(v), setError(null))}
             multilinea
             error={error}
+            maxLength={MAX_OBSERVACION}
             placeholder={tipo === 'dolor' ? 'Por ejemplo: molesta al bajar, en la última serie' : 'Por ejemplo: con zapatillas planas me siento más estable'}
           />
         </View>
@@ -578,7 +593,8 @@ function HojaObservar({
 }
 
 // ── Formulario de ejercicio propio ───────────────────────────────────────────
-const EQUIPOS_FORM = [...EQUIPOS_FILTRO, 'Otro'];
+// Solo los equipos que conoce la API (EQUIPOS de @gymtrack/shared): «Otro» no existe allá y daba 400.
+const EQUIPOS_FORM = [...EQUIPOS_FILTRO, 'Kettlebell'];
 /** La biblioteca guarda «Mancuerna»; las maquetas dicen «Mancuernas». */
 const equipoApi = (e: string) => (e === 'Mancuernas' ? 'Mancuerna' : e);
 const equipoVista = (e: string) => (e === 'Mancuerna' ? 'Mancuernas' : e);
@@ -595,7 +611,7 @@ function FormularioEjercicio({ inicial, editar, onListo }: { inicial?: Partial<B
       ? { nombre: editar.nombre, grupo: editar.grupo, equipo: equipoVista(editar.equipo), registro: registroDe(editar.tipoCarga), nota: editar.instrucciones.join('\n') }
       : { nombre: inicial?.nombre ?? '', grupo: inicial?.grupo ?? '', equipo: inicial?.equipo ?? '', registro: 'kg', nota: '' },
   );
-  const [errores, setErrores] = useState<{ nombre?: string; grupo?: string; equipo?: string }>({});
+  const [errores, setErrores] = useState<{ nombre?: string; grupo?: string; equipo?: string; nota?: string }>({});
   const [guardando, setGuardando] = useState(false);
 
   const poner = (cambio: Partial<BorradorEjercicio>) => {
@@ -629,7 +645,13 @@ function FormularioEjercicio({ inicial, editar, onListo }: { inicial?: Partial<B
         else router.back();
       }
     } catch (err) {
-      aviso.mostrar(mensajeDeError(err));
+      // Nombre repetido (409) o una regla de forma (400): el error va bajo su campo.
+      const { campo, motivo } = detalleDeError(err);
+      const campoForm = campo === 'nombre' ? 'nombre' : campo === 'instrucciones' ? 'nota' : campo === 'grupo_muscular' ? 'grupo' : campo === 'equipo' ? 'equipo' : null;
+      if (campoForm && motivo) {
+        setErrores({ [campoForm]: motivo });
+        aviso.mostrar('Revisa lo marcado en rojo.');
+      } else aviso.mostrar(mensajeDeError(err));
     } finally {
       setGuardando(false);
     }
@@ -650,6 +672,7 @@ function FormularioEjercicio({ inicial, editar, onListo }: { inicial?: Partial<B
           onCambiar={(v) => poner({ nombre: v })}
           placeholder="Por ejemplo: Curl nórdico"
           error={errores.nombre}
+          maxLength={LARGO_EJERCICIO.nombre}
           autoCapitalize="sentences"
         />
         <Txt v="etiquetaCampo" className="mt-5">
@@ -704,6 +727,8 @@ function FormularioEjercicio({ inicial, editar, onListo }: { inicial?: Partial<B
             valor={b.nota}
             onCambiar={(v) => poner({ nota: v })}
             multilinea
+            error={errores.nota}
+            maxLength={LARGO_EJERCICIO.nota}
             placeholder="En pasos cortos. Por ejemplo: rodillas en una colchoneta, baja lento con el cuerpo recto."
           />
         </View>

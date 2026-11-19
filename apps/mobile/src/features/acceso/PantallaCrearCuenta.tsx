@@ -38,6 +38,7 @@ import {
   type Errores,
   type FormRegistro,
   type RolAcceso,
+  LARGO_MAXIMO,
 } from './validacion';
 
 // La Encuesta lo importa desde aquí; vive en ./legal para que «Completa tu cuenta» lo use sin ciclos.
@@ -194,6 +195,7 @@ export function PantallaCrearCuenta() {
           <CampoTexto
             ref={nombreRef}
             etiqueta="Nombre"
+            maxLength={LARGO_MAXIMO.nombre}
             valor={form.nombre}
             onCambiar={(v) => cambiar('nombre', v)}
             error={err.nombre}
@@ -210,6 +212,7 @@ export function PantallaCrearCuenta() {
           <CampoTexto
             ref={apellidoRef}
             etiqueta="Apellido"
+            maxLength={LARGO_MAXIMO.nombre}
             valor={form.apellido}
             onCambiar={(v) => cambiar('apellido', v)}
             error={err.apellido}
@@ -228,6 +231,7 @@ export function PantallaCrearCuenta() {
         <CampoTexto
           ref={correoRef}
           etiqueta="Correo"
+          maxLength={LARGO_MAXIMO.correo}
           valor={form.correo}
           onCambiar={(v) => cambiar('correo', v)}
           error={err.correo}
@@ -254,6 +258,7 @@ export function PantallaCrearCuenta() {
         <CampoTexto
           ref={claveRef}
           etiqueta="Contraseña"
+          maxLength={LARGO_MAXIMO.clave}
           valor={form.clave}
           onCambiar={(v) => cambiar('clave', v)}
           editable={!ocupado}

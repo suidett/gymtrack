@@ -50,6 +50,7 @@ import {
   queDeAlerta,
   textoHoyToca,
   validarMensaje,
+  MENSAJE_MAX,
 } from './logica';
 import { Avatar, CabezaSeccion, ErrorCarga, Esq, EscalaDolor, TresCifras } from './piezas';
 import { useCarga } from './useCarga';
@@ -712,6 +713,7 @@ function HojaMensaje({
           }}
           multilinea
           error={error}
+          maxLength={MENSAJE_MAX}
           placeholder={responder ? undefined : 'Por ejemplo: esta semana duerme 8 horas antes de los días de pierna.'}
           ayuda={
             responder

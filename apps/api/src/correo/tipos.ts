@@ -9,7 +9,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 // aviso: los correos de src/modulos/notificaciones (alertas y dolor para el entrenador, la prueba).
-export type EtiquetaCorreo = 'bienvenida' | 'recuperacion' | 'aviso';
+export type EtiquetaCorreo = 'bienvenida' | 'recuperacion' | 'aviso' | 'ingreso';
 
 export interface CorreoSaliente {
   para: string;

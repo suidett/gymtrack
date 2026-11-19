@@ -5,12 +5,17 @@
 // misma sesión), guardar series por id (idempotente), cerrar con calcularCierre de
 // @gymtrack/shared (volumen, kcal, PRs y sugerencias, igual que el celular), descartar, armar el
 // resumen de cierre (que se puede volver a pedir y sale igual, P-18) y la alerta de dolor fuerte.
+// Reglas de fondo (422 BUSINESS_RULE con details.campo y details.motivo): fechas del teléfono no
+// más de 24 h en el futuro, cierre no antes del inicio, duración no más larga que el tiempo entre
+// inicio y cierre, repeticiones hasta 60 (o 600 segundos en un ejercicio de tiempo) y una serie
+// hecha con al menos una repetición salvo al fallo. Cerrar dos veces no duplica nada: la ruta
+// devuelve el mismo resumen (INT-100) o 409 SESSION_CLOSED desde otro teléfono.
 // Tócalo cuando: cambie una regla de sesión o de cierre del lado del servidor.
 // No lo toques para: las rutas (index.ts), Hoy (hoy.ts) ni las fórmulas (packages/shared).
 // Depende de: @gymtrack/shared, el cliente de Prisma y src/compartido.
 // ─────────────────────────────────────────────────────────────────────────────
 import {
-  calcularCierre, e1rm as e1rmEpley, kcalEstimadas, marcaVigente, mejorMarca, rpeDesdeRir,
+  calcularCierre, e1rm as e1rmEpley, errorRepsSegun, kcalEstimadas, marcaVigente, maxRepsSegun, mejorMarca, rpeDesdeRir,
   type ResumenCierreApi, type SerieEntrenoApi, type SesionDetalleApi, type SesionEntrenoApi, type ObservacionApi,
   type SessionExercise, type WorkoutSession,
 } from '@gymtrack/shared';
@@ -85,11 +90,16 @@ export async function sesionDelAlumno(db: Db, id: string, alumnoId: string): Pro
   return s;
 }
 
+const TEXTO_FUTURO = 'La fecha está demasiado en el futuro. Revisa la hora del teléfono.';
+
 function revisarFuturo(fecha: Date, ahora: Date, campo: string): void {
   if (fecha.getTime() > ahora.getTime() + TOLERANCIA_FUTURO_MS) {
-    fallar('BUSINESS_RULE', { campo, motivo: 'La fecha está demasiado en el futuro. Revisa la hora del teléfono.' });
+    fallar('BUSINESS_RULE', { campo, regla: 'fecha_futura', motivo: TEXTO_FUTURO }, TEXTO_FUTURO);
   }
 }
+
+/** Cuánto puede pasar la duración que manda el teléfono al tiempo entre el inicio y el cierre. */
+const HOLGURA_DURACION_S = 60;
 
 // ── Iniciar ──────────────────────────────────────────────────────────────────
 export type EntradaSesion = z.output<typeof esquemaSesionNueva>;
@@ -158,9 +168,19 @@ export async function guardarSeries(db: Db, s: SesionEntreno, lote: LoteSeries):
     ? new Set((await db.ejercicioRutina.findMany({ where: { id: { in: idsRe }, dia: { rutinaId: s.rutinaId } }, select: { id: true } })).map((x) => x.id))
     : new Set<string>();
   lote.series.forEach((x, i) => {
-    if (!porId.has(x.exercise_id)) fallar('NOT_FOUND', { campo: `series.${i}.exercise_id` });
+    const ej = porId.get(x.exercise_id);
+    if (!ej) fallar('NOT_FOUND', { campo: `series.${i}.exercise_id` });
     if (x.routine_exercise_id && !delaRutina.has(x.routine_exercise_id)) {
-      fallar('BUSINESS_RULE', { campo: `series.${i}.routine_exercise_id`, motivo: 'El ejercicio no es de la rutina de esta sesión.' });
+      const motivo = 'El ejercicio no es de la rutina de esta sesión.';
+      fallar('BUSINESS_RULE', { campo: `series.${i}.routine_exercise_id`, motivo }, motivo);
+    }
+    // Fondo: el tope de la «repetición» depende del ejercicio (60 repeticiones o 600 segundos).
+    const tope = errorRepsSegun(ej.tipoCarga, x.reps);
+    if (tope) fallar('BUSINESS_RULE', { campo: `series.${i}.reps`, regla: 'reps_maximas', maximo: maxRepsSegun(ej.tipoCarga), motivo: tope }, tope);
+    // Una serie hecha tiene al menos una repetición; con 0 solo puede ser una serie al fallo.
+    if (x.completada && !x.fallo && x.reps === 0) {
+      const motivo = 'Una serie hecha necesita al menos 1 repetición. Si no salió ninguna, márcala al fallo.';
+      fallar('BUSINESS_RULE', { campo: `series.${i}.reps`, regla: 'serie_sin_reps', motivo }, motivo);
     }
   });
   const ajenas = await db.serie.findMany({
@@ -221,9 +241,16 @@ export async function cerrarSesion(db: Db, s: SesionEntreno, e: EntradaCierre, a
   exigirEnCurso(s);
   const cerrada = new Date(e.cerrada_at);
   if (cerrada.getTime() < s.iniciadaAt.getTime()) {
-    fallar('BUSINESS_RULE', { campo: 'cerrada_at', motivo: 'El cierre no puede ser antes del inicio.' });
+    const motivo = 'El cierre no puede ser antes del inicio.';
+    fallar('BUSINESS_RULE', { campo: 'cerrada_at', regla: 'cierre_antes_del_inicio', motivo }, motivo);
   }
   revisarFuturo(cerrada, ahora, 'cerrada_at');
+  // La duración que mide el teléfono no puede ser más larga que el tiempo entre inicio y cierre.
+  const transcurridoS = Math.ceil((cerrada.getTime() - s.iniciadaAt.getTime()) / 1000);
+  if (e.duracion_s !== undefined && e.duracion_s > transcurridoS + HOLGURA_DURACION_S) {
+    const motivo = 'La duración no puede ser más larga que el tiempo entre el inicio y el cierre.';
+    fallar('BUSINESS_RULE', { campo: 'duracion_s', regla: 'duracion_mayor_al_intervalo', maximo: transcurridoS, motivo }, motivo);
+  }
   const incluir = { ejercicio: true, ejercicioRutina: true } as const;
   const series = await db.serie.findMany({ where: { sesionId: s.id }, include: incluir });
   const idsEj = [...new Set(series.map((x) => x.ejercicioId))];

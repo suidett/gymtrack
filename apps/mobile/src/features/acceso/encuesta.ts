@@ -6,12 +6,19 @@
 // avanzar y volver sin perder respuestas, el código del entrenador, el resumen final con
 // consentimiento y el guardado con reintento. También arma el cuerpo de POST /v1/me/survey y
 // el texto de cada fila del resumen.
+// Los rangos y las reglas de fondo (edad de 14 a 100 años, altura de 120 a 230 cm, peso de 30 a
+// 300 kg y que la altura y el peso calcen entre sí) son los mismos de la API: salen de
+// @gymtrack/shared (reglas.ts), así la pregunta muestra el error antes de enviar.
 // Es lógica pura, sin React ni red: se prueba en Node (APP-011 a APP-014).
 // Tócalo cuando: cambie una pregunta, una opción, un rango o un texto de la encuesta, o la forma
 // del cuerpo que espera la API.
 // No lo toques para: cómo se ve (PantallaEncuesta.tsx) ni las llamadas (encuestaApi.ts).
-// Depende de: nada.
+// Depende de: @gymtrack/shared (rangos, errorFechaNacimiento y errorImc).
 // ─────────────────────────────────────────────────────────────────────────────
+import {
+  ALTURA_MAX_CM, ALTURA_MIN_CM, EDAD_MAXIMA_ENCUESTA, EDAD_MINIMA_ENCUESTA, errorFechaNacimiento, errorImc,
+  PESO_CORPORAL_MAX_KG, PESO_CORPORAL_MIN_KG,
+} from '@gymtrack/shared';
 
 // ── Las 10 preguntas ─────────────────────────────────────────────────────────
 export type Objetivo = 'ganar_masa' | 'bajar_grasa' | 'salud_general' | 'mantenerme_activo';
@@ -148,8 +155,8 @@ export const PREGUNTAS: Pregunta[] = [
     unidad: 'cm',
     nombre: 'Altura en centímetros',
     paso: 1,
-    min: 120,
-    max: 230,
+    min: ALTURA_MIN_CM,
+    max: ALTURA_MAX_CM,
     base: 165,
     decimales: 0,
   },
@@ -162,8 +169,8 @@ export const PREGUNTAS: Pregunta[] = [
     unidad: 'kg',
     nombre: 'Peso en kilos',
     paso: 0.1,
-    min: 30,
-    max: 250,
+    min: PESO_CORPORAL_MIN_KG,
+    max: PESO_CORPORAL_MAX_KG,
     base: 65,
     decimales: 1,
   },
@@ -195,8 +202,10 @@ export const PREGUNTAS: Pregunta[] = [
 export const TOTAL_PREGUNTAS = PREGUNTAS.length;
 /** Índice de la pantalla de revisión, después de la última pregunta. */
 export const FINAL = TOTAL_PREGUNTAS;
-export const EDAD_MINIMA = 14;
-export const ANO_MINIMO = 1920;
+export const EDAD_MINIMA = EDAD_MINIMA_ENCUESTA;
+export const EDAD_MAXIMA = EDAD_MAXIMA_ENCUESTA;
+/** El año más antiguo que se puede elegir: el de quien cumple 100 este año. */
+export const anoMinimo = (hoy: { a: number }) => hoy.a - EDAD_MAXIMA - 1;
 export const LARGO_CODIGO = 6;
 export const MAX_DETALLE_LESIONES = 500;
 export const VERSION_ENCUESTA = 1;
@@ -311,6 +320,8 @@ export function edad(f: FechaPartes | undefined, hoy: { d: number; m: number; a:
   return e;
 }
 
+const dos = (n: number) => String(n).padStart(2, '0');
+
 // ── Reglas de cada pregunta ──────────────────────────────────────────────────
 export const preguntaActual = (s: EstadoEncuesta): Pregunta | null => (s.n < FINAL ? PREGUNTAS[s.n] : null);
 
@@ -340,16 +351,23 @@ export function errorDe(q: Pregunta, s: EstadoEncuesta): string | null {
   if (q.tipo === 'numero') {
     const v = aNumero(s.r[q.id]);
     if (v == null || v < q.min || v > q.max) return `Escribe un número entre ${q.min} y ${q.max}.`;
+    // Fondo (pregunta 8): con la altura de la pregunta 7, el peso tiene que ser posible (IMC).
+    const altura = aNumero(s.r.altura);
+    if (q.id === 'peso' && altura != null && altura >= ALTURA_MIN_CM && altura <= ALTURA_MAX_CM) {
+      const imc = errorImc(altura, v);
+      if (imc) return imc;
+    }
   }
   if (q.tipo === 'fecha') {
     const f = s.r.nacimiento;
     if (!fechaCompleta(f)) return 'Completa el día, el mes y el año.';
-    if (f.a < ANO_MINIMO || f.a > s.hoy.a) return 'Revisa el año.';
+    if (f.a > s.hoy.a) return 'Revisa el año.';
     const max = diasDelMes(f.m, f.a);
     if (f.d < 1 || f.d > max) return `Revisa el día: ${MESES[f.m - 1]} de ${f.a} tiene ${max} días.`;
     const e = edad(f, s.hoy);
     if (e == null || e < 0) return 'Revisa el año.';
-    if (e < EDAD_MINIMA) return `Para usar GymTrack necesitas tener ${EDAD_MINIMA} años o más.`;
+    // La misma regla que la API: de 14 a 100 años (errorFechaNacimiento de @gymtrack/shared).
+    return errorFechaNacimiento(`${f.a}-${dos(f.m)}-${dos(f.d)}`, `${s.hoy.a}-${dos(s.hoy.m)}-${dos(s.hoy.d)}`);
   }
   return null;
 }
@@ -415,7 +433,7 @@ function pasarFecha(s: EstadoEncuesta, campo: 'd' | 'm' | 'a', dir: 1 | -1): Est
   if (campo === 'a') {
     if (f.a == null || String(f.a).length !== 4) f.a = 2000;
     else {
-      const n = Math.min(s.hoy.a, Math.max(ANO_MINIMO, f.a + dir));
+      const n = Math.min(s.hoy.a, Math.max(anoMinimo(s.hoy), f.a + dir));
       if (n === f.a) return { ...s, limite: dir > 0 ? 'max' : 'min' };
       f.a = n;
     }
@@ -603,8 +621,6 @@ export const VERSION_POLITICA = '1';
 
 /** El código que viaja en el cuerpo, o null. */
 export const codigoDelCuerpo = (c: CuerpoEncuesta) => c.respuestas.codigo_entrenador;
-
-const dos = (n: number) => String(n).padStart(2, '0');
 
 /** Arma el cuerpo con las 10 respuestas. Lanza si falta alguna (no debería: cada paso lo exige). */
 export function armarCuerpo(s: EstadoEncuesta): CuerpoEncuesta {

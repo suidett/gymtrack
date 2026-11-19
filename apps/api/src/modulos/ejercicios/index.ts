@@ -11,6 +11,8 @@
 //   - Cambiar el tipo de carga con sesiones cerradas: 409 EXERCISE_HAS_HISTORY (los récords se
 //     comparan por tipo de carga).
 //   - Borrar es lógico (deleted_at); en una rutina activa da 409 EXERCISE_IN_ACTIVE_ROUTINE (P-35).
+//   - Nombre repetido (uno de la base o uno propio, sin mirar tildes ni mayúsculas): 409 CONFLICT
+//     con details.campo = nombre, al crear y al renombrar.
 // Pendiente: POST /exercises/:id/media y PUT /exercises/:id/media/:media_id (falta el bucket y
 // sus URLs firmadas en el contexto de los módulos).
 // Tócalo cuando: agregues o cambies una ruta de ejercicios.
@@ -18,7 +20,7 @@
 // (packages/shared/src/api/ejercicios.ts).
 // Depende de: src/compartido, ./consultas y @gymtrack/shared (RUTAS_EJERCICIOS).
 // ─────────────────────────────────────────────────────────────────────────────
-import { RUTAS_EJERCICIOS as R } from '@gymtrack/shared';
+import { claveTexto, RUTAS_EJERCICIOS as R } from '@gymtrack/shared';
 import {
   armarPagina, definirModulo, esquemaDe, exigirClienteDe, existeOFalla, fallar, noEncontrado, prohibido, urlDe, usuarioDe,
 } from '../../compartido';
@@ -32,6 +34,26 @@ async function exigirPropio(prisma: Db, quien: Pick<Usuario, 'id' | 'rol'>, id: 
   const e = existeOFalla(await ejercicioVisible(prisma, quien, id));
   if (e.duenoId !== quien.id) prohibido();
   return e;
+}
+
+/**
+ * 409 CONFLICT si ya hay un ejercicio con ese nombre entre los de la biblioteca base y los
+ * propios de quien llama, sin mirar tildes, mayúsculas ni espacios de más («Press de Banca» y
+ * «press de banca» son el mismo). `exceptoId`: el que se está editando.
+ */
+async function exigirNombreLibre(prisma: Db, duenoId: string, nombre: string, exceptoId?: string): Promise<void> {
+  const clave = claveTexto(nombre);
+  const filas = await prisma.ejercicio.findMany({
+    where: { deletedAt: null, OR: [{ duenoId: null }, { duenoId }], ...(exceptoId ? { id: { not: exceptoId } } : {}) },
+    select: { id: true, nombre: true, duenoId: true },
+  });
+  const igual = filas.find((f) => claveTexto(f.nombre) === clave);
+  if (!igual) return;
+  fallar(
+    'CONFLICT',
+    { campo: 'nombre', regla: 'nombre_repetido', exercise_id: igual.id, motivo: `«${igual.nombre}» ya está en la biblioteca.` },
+    igual.duenoId ? `Ya tienes un ejercicio llamado «${igual.nombre}».` : `«${igual.nombre}» ya está en la biblioteca.`,
+  );
 }
 
 export default definirModulo(async (app, ctx) => {
@@ -89,6 +111,7 @@ export default definirModulo(async (app, ctx) => {
   app.post(urlDe(R.crear), { schema: esquemaDe(R.crear), preHandler: app.exigirPermiso('crearEjercicio') }, async (req, reply) => {
     const usuario = usuarioDe(req);
     const c = req.body;
+    await exigirNombreLibre(prisma, usuario.id, c.nombre);
     const ahora = ctx.reloj.ahora();
     const e = await prisma.ejercicio.create({
       data: {
@@ -112,6 +135,7 @@ export default definirModulo(async (app, ctx) => {
     const usuario = usuarioDe(req);
     const e = await exigirPropio(prisma, usuario, req.params.id);
     const c = req.body;
+    if (c.nombre !== undefined && claveTexto(c.nombre) !== claveTexto(e.nombre)) await exigirNombreLibre(prisma, usuario.id, c.nombre, e.id);
     if (c.tipo_carga !== undefined && c.tipo_carga !== e.tipoCarga) {
       const conHistoria = await prisma.serie.count({ where: { ejercicioId: e.id, sesion: { estado: 'cerrada' } } });
       if (conHistoria > 0) fallar('EXERCISE_HAS_HISTORY', { exercise_id: e.id, campo: 'tipo_carga' });

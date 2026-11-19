@@ -127,7 +127,7 @@ describeConBase('Alertas', () => {
     const deDiego = await alerta(diego, null, 'baja_rendimiento');
     const reportar = (payload: Record<string, unknown>) => e.pedirComo(martina, { method: 'POST', url: '/v1/me/drop-reports', payload });
     expect((await reportar({ alert_id: baja.id, motivos: ['tiempo'] })).status).toBe(201);
-    expect((await reportar({ alert_id: baja.id, motivos: ['otro'] })).status).toBe(409);
+    expect((await reportar({ alert_id: baja.id, motivos: ['otro'], comentario: 'Cambio de turno' })).status).toBe(409);
     expect((await reportar({ alert_id: baja.id, motivos: ['flojera'] })).status).toBe(400);
     expect((await reportar({ alert_id: deDiego.id, motivos: ['sueno'] })).status).toBe(404);
     expect((await e.pedirComo(camila, { method: 'POST', url: '/v1/me/drop-reports', payload: { alert_id: baja.id, motivos: ['sueno'] } })).status).toBe(403);

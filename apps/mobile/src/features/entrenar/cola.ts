@@ -43,6 +43,16 @@ function completar(op: NuevaOp): OpCola {
   return { ...op, intentos: 0, estado: 'pendiente', motivo: null, codigo: null } as OpCola;
 }
 
+// ── Recién encolado ──────────────────────────────────────────────────────────
+/**
+ * true si `cola` trae una entrada pendiente que no estaba en `previa`: algo recién encolado que
+ * conviene mandar al tiro. Un reintento cambia la cola pero no agrega ids, así no se dispara en bucle.
+ */
+export function hayNuevaPendiente(cola: readonly OpCola[], previa: readonly OpCola[]): boolean {
+  const antes = new Set(previa.map((o) => o.id));
+  return cola.some((o) => o.estado === 'pendiente' && !antes.has(o.id));
+}
+
 // ── Encolar ──────────────────────────────────────────────────────────────────
 /**
  * Agrega una entrada a la cola juntando lo repetido. Devuelve la cola nueva. `enVuelo` son los ids

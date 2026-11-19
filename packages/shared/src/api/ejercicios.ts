@@ -13,12 +13,15 @@
 // Pendiente: POST /exercises/:id/media y PUT /exercises/:id/media/:media_id (necesitan el bucket).
 // Tócalo cuando: agregues o cambies una ruta de ejercicios.
 // No lo toques para: rutas de otra área (cada una tiene su archivo en esta carpeta).
-// Depende de: zod, ./comun (DefinicionRuta, paginación, esquemas base) y ../types (las listas
-// cerradas GRUPOS, EQUIPOS, PATRONES y TIPOS_CARGA).
+// El nombre repetido (uno propio o de la biblioteca con el mismo nombre, sin mirar tildes ni
+// mayúsculas) es una regla de fondo: la revisa la API con la base (409 CONFLICT, campo nombre).
+// Depende de: zod, ./comun (DefinicionRuta, paginación, esquemas base), ./reglas (tieneLetra) y
+// ../types (las listas cerradas GRUPOS, EQUIPOS, PATRONES y TIPOS_CARGA).
 // ─────────────────────────────────────────────────────────────────────────────
 import { z } from 'zod';
 import { EQUIPOS, GRUPOS, PATRONES, TIPOS_CARGA } from '../types';
 import { esquemaFechaHora, esquemaPagina, esquemaPaginacion, esquemaParamsId, esquemaUuid, type CatalogoRutas } from './comun';
+import { tieneLetra } from './reglas';
 
 // ── Listas cerradas ──────────────────────────────────────────────────────────
 export const esquemaGrupoMuscular = z.enum(GRUPOS, { error: `El grupo va como ${GRUPOS.join(', ')}.` });
@@ -30,16 +33,25 @@ export const esquemaTipoCarga = z.enum(TIPOS_CARGA, { error: `El tipo de carga v
 export const TIPOS_RECORD = ['peso_max', 'e1rm', 'reps_con_peso', 'volumen_sesion', 'reps', 'tiempo'] as const;
 
 // ── Entrada ──────────────────────────────────────────────────────────────────
+/** Largo del nombre de un ejercicio y de sus instrucciones. */
+export const NOMBRE_EJERCICIO_MAX = 80;
+export const INSTRUCCIONES_EJERCICIO_MAX = 2000;
+
 const nombreEjercicio = z
   .string({ error: 'El nombre es obligatorio.' })
   .trim()
   .min(1, { error: 'El nombre es obligatorio.' })
-  .max(80, { error: 'El nombre va hasta 80 caracteres.' });
+  .max(NOMBRE_EJERCICIO_MAX, { error: `El nombre va hasta ${NOMBRE_EJERCICIO_MAX} caracteres.` })
+  .refine((t) => !t || tieneLetra(t), { error: 'El nombre necesita al menos una letra.' });
 const incrementoEjercicio = z
   .number({ error: 'El incremento tiene que ser un número.' })
   .min(0, { error: 'El incremento va de 0 a 50 kg.' })
   .max(50, { error: 'El incremento va de 0 a 50 kg.' });
-const instruccionesEjercicio = z.string().trim().max(2000, { error: 'Las instrucciones van hasta 2000 caracteres.' }).nullable();
+const instruccionesEjercicio = z
+  .string({ error: 'Las instrucciones van como texto.' })
+  .trim()
+  .max(INSTRUCCIONES_EJERCICIO_MAX, { error: `Las instrucciones van hasta ${INSTRUCCIONES_EJERCICIO_MAX} caracteres.` })
+  .nullable();
 
 /** POST /exercises: un ejercicio propio. El dueño es quien llama. */
 export const esquemaEjercicioNuevo = z.strictObject({

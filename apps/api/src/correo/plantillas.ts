@@ -85,6 +85,32 @@ export function plantillaBienvenida(d: { nombre: string; rol: 'trainer' | 'clien
   return { asunto, html, texto };
 }
 
+// ── Inicio de sesión ─────────────────────────────────────────────────────────
+/**
+ * Llega al correo de la cuenta cada vez que alguien entra (con contraseña o con Google), con la
+ * hora en la zona de la persona. Si no fue ella, la manda a «Olvidé mi contraseña».
+ */
+export function plantillaIngreso(d: { nombre: string; cuando: Date; zona: string; metodo: 'contrasena' | 'google' }): Plantilla {
+  const asunto = 'Iniciaste sesión en GymTrack';
+  const cuando = fmtVencimiento(d.cuando, d.zona);
+  const como = d.metodo === 'google' ? 'con tu cuenta de Google' : 'con tu correo y contraseña';
+  const texto = [
+    `Hola, ${d.nombre}:`,
+    '',
+    `Se inició sesión en tu cuenta de GymTrack ${como} el ${cuando}.`,
+    'Si fuiste tú, no tienes que hacer nada.',
+    'Si no fuiste tú, cambia tu contraseña desde «Olvidé mi contraseña» en la pantalla de ingreso.',
+    '',
+    'El equipo de GymTrack',
+  ].join('\n');
+  const html = marco(asunto, `
+          <h1 style="font-size:22px;line-height:1.3;margin:0 0 12px 0;">Hola, ${escaparHtml(d.nombre)}</h1>
+          <p style="margin:0 0 12px 0;">Se inició sesión en tu cuenta de GymTrack ${como} el <strong>${escaparHtml(cuando)}</strong>.</p>
+          <p style="margin:0 0 12px 0;">Si fuiste tú, no tienes que hacer nada.</p>
+          <p style="margin:16px 0 0 0;color:${colors.ink.muted};font-size:14px;">Si no fuiste tú, cambia tu contraseña desde «Olvidé mi contraseña» en la pantalla de ingreso.</p>`);
+  return { asunto, html, texto };
+}
+
 // ── Recuperación de contraseña ───────────────────────────────────────────────
 export function plantillaRecuperacion(d: { nombre: string; enlace: string; venceAt: Date; zona: string }): Plantilla {
   const asunto = 'Restablece tu contraseña de GymTrack';

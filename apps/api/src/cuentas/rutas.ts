@@ -4,7 +4,8 @@
 // Qué hace: registra en Fastify las rutas de §API «Cuentas y perfil» que existen hoy, cada una
 // con su esquema de entrada y de salida tomado tal cual de @gymtrack/shared (CON-001): registro,
 // ingreso, ingreso con Google (./google.ts), refresh, cierre de sesión, olvidé mi contraseña,
-// restablecer y GET /v1/me. Aplica los límites de intentos por IP (5 ingresos y 5 con Google por
+// restablecer y GET /v1/me (con el entrenador, la encuesta pendiente y el recordatorio de
+// client_profiles, igual que PATCH /v1/me). Aplica los límites de intentos por IP (5 ingresos y 5 con Google por
 // minuto, 5 registros por hora, 30 refresh por minuto, 10 enlaces y 10 restablecimientos por hora)
 // y por correo (3 enlaces por hora), y delega la lógica en servicio.ts. La IP es `req.ip`: detrás de Caddy sale de CONFIAR_PROXY (config.ts).
 // Tócalo cuando: agregues una ruta de cuentas (PATCH /me, push-tokens, DELETE /me, export).
@@ -125,6 +126,7 @@ export async function rutasCuentas(appBase: FastifyInstance, o: OpcionesRutasCue
   });
 
   // ── Perfil ─────────────────────────────────────────────────────────────────
+  // La misma forma que responde PATCH /v1/me: el recordatorio_hora vive en client_profiles.
   app.get(
     R.perfil.ruta,
     { schema: { response: { 200: R.perfil.respuesta, ...RESPUESTAS_ERROR } }, preHandler: o.autenticar },

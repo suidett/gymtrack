@@ -295,6 +295,7 @@ export const Buscador = forwardRef<
         placeholderTextColor={c['desh-texto']}
         selectionColor={c['campo-edicion']}
         cursorColor={c['campo-edicion']}
+        maxLength={80}
         autoCorrect={false}
         autoCapitalize="none"
         returnKeyType="search"

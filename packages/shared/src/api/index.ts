@@ -1,8 +1,9 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Puerta del contrato de la API · Zona: Contrato
 //
-// Qué hace: junta los esquemas Zod de la API, los códigos de error, las piezas comunes
-// (definición de ruta, paginación) y el cliente tipado, más un archivo por módulo de la API
+// Qué hace: junta los esquemas Zod de la API, los códigos de error, las reglas de validación que
+// comparten la app y la API (reglas.ts), las piezas comunes (definición de ruta, paginación) y el
+// cliente tipado, más un archivo por módulo de la API
 // (perfil, ejercicios, rutinas, sesiones, progreso, alertas, entrenador, notificaciones). La API los importa
 // desde '@gymtrack/shared' y la app también: así validan con el mismo objeto.
 // También arma CATALOGO_API y LISTA_RUTAS_API: todas las rutas de todos los módulos, que
@@ -24,6 +25,7 @@ import { RUTAS_RUTINAS } from './rutinas';
 import { RUTAS_SESIONES } from './sesiones';
 
 export * from './errores';
+export * from './reglas';
 export * from './cuentas';
 export * from './cliente';
 export * from './comun';

@@ -3,8 +3,9 @@
 //
 // Qué hace: la hoja «Anotar en Sentadilla» del registro y «Sobre la sesión» de Rutina completada:
 // elige Observación o Dolor; con Dolor pide «Dónde» (las zonas de la encuesta) y «Cuánto molesta»
-// de 1 a 10 con más y menos de 56 dp; y el texto. Guardar devuelve lo escrito; quien la abre lo
-// encola (sin señal queda en la cola).
+// de 1 a 10 con más y menos de 56 dp; y el texto (hasta 1000 caracteres, como la API; sin texto
+// solo se guarda un dolor, que lleva uno armado con la zona y la intensidad). Guardar devuelve lo
+// escrito; quien la abre lo encola (sin señal queda en la cola).
 // Tócalo cuando: cambie el formulario de observación de estas pantallas.
 // No lo toques para: cómo se manda (almacen.ts, contrato.ts).
 // Depende de: @/components/ui, @/lib/tema y ./contrato (ZONAS_DOLOR).
@@ -94,6 +95,7 @@ export function HojaObservacion({
         accessibilityLabel={esDolor ? 'Qué dolor sentiste' : 'Qué quieres anotar'}
         placeholder={esDolor ? ejemplos.dolor : ejemplos.observacion}
         placeholderTextColor={c['texto-2']}
+        maxLength={1000}
         className="mt-4 min-h-[96px] rounded-control border-2 border-campo-borde bg-campo-fondo px-3 py-3 font-sans-medium text-[16px] text-texto"
         style={{ textAlignVertical: 'top' }}
       />

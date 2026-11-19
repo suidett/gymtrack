@@ -23,6 +23,7 @@ import type { Alerta, TipoAlerta } from './contrato';
 import { apiEntrenador, useInsigniaAlertas } from './instancia';
 import {
   agruparPorMes,
+  alternarSalida,
   comoSeResolvio,
   contarNuevas,
   fmtCuando,
@@ -531,7 +532,7 @@ function HojaResolver({
       }
     >
       <Txt v="etiquetaCampo" className="mt-4">
-        ¿Qué hiciste? Opcional, puedes marcar varias
+        ¿Qué hiciste? Opcional, puedes marcar varias («Nada» va sola)
       </Txt>
       <View className="mt-1">
         {SALIDAS_RESOLVER.map((s) => (
@@ -539,7 +540,7 @@ function HojaResolver({
             key={s.id}
             titulo={s.enHoja}
             marcada={elegidas.includes(s.id)}
-            onCambiar={(v) => setElegidas((p) => (v ? [...p, s.id] : p.filter((x) => x !== s.id)))}
+            onCambiar={(v) => setElegidas((p) => alternarSalida(p, s.id, v))}
           />
         ))}
       </View>

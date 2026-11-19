@@ -5,15 +5,17 @@
 // entrenador y su encuesta pendiente, cambiar ajustes, guardar la encuesta (con el primer peso y
 // el vínculo por código, todo en una transacción), registrar el token de push con hash, generar
 // el código de invitación (uno vigente por entrenador, P-14), vincular y desvincular al alumno
-// (P-15, P-16) y marcar la cuenta para borrado (P-24).
+// (P-15, P-16) y marcar la cuenta para borrado (P-24). La encuesta revisa el fondo con el día de
+// hoy en la zona del alumno: fecha de nacimiento no futura y de 14 a 100 años, y altura y peso
+// que calcen entre sí (IMC de 12 a 70); las dos dan 422 BUSINESS_RULE con details.campo y motivo.
 // Tócalo cuando: cambie una regla de estas (qué termina al borrar, cómo se valida un código).
 // No lo toques para: la forma de entrada y salida (packages/shared/src/api/perfil.ts) ni la
 // matriz de permisos (src/compartido/permisos.ts).
 // Depende de: la base, src/compartido (errores), src/seguridad/tokens.ts (hash) y @gymtrack/shared.
 // ─────────────────────────────────────────────────────────────────────────────
 import {
-  ALFABETO_INVITACION, DIAS_PURGA_CUENTA, DURACION_INVITACION_MS, EDAD_MINIMA_ENCUESTA, LARGO_INVITACION,
-  VERSION_ENCUESTA,
+  ALFABETO_INVITACION, DIAS_PURGA_CUENTA, DURACION_INVITACION_MS, EDAD_MAXIMA_ENCUESTA, EDAD_MINIMA_ENCUESTA, LARGO_INVITACION,
+  VERSION_ENCUESTA, edadCumplida, errorFechaNacimiento, errorImc,
   type Encuesta, type EncuestaRespuestas, type Invitacion, type PerfilUsuario, type VinculoResultado,
   type esquemaEncuestaEntrada, type esquemaPerfilCambios, type esquemaPushToken, type esquemaPushTokenEntrada,
 } from '@gymtrack/shared';
@@ -21,7 +23,7 @@ import { randomInt } from 'node:crypto';
 import type { z } from 'zod';
 import { esDuplicado, type BaseDeDatos } from '../../db';
 import type { PerfilAlumno, Prisma, RespuestaEncuesta, Usuario, VinculoEntrenador } from '../../generado/prisma/client';
-import { aUsuarioApi } from '../../cuentas/servicio';
+import { usuarioApiCompleto } from '../../cuentas/servicio';
 import { fallar, noEncontrado } from '../../compartido';
 import { hashToken } from '../../seguridad/tokens';
 
@@ -30,23 +32,8 @@ type Db = BaseDeDatos | Tx;
 type PushTokenApi = z.infer<typeof esquemaPushToken>;
 
 // ── Perfil ───────────────────────────────────────────────────────────────────
-/** GET /me con el entrenador del vínculo activo, la encuesta pendiente y el recordatorio. */
-export async function perfilApi(prisma: Db, usuario: Usuario): Promise<PerfilUsuario> {
-  const base = aUsuarioApi(usuario);
-  if (usuario.rol === 'trainer') return { ...base, entrenador: null, encuesta_pendiente: false, recordatorio_activo: null, recordatorio_hora: null };
-  const [vinculo, encuestas, perfil] = await Promise.all([
-    prisma.vinculoEntrenador.findFirst({ where: { alumnoId: usuario.id, estado: 'activo' }, include: { entrenador: true } }),
-    prisma.respuestaEncuesta.count({ where: { alumnoId: usuario.id } }),
-    prisma.perfilAlumno.findUnique({ where: { usuarioId: usuario.id } }),
-  ]);
-  return {
-    ...base,
-    entrenador: vinculo ? resumenEntrenador(vinculo.entrenador) : null,
-    encuesta_pendiente: encuestas === 0,
-    recordatorio_activo: perfil?.recordatorioActivo ?? true,
-    recordatorio_hora: perfil?.recordatorioHora ?? null,
-  };
-}
+/** GET /me y PATCH /me: el entrenador del vínculo activo, la encuesta pendiente y el recordatorio. */
+export const perfilApi = (prisma: Db, usuario: Usuario): Promise<PerfilUsuario> => usuarioApiCompleto(prisma, usuario);
 
 const resumenEntrenador = (u: Pick<Usuario, 'id' | 'nombre' | 'apellido'>) => ({ id: u.id, nombre: u.nombre, apellido: u.apellido });
 
@@ -83,12 +70,8 @@ export function hoyEn(zona: string, ahora: Date): string {
   return new Intl.DateTimeFormat('en-CA', { timeZone: zona, year: 'numeric', month: '2-digit', day: '2-digit' }).format(ahora);
 }
 
-/** Años cumplidos a la fecha `hoy` (las dos en AAAA-MM-DD). */
-export function edadEn(nacimiento: string, hoy: string): number {
-  const [an, mn, dn] = nacimiento.split('-').map(Number) as [number, number, number];
-  const [ah, mh, dh] = hoy.split('-').map(Number) as [number, number, number];
-  return ah - an - (mh < mn || (mh === mn && dh < dn) ? 1 : 0);
-}
+/** Años cumplidos a la fecha `hoy` (las dos en AAAA-MM-DD). La regla vive en @gymtrack/shared. */
+export const edadEn = edadCumplida;
 
 function encuestaApi(fila: RespuestaEncuesta, perfil: PerfilAlumno | null, entrenador: Pick<Usuario, 'id' | 'nombre' | 'apellido'> | null): Encuesta {
   const { codigo_entrenador: _codigo, ...respuestas } = fila.respuestas as EncuestaRespuestas;
@@ -114,10 +97,18 @@ export async function responderEncuesta(
   if (entrada.consentimiento_salud !== true) fallar('CONSENT_REQUIRED', { campo: 'consentimiento_salud' });
   const r = entrada.respuestas;
   const hoy = hoyEn(usuario.timezone, ahora);
-  if (r.fecha_nacimiento > hoy || edadEn(r.fecha_nacimiento, hoy) < EDAD_MINIMA_ENCUESTA) {
-    fallar('BUSINESS_RULE', { campo: 'fecha_nacimiento', regla: 'edad_minima', edad_minima: EDAD_MINIMA_ENCUESTA },
-      `Necesitas tener al menos ${EDAD_MINIMA_ENCUESTA} años para usar GymTrack.`);
+  // Fondo de la pregunta 6: no futura y de 14 a 100 años, con el día de hoy en la zona del alumno.
+  const errorNacimiento = errorFechaNacimiento(r.fecha_nacimiento, hoy);
+  if (errorNacimiento) {
+    const regla = r.fecha_nacimiento > hoy ? 'fecha_futura' : edadEn(r.fecha_nacimiento, hoy) < EDAD_MINIMA_ENCUESTA ? 'edad_minima' : 'edad_maxima';
+    fallar('BUSINESS_RULE', {
+      campo: 'respuestas.fecha_nacimiento', regla, motivo: errorNacimiento,
+      edad_minima: EDAD_MINIMA_ENCUESTA, edad_maxima: EDAD_MAXIMA_ENCUESTA,
+    }, errorNacimiento);
   }
+  // Fondo de las preguntas 7 y 8: cada una está en su rango, pero juntas tienen que ser posibles.
+  const errorCuerpo = errorImc(r.altura_cm, r.peso_kg);
+  if (errorCuerpo) fallar('BUSINESS_RULE', { campo: 'respuestas.peso_kg', regla: 'imc', motivo: errorCuerpo }, errorCuerpo);
   return prisma.$transaction(async (tx) => {
     const fila = await tx.respuestaEncuesta.create({
       data: { alumnoId: usuario.id, version: VERSION_ENCUESTA, respuestas: r as Prisma.InputJsonValue, completadaAt: ahora },

@@ -9,6 +9,9 @@
 // registro de medidas y fotos es solo del alumno (el entrenador recibe 403, PERM-16, PERM-36);
 // las sugerencias son del entrenador y del alumno solo (el vinculado recibe 403, PERM-20, PERM-42).
 // Lo ajeno siempre da 404 con el mismo cuerpo que lo inexistente.
+// Reglas de fondo: la fecha de una medida o de una foto no puede ser futura ni de hace más de un
+// año en la zona del alumno (400 con el campo); un campo de medida en null no borra lo que había
+// ese día; las repeticiones de una sugerencia siguen el tope del tipo de carga (422).
 // Tócalo cuando: agregues o cambies una ruta de progreso.
 // No lo toques para: las cuentas (./consultas), las sugerencias (./sugerencias), dónde viven las
 // fotos (./almacenamiento) ni la forma de entrada y salida (packages/shared/src/api/progreso.ts).
@@ -16,7 +19,8 @@
 // @gymtrack/shared (RUTAS_PROGRESO).
 // ─────────────────────────────────────────────────────────────────────────────
 import {
-  BYTES_MAX_FOTO, CAMPOS_MEDIDA, CONTENIDOS_FOTO, RUTAS_PROGRESO as R, SEMANAS_PROGRESO_EJERCICIO, tipoDeMarca,
+  BYTES_MAX_FOTO, CAMPOS_MEDIDA, CONTENIDOS_FOTO, errorFechaRegistro, errorRepsSegun, maxRepsSegun, RUTAS_PROGRESO as R,
+  SEMANAS_PROGRESO_EJERCICIO, tipoDeMarca,
 } from '@gymtrack/shared';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
@@ -172,9 +176,12 @@ export default definirModulo(async (app, ctx) => {
       const hoy = diaLocal(ahora, usuario.timezone);
       // El día es el de la zona del alumno: 23:30 y 00:30 de Santiago caen en días distintos (INT-121).
       const dia = req.body.fecha ?? diaLocal(req.body.medido_at ? new Date(req.body.medido_at) : ahora, usuario.timezone);
-      if (dia > hoy) campoInvalido('fecha', 'La fecha no puede ser futura.');
+      // Fondo: ni futura ni de hace más de un año, contra el día de hoy en la zona del alumno.
+      const errorFecha = errorFechaRegistro(dia, hoy);
+      if (errorFecha) campoInvalido(req.body.fecha ? 'fecha' : 'medido_at', errorFecha);
       const datos: Record<string, unknown> = {};
-      for (const campo of CAMPOS_MEDIDA) if (req.body[campo] !== undefined) datos[columnaDeMedida(campo)] = req.body[campo];
+      // null es «no lo medí» (la app lo manda así): no borra lo que ya había ese día.
+      for (const campo of CAMPOS_MEDIDA) if (req.body[campo] != null) datos[columnaDeMedida(campo)] = req.body[campo];
       if (req.body.nota !== undefined) datos.nota = req.body.nota;
       const clave = { alumnoId_fecha: { alumnoId: usuario.id, fecha: fechaDbDeDia(dia) } };
       const previa = await prisma.medidaCorporal.findUnique({ where: clave });
@@ -203,6 +210,9 @@ export default definirModulo(async (app, ctx) => {
       });
     }
     const dia = req.body.fecha ?? diaLocal(ahora, usuario.timezone);
+    // La misma regla de fecha que las medidas: ni futura ni de hace más de un año.
+    const errorFecha = errorFechaRegistro(dia, diaLocal(ahora, usuario.timezone));
+    if (errorFecha) campoInvalido('fecha', errorFecha);
     const id = uuidV7Fijo(ahora, randomUUID());
     const clave = `fotos/${usuario.id}/${id}.${extensionDe(req.body.content_type)}`;
     await prisma.fotoProgreso.create({
@@ -335,8 +345,13 @@ export default definirModulo(async (app, ctx) => {
         nota: b.nota !== undefined ? b.nota : base.nota,
       };
       if (final.reps_min > final.reps_max) {
-        fallar('REPS_RANGE_INVALID', { reps_min: final.reps_min, reps_max: final.reps_max });
+        fallar('REPS_RANGE_INVALID', { campo: 'reps_min', reps_min: final.reps_min, reps_max: final.reps_max });
       }
+      // Fondo: el tope depende del ejercicio (60 repeticiones o 600 segundos si es de tiempo).
+      const re = await prisma.ejercicioRutina.findUnique({ where: { id: s.ejercicioRutinaId }, select: { ejercicio: { select: { tipoCarga: true } } } });
+      const tipoCarga = re?.ejercicio.tipoCarga ?? 'kg';
+      const tope = errorRepsSegun(tipoCarga, final.reps_max);
+      if (tope) fallar('BUSINESS_RULE', { campo: 'reps_max', regla: 'reps_maximas', maximo: maxRepsSegun(tipoCarga), motivo: tope }, tope);
       data = { estado: 'sobrescrita', valorFinal: final, sobrescritaPor: { connect: { id: usuario.id } }, sobrescritaAt: ahora };
     }
     const fila = await prisma.sugerenciaProgresion.update({ where: { id: s.id }, data, include: conDetalle });

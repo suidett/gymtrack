@@ -6,7 +6,8 @@
 // error de cualquier ruta (con el 422 de las reglas de negocio), la paginación por cursor de §API
 // (`?limit=50&cursor=...` y `{ items, next_cursor }`, CON-008), el `?client_id=` con que el
 // entrenador lee los datos de su alumno en las rutas `/me/...` (P-02) y los esquemas base de ids
-// y fechas (ISO 8601 con zona, CON-006).
+// y fechas (ISO 8601 con zona, CON-006). También deja a Zod hablando en español: los campos que no
+// traen un mensaje propio (un campo de más, un tipo equivocado) igual responden en español.
 // Tócalo cuando: todas las rutas necesiten algo nuevo en común (otro estado de error, otro tope
 // de página).
 // No lo toques para: el contrato de un módulo (va en su archivo: perfil.ts, ejercicios.ts, ...).
@@ -15,6 +16,11 @@
 import { z } from 'zod';
 import { RESPUESTAS_ERROR } from './cuentas';
 import { esquemaSobreError } from './errores';
+
+// ── Idioma de los mensajes ───────────────────────────────────────────────────
+// Los mensajes propios de cada esquema mandan; este es el respaldo («Llave desconocida: "x"»). Es
+// una sola configuración para la app y la API porque las dos usan el mismo zod.
+z.config(z.locales.es());
 
 // ── Definición de una ruta ───────────────────────────────────────────────────
 export type MetodoHttp = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';

@@ -10,10 +10,12 @@
 // vez: si quitas o renombras un campo, la app instalada en los teléfonos deja de entenderlo.
 // No lo toques para: reglas que necesitan la base (correo repetido, token vencido): eso vive en
 // apps/api/src/cuentas. Ni para los códigos de error (errores.ts).
-// Depende de: zod y ./errores (el sobre de error de cada respuesta 4xx).
+// Depende de: zod, ./errores (el sobre de error de cada respuesta 4xx) y ./reglas (nombre y
+// contraseña fácil de adivinar).
 // ─────────────────────────────────────────────────────────────────────────────
 import { z } from 'zod';
 import { esquemaSobreError } from './errores';
+import { errorContrasenaDebil, errorNombrePersona, NOMBRE_PERSONA_MAX } from './reglas';
 
 // ── Reglas de los campos ─────────────────────────────────────────────────────
 // §Seguridad: contraseña de 8 a 128 caracteres. El tope corta antes de calcular el hash, así una
@@ -36,24 +38,45 @@ export const esquemaContrasena = z
   .min(CONTRASENA_MIN, { error: `La contraseña necesita al menos ${CONTRASENA_MIN} caracteres.` })
   .max(CONTRASENA_MAX, { error: `La contraseña puede tener hasta ${CONTRASENA_MAX} caracteres.` });
 
-const esquemaNombre = (que: string) =>
+/** Contraseña nueva (registro y restablecer): el largo y, además, que no sea fácil de adivinar. */
+export const esquemaContrasenaNueva = esquemaContrasena.superRefine((clave, ctx) => {
+  if (clave.length < CONTRASENA_MIN || clave.length > CONTRASENA_MAX) return;
+  const e = errorContrasenaDebil(clave);
+  if (e) ctx.addIssue({ code: 'custom', message: e, input: clave });
+});
+
+/** Nombre o apellido de una persona: 1 a 80 caracteres, con letras (errorNombrePersona en reglas.ts). */
+export const esquemaNombrePersona = (que: 'nombre' | 'apellido') =>
   z
     .string({ error: `Escribe tu ${que}.` })
     .trim()
     .min(1, { error: `Escribe tu ${que}.` })
-    .max(80, { error: `Tu ${que} puede tener hasta 80 caracteres.` });
+    .max(NOMBRE_PERSONA_MAX, { error: `Tu ${que} puede tener hasta ${NOMBRE_PERSONA_MAX} caracteres.` })
+    .superRefine((t, ctx) => {
+      // El vacío y el largo ya tienen su mensaje arriba; aquí va solo la forma (letras).
+      if (!t || t.length > NOMBRE_PERSONA_MAX) return;
+      const e = errorNombrePersona(t, que);
+      if (e) ctx.addIssue({ code: 'custom', message: e, input: t });
+    });
+const esquemaNombre = esquemaNombrePersona;
 
 const fechaIso = z.iso.datetime({ offset: true });
 
 // ── Entradas ─────────────────────────────────────────────────────────────────
 // Todas son estrictas: un campo de más (`owner_id`, `deleted_at`) da 400 (CON-012, SEG-012).
-export const esquemaRegistro = z.strictObject({
-  rol: z.enum(ROLES, { error: 'Elige si eres entrenador (trainer) o alumno (client).' }),
-  nombre: esquemaNombre('nombre'),
-  apellido: esquemaNombre('apellido'),
-  email: esquemaEmail,
-  password: esquemaContrasena,
-});
+export const esquemaRegistro = z
+  .strictObject({
+    rol: z.enum(ROLES, { error: 'Elige si eres entrenador (trainer) o alumno (client).' }),
+    nombre: esquemaNombre('nombre'),
+    apellido: esquemaNombre('apellido'),
+    email: esquemaEmail,
+    password: esquemaContrasenaNueva,
+  })
+  .superRefine((d, ctx) => {
+    // Fondo que mira dos campos: la contraseña no puede ser el correo ni lo que va antes de la @.
+    const e = errorContrasenaDebil(d.password, d.email);
+    if (e && !errorContrasenaDebil(d.password)) ctx.addIssue({ code: 'custom', path: ['password'], message: e, input: d.password });
+  });
 
 export const esquemaIngreso = z.strictObject({
   email: esquemaEmail,
@@ -73,8 +96,8 @@ export const esquemaOlvideContrasena = z.strictObject({
 });
 
 export const esquemaRestablecerContrasena = z.strictObject({
-  token: z.string().min(1).max(512),
-  password: esquemaContrasena,
+  token: z.string({ error: 'Falta el enlace del correo.' }).min(1, { error: 'Falta el enlace del correo.' }).max(512),
+  password: esquemaContrasenaNueva,
 });
 
 // ── Salidas ──────────────────────────────────────────────────────────────────
@@ -93,6 +116,22 @@ export const esquemaUsuario = z.object({
   // El alumno sin encuesta va a la Encuesta al ingresar; el entrenador nunca (INT-002).
   encuesta_pendiente: z.boolean(),
   created_at: fechaIso,
+});
+
+/** GET /me y PATCH /me: el usuario más los ajustes del recordatorio (null para el entrenador). */
+export const esquemaPerfilUsuario = esquemaUsuario.extend({
+  recordatorio_activo: z.boolean().nullable(),
+  recordatorio_hora: z.string().nullable(),
+});
+
+/**
+ * Respuesta de GET /me: la misma de PATCH /me. Los dos campos del recordatorio van opcionales
+ * aquí para que una app nueva entienda a una API anterior que todavía no los mandaba; esta API
+ * los manda siempre.
+ */
+export const esquemaUsuarioMe = esquemaUsuario.extend({
+  recordatorio_activo: z.boolean().nullable().optional(),
+  recordatorio_hora: z.string().nullable().optional(),
 });
 
 export const esquemaTokens = z.object({
@@ -209,7 +248,7 @@ export const RUTAS_CUENTAS = {
   },
   perfil: {
     metodo: 'GET', ruta: '/v1/me', publica: false,
-    cuerpo: undefined, exito: 200, respuesta: esquemaUsuario,
+    cuerpo: undefined, exito: 200, respuesta: esquemaUsuarioMe,
   },
   salud: {
     metodo: 'GET', ruta: '/health', publica: true,

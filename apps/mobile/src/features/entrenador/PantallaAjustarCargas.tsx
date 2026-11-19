@@ -35,6 +35,7 @@ import {
   textoDeltaCarga,
   textoDeltaReps,
   LIMITE_CARGA_KG,
+  NOTA_AJUSTE_MAX,
   type Ajuste,
 } from './logica';
 import { ErrorCarga, Esq } from './piezas';
@@ -456,6 +457,7 @@ function TarjetaEjercicio({
               valor={a.nota}
               onCambiar={(v) => onCambiar({ nota: v })}
               multilinea
+              maxLength={NOTA_AJUSTE_MAX}
               placeholder="Por ejemplo: baja lento, 3 segundos"
             />
           </View>

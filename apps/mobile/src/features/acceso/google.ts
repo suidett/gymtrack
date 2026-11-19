@@ -14,7 +14,7 @@
 // ni la validación de rol, nombre y apellido (validacion.ts).
 // Depende de: @gymtrack/shared (ErrorDeApi, PerfilGoogle), ./errores y ./validacion.
 // ─────────────────────────────────────────────────────────────────────────────
-import { ErrorDeApi, type PerfilGoogle } from '@gymtrack/shared';
+import { detalleDeError, ErrorDeApi, type PerfilGoogle } from '@gymtrack/shared';
 import { campoDeErrorDeForma, ESPERA_POR_DEFECTO_S, esErrorDeRed, type MensajePantalla } from './errores';
 import type { FormCuentaGoogle, RolAcceso } from './validacion';
 
@@ -151,16 +151,18 @@ const CAMPOS: Record<string, CampoCuentaGoogle> = { rol: 'rol', nombre: 'nombre'
 export function errorDeGoogle(e: unknown): ResultadoErrorGoogle {
   if (esErrorDeRed(e)) return { tipo: 'mensaje', mensaje: MENSAJES_GOOGLE.red };
   const forma = campoDeErrorDeForma(e);
+  // El motivo es el texto de la misma regla de la API («Tu nombre solo puede tener letras...»).
+  const motivo = detalleDeError(e).motivo ?? 'Revisa este dato.';
   if (forma !== null) {
     const campo = CAMPOS[forma];
-    return campo ? { tipo: 'campo', campo, mensaje: 'Revisa este dato.' } : { tipo: 'mensaje', mensaje: MENSAJES_GOOGLE.token };
+    return campo ? { tipo: 'campo', campo, mensaje: motivo } : { tipo: 'mensaje', mensaje: MENSAJES_GOOGLE.token };
   }
   if (!(e instanceof ErrorDeApi)) return { tipo: 'mensaje', mensaje: MENSAJES_GOOGLE.otro };
   const d = e.detalles ?? {};
   switch (e.codigo) {
     case 'VALIDATION_ERROR': {
       const campo = CAMPOS[String(d.campo ?? '')];
-      return campo ? { tipo: 'campo', campo, mensaje: 'Revisa este dato.' } : { tipo: 'mensaje', mensaje: MENSAJES_GOOGLE.token };
+      return campo ? { tipo: 'campo', campo, mensaje: motivo } : { tipo: 'mensaje', mensaje: MENSAJES_GOOGLE.token };
     }
     case 'BUSINESS_RULE':
       return { tipo: 'mensaje', mensaje: d.regla === 'google_correo_sin_verificar' ? MENSAJES_GOOGLE.sinVerificar : MENSAJES_GOOGLE.otro };

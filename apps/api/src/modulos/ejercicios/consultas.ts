@@ -62,7 +62,7 @@ export async function ejerciciosUsables(
   prisma: Db,
   ids: string[],
   d: { duenoId: string; alumnoId: string | null; rutinaId?: string },
-): Promise<Map<string, { incrementoDefaultKg: number }>> {
+): Promise<Map<string, { incrementoDefaultKg: number; tipoCarga: string }>> {
   if (ids.length === 0) return new Map();
   const duenos = d.alumnoId && d.alumnoId !== d.duenoId ? [d.duenoId, d.alumnoId] : [d.duenoId];
   const o: Prisma.EjercicioWhereInput[] = [{ duenoId: null }, { duenoId: { in: duenos } }];
@@ -72,9 +72,9 @@ export async function ejerciciosUsables(
   }
   const filas = await prisma.ejercicio.findMany({
     where: { id: { in: [...new Set(ids)] }, deletedAt: null, OR: o },
-    select: { id: true, incrementoDefaultKg: true },
+    select: { id: true, incrementoDefaultKg: true, tipoCarga: true },
   });
-  return new Map(filas.map((f) => [f.id, { incrementoDefaultKg: f.incrementoDefaultKg }]));
+  return new Map(filas.map((f) => [f.id, { incrementoDefaultKg: f.incrementoDefaultKg, tipoCarga: f.tipoCarga }]));
 }
 
 // ── Lista ────────────────────────────────────────────────────────────────────

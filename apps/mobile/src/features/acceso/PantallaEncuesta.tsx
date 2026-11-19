@@ -33,7 +33,7 @@ import {
   PasoEscribible,
 } from './componentes';
 import {
-  ANO_MINIMO,
+  anoMinimo,
   armarCuerpo,
   codigoDelCuerpo,
   edad,
@@ -126,7 +126,7 @@ function Respuestas({ q, s, despachar }: { q: Pregunta; s: EstadoEncuesta; despa
             etiqueta="Año"
             texto={f.a ? String(f.a) : ''}
             largo={4}
-            limiteMin={f.a === ANO_MINIMO}
+            limiteMin={f.a === anoMinimo(s.hoy)}
             limiteMax={f.a === s.hoy.a}
             error={!!s.err}
             onEscribir={(t) => despachar({ tipo: 'escribir', campo: 'a', valor: t })}

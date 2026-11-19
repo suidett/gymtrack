@@ -6,7 +6,8 @@
 // promedio de 4 semanas, o las sesiones sin superar la mejor serie), después «¿Qué pudo influir?»
 // con los 6 motivos, el comentario y Enviar (n). Al enviar (POST /me/drop-reports) muestra hasta 3
 // consejos por motivo (APP-044). Sin señal guarda los motivos en el teléfono, muestra los
-// consejos sembrados y los manda solos la próxima vez que se abre Motivos o Progreso.
+// consejos sembrados y los manda solos la próxima vez que se abre Motivos o Progreso. Con «Otro»
+// el comentario es obligatorio (la misma regla de la API) y el error va bajo el comentario.
 // Tócalo cuando: cambie la pregunta, los motivos o cómo se muestran los consejos.
 // No lo toques para: los textos de los consejos (./logica.ts, CONSEJOS_BASE) ni cuándo se abre
 // Motivos (lo decide Hoy).
@@ -17,10 +18,22 @@ import { useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BarraAccion, Boton, CampoTexto, Simbolo, Tarjeta, Txt } from '@/components/ui';
+import { detalleDeError } from '@gymtrack/shared';
 import { esSinConexion, useSesion } from '@/lib/sesion';
 import { alertasPropias, enviarMotivos } from './api';
 import type { Alerta } from './datos';
-import { consejosPara, iniciales, listaNatural, MOTIVOS, nombreMotivo, resumenAlerta, textoEnviar, type Motivo } from './logica';
+import {
+  COMENTARIO_MOTIVOS_MAX,
+  consejosPara,
+  errorComentarioMotivos,
+  iniciales,
+  listaNatural,
+  MOTIVOS,
+  nombreMotivo,
+  resumenAlerta,
+  textoEnviar,
+  type Motivo,
+} from './logica';
 import { Avatar, FilaElegible } from './piezas';
 import { guardarCache, leerCache, useCarga } from './useCarga';
 
@@ -55,6 +68,7 @@ export function PantallaMotivos({ alertaId }: { alertaId: string }) {
   const [elegidos, setElegidos] = useState<Motivo[]>([]);
   const [comentario, setComentario] = useState('');
   const [enviando, setEnviando] = useState(false);
+  const [errorComentario, setErrorComentario] = useState<string | null>(null);
   const [resultado, setResultado] = useState<{ consejos: { [m: string]: string[] } | null; enCola: boolean } | null>(null);
   const ent = usuario?.entrenador ?? null;
 
@@ -63,6 +77,10 @@ export function PantallaMotivos({ alertaId }: { alertaId: string }) {
   const salir = () => router.replace('/');
 
   async function enviar() {
+    // Lo mismo que revisa la API: «otro» pide el comentario y el comentario va hasta 500.
+    const err = errorComentarioMotivos(elegidos, comentario);
+    setErrorComentario(err);
+    if (err) return;
     setEnviando(true);
     const cuerpo: Pendiente = { alert_id: alertaId, motivos: elegidos, ...(comentario.trim() ? { comentario: comentario.trim() } : {}) };
     try {
@@ -74,8 +92,11 @@ export function PantallaMotivos({ alertaId }: { alertaId: string }) {
         const lista = (await leerCache<Pendiente[]>(clave)) ?? [];
         await guardarCache(clave, [...lista.filter((p) => p.alert_id !== alertaId), cuerpo]);
         setResultado({ consejos: null, enCola: true });
+      } else if (detalleDeError(e).campo === 'comentario') {
+        // Una regla del comentario: se queda en la pantalla con el motivo bajo el campo.
+        setErrorComentario(detalleDeError(e).motivo);
       } else {
-        // La API respondió con error: igual se muestran los consejos sembrados.
+        // La API respondió con otro error: igual se muestran los consejos sembrados.
         setResultado({ consejos: null, enCola: false });
       }
     } finally {
@@ -228,7 +249,9 @@ export function PantallaMotivos({ alertaId }: { alertaId: string }) {
           <CampoTexto
             etiqueta={elegidos.includes('otro') ? 'Comentario' : 'Comentario (opcional)'}
             valor={comentario}
-            onCambiar={setComentario}
+            onCambiar={(v) => (setComentario(v), setErrorComentario(null))}
+            error={errorComentario}
+            maxLength={COMENTARIO_MOTIVOS_MAX}
             multilinea
             editable={!enviando}
             placeholder="Por ejemplo: esta semana dormí 5 horas por los turnos"

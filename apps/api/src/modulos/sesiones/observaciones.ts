@@ -30,7 +30,7 @@ export async function crearObservacion(db: Db, u: Usuario, e: Entrada): Promise<
     }
   }
   if (e.tipo === 'consejo' && u.rol !== 'trainer') {
-    fallar('BUSINESS_RULE', { campo: 'tipo', motivo: 'El consejo es solo del entrenador.' });
+    fallar('BUSINESS_RULE', { campo: 'tipo', motivo: 'El consejo es solo del entrenador.' }, 'El consejo es solo del entrenador.');
   }
   // De quién es el dato: del destino más concreto.
   const candidatos: string[] = [];

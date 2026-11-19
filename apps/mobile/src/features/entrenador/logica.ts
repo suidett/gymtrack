@@ -10,9 +10,10 @@
 // Tócalo cuando: cambie una regla de la pantalla (qué cuenta como «Revisar», cómo se escribe
 // una fecha, cuánto sube el más y menos).
 // No lo toques para: cómo se ve algo (los componentes) ni cómo se llama a la API (api.ts).
-// Depende de: ./contrato (tipos) y @gymtrack/shared (fmtNum, fmtHace, MESES, DIAS).
+// Depende de: ./contrato (tipos) y @gymtrack/shared (fmtNum, fmtHace, MESES, DIAS y el tope
+// PESO_MAX_KG de reglas.ts).
 // ─────────────────────────────────────────────────────────────────────────────
-import { DIAS, fmtHace, fmtNum, MESES } from '@gymtrack/shared';
+import { DIAS, fmtHace, fmtNum, MESES, PESO_MAX_KG } from '@gymtrack/shared';
 import type { Alerta, ClienteLista, Ficha, Invitacion, Observacion, Sugerencia, TipoAlerta, ValoresCarga } from './contrato';
 
 // ── Texto y nombres ──────────────────────────────────────────────────────────
@@ -331,6 +332,16 @@ export const SALIDAS_RESOLVER = [
 ] as const;
 export type SalidaResolver = (typeof SALIDAS_RESOLVER)[number]['id'];
 
+/**
+ * Marca o desmarca una acción de la hoja Resolver: «Nada, fue algo puntual» no va con las otras
+ * (la misma regla de la API, esquemaAlertaCambio), así que marcarla limpia las demás y al revés.
+ */
+export function alternarSalida(elegidas: readonly SalidaResolver[], id: SalidaResolver, marcar: boolean): SalidaResolver[] {
+  if (!marcar) return elegidas.filter((x) => x !== id);
+  if (id === 'nada') return ['nada'];
+  return [...elegidas.filter((x) => x !== 'nada' && x !== id), id];
+}
+
 /** La nota que se manda al resolver; sin nada marcado no hay nota. */
 export function notaResolver(elegidas: readonly SalidaResolver[]): string | undefined {
   const textos = SALIDAS_RESOLVER.filter((s) => elegidas.includes(s.id)).map((s) => s.enLista);
@@ -366,7 +377,9 @@ export function accionFicha(f: Ficha): 'asignar' | 'responder' | 'consejo' {
 }
 
 export function validarMensaje(texto: string, esRespuesta: boolean): string | null {
-  if (texto.trim()) return null;
+  const t = texto.trim();
+  if (t.length > MENSAJE_MAX) return `El mensaje va hasta ${MENSAJE_MAX} caracteres.`;
+  if (t) return null;
   return esRespuesta ? 'Escribe la respuesta antes de enviarla.' : 'Escribe el consejo antes de enviarlo.';
 }
 
@@ -485,8 +498,12 @@ export function sinGuardar(s: Sugerencia, a: Ajuste): boolean {
 export const contarSinGuardar = (lista: readonly Sugerencia[], ajustes: Record<string, Ajuste>) =>
   lista.filter((s) => ajustes[s.id] && sinGuardar(s, ajustes[s.id] as Ajuste)).length;
 
-/** Tope del más y menos de Ajustar cargas. El mínimo es el incremento del ejercicio. */
-export const LIMITE_CARGA_KG = 300;
+/** Tope del más y menos de Ajustar cargas (el de la API). El mínimo es el incremento del ejercicio. */
+export const LIMITE_CARGA_KG = PESO_MAX_KG;
+/** PATCH /suggestions/:id: la nota va hasta 300 caracteres. */
+export const NOTA_AJUSTE_MAX = 300;
+/** POST /observations: el consejo o la respuesta van hasta 1000 caracteres. */
+export const MENSAJE_MAX = 1000;
 
 export function textoDeltaCarga(s: Sugerencia, a: Ajuste): string {
   const d = Math.round((a.peso_kg - s.sugerencia.peso_kg) * 100) / 100;

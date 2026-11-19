@@ -13,16 +13,24 @@
 //   - Cada elemento de POST /sync/sessions es crear, series y cerrar juntos (CON-015). El lote
 //     solo exige el `id`: cada sesión se valida por separado y la inválida vuelve `rechazada`
 //     con su motivo sin frenar a las demás (INT-106).
-//   - Pesos en kilos (*_kg), fechas ISO 8601 con zona, cuerpos estrictos (CON-012).
+//   - Pesos en kilos (*_kg) de 0 a 500, fechas ISO 8601 con zona, cuerpos estrictos (CON-012).
+//   - Lo que depende del ejercicio guardado lo revisa la API (422): el tope de repeticiones según
+//     el tipo de carga (60 reps o 600 segundos), que una serie hecha tenga al menos 1 repetición
+//     (salvo al fallo), que la duración no pase del tiempo entre el inicio y el cierre, y que las
+//     fechas no vengan del futuro.
+//   - Un dolor lleva su zona y su intensidad de 1 a 10; la zona y la intensidad van solo con un
+//     dolor (0 es «sin dolor»: no se registra).
 // Tócalo cuando: agregues o cambies una ruta de sesiones u observaciones.
 // No lo toques para: rutas de otra área (cada una tiene su archivo en esta carpeta).
-// Depende de: zod, ./comun, ./ejercicios (esquemaTipoCarga) y ./rutinas (esquemaMetodoProgresion).
+// Depende de: zod, ./comun, ./ejercicios (esquemaTipoCarga), ./rutinas (esquemaMetodoProgresion) y
+// ./reglas (topes de kilos y segundos).
 // ─────────────────────────────────────────────────────────────────────────────
 import { z } from 'zod';
 import {
   esquemaFechaHora, esquemaPagina, esquemaPaginacion, esquemaParamsId, esquemaUuid, type CatalogoRutas,
 } from './comun';
 import { esquemaTipoCarga } from './ejercicios';
+import { PESO_MAX_KG, SEGUNDOS_MAX } from './reglas';
 import { esquemaMetodoProgresion } from './rutinas';
 
 // ── Piezas ───────────────────────────────────────────────────────────────────
@@ -42,9 +50,16 @@ const decimal = (min: number, max: number, que: string) =>
     .min(min, { error: `${que} va de ${min} a ${max}.` }).max(max, { error: `${que} va de ${min} a ${max}.` });
 const textoLibre = (max: number) => z.string().trim().max(max, { error: `Va hasta ${max} caracteres.` });
 
+/** Zona del dolor: «rodilla», «hombro derecho». */
+const zonaDolor = z
+  .string({ error: 'Indica dónde te duele.' })
+  .trim()
+  .min(1, { error: 'Indica dónde te duele.' })
+  .max(60, { error: 'La zona va hasta 60 caracteres.' });
+
 /** Dolor de toda la sesión: zona e intensidad de 1 a 10. */
 export const esquemaDolorGeneral = z.strictObject({
-  zona: z.string().trim().min(1).max(60),
+  zona: zonaDolor,
   intensidad: entero(1, 10, 'La intensidad'),
 });
 
@@ -64,9 +79,9 @@ export const esquemaSerieEntrada = z.strictObject({
   exercise_id: esquemaUuid,
   routine_exercise_id: esquemaUuid.nullable().optional(),
   serie_n: entero(1, 50, 'El número de serie'),
-  peso_kg: decimal(0, 1000, 'El peso'),
-  /** Repeticiones, o segundos si el ejercicio es de tiempo. */
-  reps: entero(0, 3600, 'Las repeticiones'),
+  peso_kg: decimal(0, PESO_MAX_KG, 'El peso'),
+  /** Repeticiones, o segundos si el ejercicio es de tiempo (la API baja el tope a 60 si no es de tiempo). */
+  reps: entero(0, SEGUNDOS_MAX, 'El número de repeticiones'),
   rir: entero(0, 10, 'El RIR').nullable().optional(),
   completada: z.boolean().default(false),
   fallo: z.boolean().default(false),
@@ -113,14 +128,18 @@ export const esquemaObservacionNueva = z
   .strictObject({
     id: esquemaUuid.optional(),
     tipo: esquemaTipoObservacion.default('observacion'),
-    texto: z.string().trim().min(1, { error: 'Escribe la observación.' }).max(1000),
+    texto: z
+      .string({ error: 'Escribe la observación.' })
+      .trim()
+      .min(1, { error: 'Escribe la observación.' })
+      .max(1000, { error: 'La observación va hasta 1000 caracteres.' }),
     exercise_id: esquemaUuid.nullable().optional(),
     session_id: esquemaUuid.nullable().optional(),
     set_id: esquemaUuid.nullable().optional(),
     routine_id: esquemaUuid.nullable().optional(),
     /** De quién es el dato: solo el entrenador lo manda, si no hay sesión o serie de donde sacarlo. */
     client_id: esquemaUuid.optional(),
-    dolor_zona: z.string().trim().min(1).max(60).nullable().optional(),
+    dolor_zona: zonaDolor.nullable().optional(),
     dolor_intensidad: entero(1, 10, 'La intensidad').nullable().optional(),
   })
   .refine((o) => Boolean(o.exercise_id || o.session_id || o.set_id || o.routine_id), {
@@ -128,6 +147,12 @@ export const esquemaObservacionNueva = z
   })
   .refine((o) => o.tipo !== 'dolor' || typeof o.dolor_intensidad === 'number', {
     error: 'Un dolor necesita su intensidad de 1 a 10.', path: ['dolor_intensidad'],
+  })
+  .refine((o) => o.tipo !== 'dolor' || typeof o.dolor_zona === 'string', {
+    error: 'Indica dónde te duele.', path: ['dolor_zona'],
+  })
+  .refine((o) => o.tipo === 'dolor' || (o.dolor_zona == null && o.dolor_intensidad == null), {
+    error: 'La zona y la intensidad van solo con un dolor.', path: ['dolor_intensidad'],
   });
 
 export const esquemaQueryObservaciones = esquemaPaginacion.extend({

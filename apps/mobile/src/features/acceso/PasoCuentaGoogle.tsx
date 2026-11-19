@@ -29,6 +29,7 @@ import {
   type Errores,
   type FormCuentaGoogle,
   type RolAcceso,
+  LARGO_MAXIMO,
 } from './validacion';
 
 export function PasoCuentaGoogle({ google, paso }: { google: IngresoGoogle; paso: PasoGoogle }) {
@@ -138,6 +139,7 @@ export function PasoCuentaGoogle({ google, paso }: { google: IngresoGoogle; paso
           <CampoTexto
             ref={nombreRef}
             etiqueta="Nombre"
+            maxLength={LARGO_MAXIMO.nombre}
             valor={form.nombre}
             onCambiar={(v) => cambiar('nombre', v)}
             error={err.nombre}
@@ -154,6 +156,7 @@ export function PasoCuentaGoogle({ google, paso }: { google: IngresoGoogle; paso
           <CampoTexto
             ref={apellidoRef}
             etiqueta="Apellido"
+            maxLength={LARGO_MAXIMO.nombre}
             valor={form.apellido}
             onCambiar={(v) => cambiar('apellido', v)}
             error={err.apellido}

@@ -9,7 +9,11 @@
 // Reglas que se ven en la forma:
 //   - La rutina nace en borrador con sus días completos; el método parte en doble progresión.
 //   - reps_min mayor que reps_max NO es un 400: es la regla de negocio 422 REPS_RANGE_INVALID
-//     (§API), por eso no va como refine aquí; la revisa la API con el día y la posición.
+//     (§API), por eso no va como refine aquí; la revisa la API con el día y la posición. Lo mismo
+//     el tope de repeticiones según el tipo de carga (60 reps o 600 segundos, reglas.ts): la API
+//     lo revisa con el ejercicio guardado (422 BUSINESS_RULE).
+//   - Dos días con el mismo nombre o el mismo día de la semana dan 400 con el campo del segundo
+//     (erroresDiasRutina de reglas.ts, la misma función que usa el editor de la app).
 //   - El orden de los días y de los ejercicios es el orden en que vienen (desde 0).
 //   - En PUT /days un día o un ejercicio puede traer su `id` para conservarlo (así la sugerencia y
 //     el historial por routine_exercise_id siguen); sin id es nuevo; lo que no viene se quita.
@@ -18,12 +22,16 @@
 // Tócalo cuando: agregues o cambies una ruta de rutinas.
 // No lo toques para: rutas de otra área (cada una tiene su archivo en esta carpeta).
 // Depende de: zod, ./comun (DefinicionRuta, paginación, esquemas base), ./ejercicios (las listas
-// cerradas del ejercicio) y ../types (MetodoProgresion).
+// cerradas del ejercicio), ./reglas (topes y días repetidos) y ../types (MetodoProgresion).
 // ─────────────────────────────────────────────────────────────────────────────
 import { z } from 'zod';
 import type { MetodoProgresion } from '../types';
 import { esquemaFechaHora, esquemaPagina, esquemaPaginacion, esquemaParamsId, esquemaUuid, type CatalogoRutas } from './comun';
 import { esquemaEquipo, esquemaGrupoMuscular, esquemaPatron, esquemaTipoCarga } from './ejercicios';
+import {
+  DESCANSO_RUTINA_MAX_S, DIAS_RUTINA_MAX, EJERCICIOS_POR_DIA_MAX, erroresDiasRutina, NOMBRE_DIA_MAX, PESO_MAX_KG,
+  SEGUNDOS_MAX, SEMANAS_MAX, SERIES_MAX,
+} from './reglas';
 
 // ── Listas cerradas ──────────────────────────────────────────────────────────
 /** Los ids de METODOS (types.ts), como tupla para Zod. */
@@ -61,29 +69,32 @@ const texto = (min: number, max: number, que: string) =>
 
 const camposEjercicioRutina = {
   exercise_id: esquemaUuid,
-  series: entero(1, 20, 'Las series'),
-  /** Repeticiones, o segundos si el ejercicio es de tiempo. */
-  reps_min: entero(1, 3600, 'El mínimo de repeticiones'),
-  reps_max: entero(1, 3600, 'El máximo de repeticiones'),
+  series: entero(1, SERIES_MAX, 'El número de series'),
+  /**
+   * Repeticiones, o segundos si el ejercicio es de tiempo. La forma acepta hasta 600 (segundos);
+   * la API baja el tope a 60 repeticiones cuando el ejercicio es con carga o con el cuerpo.
+   */
+  reps_min: entero(1, SEGUNDOS_MAX, 'El mínimo de repeticiones'),
+  reps_max: entero(1, SEGUNDOS_MAX, 'El máximo de repeticiones'),
   rir_objetivo: entero(0, 10, 'El RIR objetivo').default(2),
-  descanso_s: entero(0, 1800, 'El descanso').default(90),
+  descanso_s: entero(0, DESCANSO_RUTINA_MAX_S, 'El descanso').default(90),
   /** Sin valor, se copia el incremento por defecto del ejercicio. 0: se progresa en repeticiones. */
   incremento_kg: decimal(0, 50, 'El incremento').optional(),
-  peso_inicial_kg: decimal(0, 1000, 'El peso inicial').nullable().optional(),
+  peso_inicial_kg: decimal(0, PESO_MAX_KG, 'El peso inicial').nullable().optional(),
   esquema: esquemaEsquemaSerie.default('normal'),
   /** Mismo texto en dos ejercicios seguidos del día: van en superserie («A»). */
   grupo_superserie: texto(1, 10, 'El grupo de superserie').nullable().optional(),
   nota_entrenador: texto(0, 500, 'La nota').nullable().optional(),
   /** Método porcentual: el porcentaje del 1RM de cada semana (P-10). */
   porcentajes_semana: z.array(decimal(1, 120, 'El porcentaje'), { error: 'Los porcentajes van en una lista.' })
-    .max(52, { error: 'Hay un porcentaje por semana, hasta 52.' })
+    .max(SEMANAS_MAX, { error: `Hay un porcentaje por semana, hasta ${SEMANAS_MAX}.` })
     .default([]),
   /** Método por RM: el «x» de xRM (P-10). */
   objetivo_rm: entero(1, 30, 'El objetivo de RM').nullable().optional(),
 };
 
 const camposDiaRutina = {
-  nombre: texto(1, 40, 'El nombre del día'),
+  nombre: texto(1, NOMBRE_DIA_MAX, 'El nombre del día'),
   /** 1 lunes a 7 domingo (ISO). null o sin valor: sin día fijo, va por ciclo. */
   dia_semana: entero(1, 7, 'El día de la semana').nullable().optional(),
 };
@@ -94,7 +105,7 @@ export const esquemaEjercicioRutinaNuevo = z.strictObject(camposEjercicioRutina)
 export const esquemaDiaRutinaNuevo = z.strictObject({
   ...camposDiaRutina,
   ejercicios: z.array(esquemaEjercicioRutinaNuevo, { error: 'Los ejercicios del día van en una lista.' })
-    .max(30, { error: 'Un día va hasta 30 ejercicios.' }),
+    .max(EJERCICIOS_POR_DIA_MAX, { error: `Un día va hasta ${EJERCICIOS_POR_DIA_MAX} ejercicios.` }),
 });
 
 /** Un ejercicio en PUT /days: con `id` conserva el que ya estaba en la rutina. */
@@ -103,17 +114,20 @@ export const esquemaDiaRutinaEdicion = z.strictObject({
   id: esquemaUuid.optional(),
   ...camposDiaRutina,
   ejercicios: z.array(esquemaEjercicioRutinaEdicion, { error: 'Los ejercicios del día van en una lista.' })
-    .max(30, { error: 'Un día va hasta 30 ejercicios.' }),
+    .max(EJERCICIOS_POR_DIA_MAX, { error: `Un día va hasta ${EJERCICIOS_POR_DIA_MAX} ejercicios.` }),
 });
 
-const diasRutina = <T extends z.ZodType>(dia: T) =>
+const diasRutina = <T extends z.ZodType<{ nombre: string; dia_semana?: number | null }>>(dia: T) =>
   z.array(dia, { error: 'La rutina necesita sus días.' })
     .min(1, { error: 'La rutina necesita al menos un día.' })
-    .max(14, { error: 'La rutina va hasta 14 días.' });
+    .max(DIAS_RUTINA_MAX, { error: `La rutina va hasta ${DIAS_RUTINA_MAX} días.` })
+    .superRefine((dias, ctx) => {
+      for (const e of erroresDiasRutina(dias)) ctx.addIssue({ code: 'custom', path: [e.dia, e.campo], message: e.mensaje, input: dias });
+    });
 
 const nombreRutina = texto(1, 80, 'El nombre');
 const descripcionRutina = texto(0, 500, 'La descripción').nullable();
-const semanasRutina = entero(1, 52, 'Las semanas');
+const semanasRutina = entero(1, SEMANAS_MAX, 'El número de semanas');
 
 // ── Entrada de cada ruta ─────────────────────────────────────────────────────
 /**

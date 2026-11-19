@@ -132,7 +132,7 @@ describe('Ingreso con Google en la app', () => {
     expect(llamadas[1]!.op!.cuerpo).toEqual({ id_token: token, rol: 'trainer', nombre: 'Valentina', apellido: 'Soto' });
     // Un rol sin nombre no sale del teléfono: el error de forma dice el campo.
     const sinNombre = await enviarAGoogle(api, { id_token: token, rol: 'client' }).catch((e: unknown) => e);
-    expect(errorDeGoogle(sinNombre)).toEqual({ tipo: 'campo', campo: 'nombre', mensaje: 'Revisa este dato.' });
+    expect(errorDeGoogle(sinNombre)).toEqual({ tipo: 'campo', campo: 'nombre', mensaje: 'Escribe tu nombre.' });
     expect(llamadas).toHaveLength(2);
   });
 });

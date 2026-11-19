@@ -52,6 +52,25 @@ export class ErrorDeApi extends Error {
   }
 }
 
+/**
+ * El campo y el motivo de un error para mostrarlo junto al campo, venga de Zod (el cliente valida
+ * antes de salir: el issue trae la ruta y el mensaje en español) o de la API (`details.campo` y
+ * `details.motivo` de un 400, un 409 o un 422). `motivo` es null si el error no trae uno (queda el
+ * mensaje general); `campo`, la ruta con puntos (`respuestas.peso_kg`, `dias.1.nombre`).
+ */
+export function detalleDeError(e: unknown): { campo: string | null; motivo: string | null } {
+  if (e instanceof Error && e.name === 'ZodError') {
+    const issue = (e as Error & { issues?: { path?: PropertyKey[]; message?: string }[] }).issues?.[0];
+    return { campo: issue?.path?.length ? issue.path.map(String).join('.') : null, motivo: issue?.message ?? null };
+  }
+  if (e instanceof ErrorDeApi) {
+    const d = e.detalles ?? {};
+    const campo = typeof d.campo === 'string' ? d.campo : null;
+    return { campo, motivo: typeof d.motivo === 'string' ? d.motivo : null };
+  }
+  return { campo: null, motivo: null };
+}
+
 type Ruta<N extends NombreRutaCuentas> = (typeof RUTAS_CUENTAS)[N];
 type Cuerpo<N extends NombreRutaCuentas> =
   Ruta<N>['cuerpo'] extends z.ZodType ? z.input<Ruta<N>['cuerpo']> : undefined;

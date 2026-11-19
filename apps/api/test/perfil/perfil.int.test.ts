@@ -267,7 +267,7 @@ describeConBase('Perfil y cuenta', () => {
     expect(v.aceptadoAt?.toISOString()).toBe('2026-11-17T13:00:00.000Z');
     const perfil = await e.prisma.perfilAlumno.findUniqueOrThrow({ where: { usuarioId: diego.id } });
     expect(perfil.entrenadorId).toBe(camila.id);
-    const me = await e.pedirComo(diego, { method: 'PATCH', url: '/v1/me', payload: {} });
+    const me = await e.pedirComo(diego, { method: 'GET', url: '/v1/me' });
     expect(me.json.entrenador).toMatchObject({ id: camila.id });
   });
 
@@ -432,7 +432,7 @@ describeConBase('Perfil y cuenta', () => {
     expect(r.status).toBe(200);
     expect(await e.prisma.vinculoEntrenador.count({ where: { entrenadorId: camila.id, estado: 'activo' } })).toBe(0);
     expect((await e.prisma.perfilAlumno.findUniqueOrThrow({ where: { usuarioId: martina.id } })).entrenadorId).toBeNull();
-    const yo = await e.pedirComo(martina, { method: 'PATCH', url: '/v1/me', payload: {} });
+    const yo = await e.pedirComo(martina, { method: 'GET', url: '/v1/me' });
     expect(yo.status).toBe(200);
     expect(yo.json.entrenador).toBeNull();
     const { diego } = { diego: await e.prisma.usuario.findFirstOrThrow({ where: { nombre: 'Diego' } }) };

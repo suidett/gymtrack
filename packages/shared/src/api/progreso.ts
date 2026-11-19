@@ -20,13 +20,18 @@
 // Tócalo cuando: agregues o cambies una ruta de progreso, fotos o sugerencias.
 // No lo toques para: rutas de otra área (cada una tiene su archivo en esta carpeta) ni para cómo
 // se calcula una sugerencia (packages/shared/src/progression.ts).
-// Depende de: zod y ./comun (DefinicionRuta, paginación, esquemas base).
+// Reglas de fondo que revisa la API con la zona del alumno: la fecha de una medida o de una foto
+// no puede ser futura ni de hace más de un año (errorFechaRegistro de reglas.ts), y las
+// repeticiones de una sugerencia siguen el tope del tipo de carga del ejercicio.
+// Depende de: zod, ./comun (DefinicionRuta, paginación, esquemas base) y ./reglas (rangos de las
+// medidas y topes de kilos y segundos).
 // ─────────────────────────────────────────────────────────────────────────────
 import { z } from 'zod';
 import {
   esquemaFechaDia, esquemaFechaHora, esquemaPagina, esquemaPaginacion, esquemaParamsId, esquemaQueryAlumno, esquemaUuid,
   type CatalogoRutas,
 } from './comun';
+import { PESO_MAX_KG, RANGOS_MEDIDA, SEGUNDOS_MAX, textoRangoMedida, type CampoRangoMedida } from './reglas';
 
 // ── Reglas ───────────────────────────────────────────────────────────────────
 /** §API: el progreso por ejercicio mira las últimas 26 semanas (INT-116). */
@@ -49,11 +54,17 @@ export const TIPOS_RECORD_PROGRESO = ['peso_max', 'e1rm', 'reps_con_peso', 'volu
 export const ESTADOS_SUGERENCIA = ['pendiente', 'aplicada', 'sobrescrita'] as const;
 
 // ── Piezas ───────────────────────────────────────────────────────────────────
-const kilos = (campo: string, max: number) =>
+/**
+ * Un campo de medida con su rango posible (RANGOS_MEDIDA). null es «no lo medí»: lo mismo que no
+ * mandarlo (la app instalada manda null en lo que no se midió).
+ */
+const medida = (campo: CampoRangoMedida) =>
   z
-    .number({ error: `${campo} tiene que ser un número.` })
-    .positive({ error: `${campo} tiene que ser mayor que 0.` })
-    .max(max, { error: `${campo} puede ser hasta ${max}.` });
+    .number({ error: `${RANGOS_MEDIDA[campo].nombre} tiene que ser un número.` })
+    .min(RANGOS_MEDIDA[campo].min, { error: textoRangoMedida(campo) })
+    .max(RANGOS_MEDIDA[campo].max, { error: textoRangoMedida(campo) })
+    .nullable()
+    .optional();
 
 /** Query de las lecturas `/me/...` con el `?client_id=` del entrenador (P-02). */
 export const esquemaQueryProgreso = esquemaQueryAlumno;
@@ -148,16 +159,16 @@ export const esquemaMedidaEntrada = z
     fecha: esquemaFechaDia.optional(),
     /** Cuándo se midió (ISO con zona). Decide el día cuando no viene `fecha` (INT-121). */
     medido_at: esquemaFechaHora.optional(),
-    peso_kg: kilos('El peso', 400).optional(),
-    cintura_cm: kilos('La cintura', 300).optional(),
-    cadera_cm: kilos('La cadera', 300).optional(),
-    pecho_cm: kilos('El pecho', 300).optional(),
-    brazo_cm: kilos('El brazo', 150).optional(),
-    muslo_cm: kilos('El muslo', 200).optional(),
-    grasa_pct: kilos('La grasa', 80).optional(),
+    peso_kg: medida('peso_kg'),
+    cintura_cm: medida('cintura_cm'),
+    cadera_cm: medida('cadera_cm'),
+    pecho_cm: medida('pecho_cm'),
+    brazo_cm: medida('brazo_cm'),
+    muslo_cm: medida('muslo_cm'),
+    grasa_pct: medida('grasa_pct'),
     nota: z.string().trim().max(500, { error: 'La nota puede tener hasta 500 caracteres.' }).nullable().optional(),
   })
-  .refine((m) => CAMPOS_MEDIDA.some((c) => m[c] !== undefined), {
+  .refine((m) => CAMPOS_MEDIDA.some((c) => m[c] !== undefined && m[c] !== null), {
     error: 'Escribe al menos el peso o una medida.',
     path: ['peso_kg'],
   });
@@ -299,13 +310,34 @@ export const esquemaSugerenciaCambio = z.union([
     restaurar: z.literal(true),
   }),
   z.strictObject({
-    peso_kg: z.number().min(0, { error: 'El peso no puede ser negativo.' }).max(1000).optional(),
-    reps_min: z.number().int().min(1, { error: 'Las repeticiones van desde 1.' }).max(100).optional(),
-    reps_max: z.number().int().min(1, { error: 'Las repeticiones van desde 1.' }).max(100).optional(),
-    rir: z.number().int().min(0).max(10).nullable().optional(),
+    peso_kg: z
+      .number({ error: 'El peso tiene que ser un número.' })
+      .min(0, { error: 'El peso no puede ser negativo.' })
+      .max(PESO_MAX_KG, { error: `El peso va hasta ${PESO_MAX_KG} kg.` })
+      .optional(),
+    /** Repeticiones, o segundos si el ejercicio es de tiempo: la API baja el tope a 60 si no lo es. */
+    reps_min: z
+      .number({ error: 'Las repeticiones tienen que ser un número.' })
+      .int({ error: 'Las repeticiones van enteras.' })
+      .min(1, { error: 'Las repeticiones van desde 1.' })
+      .max(SEGUNDOS_MAX, { error: `Las repeticiones van hasta ${SEGUNDOS_MAX}.` })
+      .optional(),
+    reps_max: z
+      .number({ error: 'Las repeticiones tienen que ser un número.' })
+      .int({ error: 'Las repeticiones van enteras.' })
+      .min(1, { error: 'Las repeticiones van desde 1.' })
+      .max(SEGUNDOS_MAX, { error: `Las repeticiones van hasta ${SEGUNDOS_MAX}.` })
+      .optional(),
+    rir: z
+      .number({ error: 'El RIR tiene que ser un número.' })
+      .int({ error: 'El RIR va entero.' })
+      .min(0, { error: 'El RIR va de 0 a 10.' })
+      .max(10, { error: 'El RIR va de 0 a 10.' })
+      .nullable()
+      .optional(),
     nota: z.string().trim().max(300, { error: 'La nota puede tener hasta 300 caracteres.' }).nullable().optional(),
   }),
-]);
+], { error: 'Manda restaurar: true o los valores que cambias.' });
 
 // ── Catálogo de rutas ────────────────────────────────────────────────────────
 export const RUTAS_PROGRESO = {

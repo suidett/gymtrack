@@ -21,7 +21,7 @@ import { useSesion } from '@/lib/sesion';
 import { useTema } from '@/lib/tema';
 import { BarraCarga, CejaAlerta, Mensaje, ReglaContrasena } from './componentes';
 import { errorDeRestablecer, type MensajePantalla } from './errores';
-import { errorContrasenaNueva, reglaContrasena } from './validacion';
+import { errorContrasenaNueva, reglaContrasena, LARGO_MAXIMO } from './validacion';
 
 type Paso = 'nueva' | 'lista' | 'vencido';
 
@@ -128,6 +128,7 @@ export function PantallaRestablecer() {
         <CampoTexto
           ref={claveRef}
           etiqueta="Contraseña nueva"
+          maxLength={LARGO_MAXIMO.clave}
           valor={clave}
           onCambiar={(v) => {
             setClave(v);

@@ -8,7 +8,9 @@
 // unidades; descanso entre series de 30 s a 5 min, APP-038), los avisos (si llegan a este
 // teléfono, con «Activar avisos»; el recordatorio va a la API como recordatorio_activo), y la cuenta: datos
 // personales, exportar mis datos (GET /me/export, APP-036), borrar la cuenta con su pantalla de
-// confirmación (escribir BORRAR, fecha a 30 días, APP-035) y cerrar sesión.
+// confirmación (escribir BORRAR, fecha a 30 días, APP-035) y cerrar sesión. Los datos personales
+// se revisan con las mismas reglas de la API (nombre y apellido con letras, hasta 80) y el error
+// va bajo el campo.
 // Tócalo cuando: cambie el perfil, un ajuste o una de sus hojas.
 // No lo toques para: cómo se guarda el tema (@/lib/tema) ni cómo se cierra la sesión (@/lib/sesion).
 // Depende de: ./api, ./logica, ./piezas, ./useCarga, @/components/ui, @/components/AvisosDelTelefono,
@@ -18,6 +20,8 @@ import { useRef, useState, type ReactNode } from 'react';
 import { Linking, Pressable, Share, Text, TextInput, View } from 'react-native';
 import { BarraAccion, Boton, Cabecera, CampoTexto, Chip, Hoja, Icono, Interruptor, Pantalla, Separador, Simbolo, Tarjeta, Txt, useAviso } from '@/components/ui';
 import { AvisosDelTelefono } from '@/components/AvisosDelTelefono';
+import { detalleDeError } from '@gymtrack/shared';
+import { errorNombre, LARGO_MAXIMO } from '@/features/acceso/validacion';
 import { ErrorDeApi, useSesion } from '@/lib/sesion';
 import { useTema } from '@/lib/tema';
 import {
@@ -475,19 +479,22 @@ function HojaDatos({ onCerrar }: { onCerrar: () => void }) {
   const [nombre, setNombre] = useState(usuario?.nombre ?? '');
   const [apellido, setApellido] = useState(usuario?.apellido ?? '');
   const [guardando, setGuardando] = useState(false);
+  const [errores, setErrores] = useState<{ nombre?: string | null; apellido?: string | null }>({});
   async function guardar() {
-    if (!nombre.trim() || !apellido.trim()) {
-      aviso.mostrar('Escribe tu nombre y tu apellido.');
-      return;
-    }
+    // Las mismas reglas de la API (errorNombrePersona): el error va bajo el campo.
+    const e = { nombre: errorNombre(nombre, 'nombre'), apellido: errorNombre(apellido, 'apellido') };
+    setErrores(e);
+    if (e.nombre || e.apellido) return;
     setGuardando(true);
     try {
       await cambiarPerfil({ nombre: nombre.trim(), apellido: apellido.trim() });
       actualizarUsuario({ nombre: nombre.trim(), apellido: apellido.trim() });
       aviso.mostrar('Guardaste tus datos.');
       onCerrar();
-    } catch (e) {
-      aviso.mostrar(mensajeDeError(e));
+    } catch (err) {
+      const { campo, motivo } = detalleDeError(err);
+      if (motivo && (campo === 'nombre' || campo === 'apellido')) setErrores({ [campo]: motivo });
+      else aviso.mostrar(mensajeDeError(err));
     } finally {
       setGuardando(false);
     }
@@ -505,8 +512,24 @@ function HojaDatos({ onCerrar }: { onCerrar: () => void }) {
       }
     >
       <View className="mt-3 gap-3">
-        <CampoTexto etiqueta="Nombre" valor={nombre} onCambiar={setNombre} autoCapitalize="words" />
-        <CampoTexto etiqueta="Apellido" valor={apellido} onCambiar={setApellido} autoCapitalize="words" />
+        <CampoTexto
+          etiqueta="Nombre"
+          valor={nombre}
+          onCambiar={(v) => (setNombre(v), setErrores((x) => ({ ...x, nombre: null })))}
+          error={errores.nombre}
+          maxLength={LARGO_MAXIMO.nombre}
+          autoCapitalize="words"
+          autoComplete="given-name"
+        />
+        <CampoTexto
+          etiqueta="Apellido"
+          valor={apellido}
+          onCambiar={(v) => (setApellido(v), setErrores((x) => ({ ...x, apellido: null })))}
+          error={errores.apellido}
+          maxLength={LARGO_MAXIMO.nombre}
+          autoCapitalize="words"
+          autoComplete="family-name"
+        />
         <Txt v="sec">
           Tu correo es {usuario?.email}. Para cambiar la contraseña, cierra sesión y usa «¿Olvidaste tu contraseña?» al ingresar.
         </Txt>

@@ -7,11 +7,14 @@
 // 30 días y la tendencia por semana desde el tercer registro (APP-033), el gráfico y el
 // historial, con la hoja «Registrar peso» de 0,1 en 0,1. Medidas: los cinco perímetros con su
 // diferencia y su línea de tendencia desde el tercer registro (APP-051), las fotos por fecha
-// (privadas) y las hojas para registrar medidas, agregar y comparar fotos.
+// (privadas) y las hojas para registrar medidas, agregar y comparar fotos. El peso va de 30 a
+// 300 kg y cada medida tiene su rango posible (RANGOS_MEDIDA de @gymtrack/shared, los mismos de
+// la API); el más y menos no deja salir de ahí y, si la API rechaza algo, se ve su motivo.
 // Tócalo cuando: cambie lo que muestra Progreso o una de sus hojas.
 // No lo toques para: los cálculos de tendencia (./logica.ts) ni cómo se dibujan los gráficos (./graficos.tsx).
 // Depende de: ./api, ./logica, ./graficos, ./piezas, ./useCarga, @/components/ui y @/lib/sesion.
 // ─────────────────────────────────────────────────────────────────────────────
+import { detalleDeError, PESO_CORPORAL_MAX_KG, PESO_CORPORAL_MIN_KG } from '@gymtrack/shared';
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Image, Pressable, ScrollView, Text, View } from 'react-native';
@@ -34,8 +37,10 @@ import {
   firmado,
   hayTendencia,
   MINIMO_TENDENCIA,
+  erroresMedidas,
   PARTES_MEDIDA,
   pesosDe,
+  RANGO_PARTE,
   tendenciaSemanal,
   textoSinTendenciaPeso,
   type ParteMedida,
@@ -103,7 +108,8 @@ export function PantallaProgreso({ vistaInicial }: { vistaInicial?: Vista }) {
       setHoja(null);
       aviso.mostrar(exito);
     } catch (e) {
-      aviso.mostrar(mensajeDeError(e));
+      // El motivo de la API es el texto de la regla («La cintura va de 40 a 250 cm.»).
+      aviso.mostrar(detalleDeError(e).motivo ?? mensajeDeError(e));
     } finally {
       setGuardando(false);
     }
@@ -529,7 +535,8 @@ function BloqueFotos({ fotos, hoy, nombreEnt, onHoja }: { fotos: Foto[]; hoy: Da
 
 // ── Hojas ────────────────────────────────────────────────────────────────────
 function HojaPeso({ inicial, hoy, guardando, onCerrar, onGuardar }: { inicial: number; hoy: Date; guardando: boolean; onCerrar: () => void; onGuardar: (p: number) => void }) {
-  const [peso, setPeso] = useState(Math.round(inicial * 10) / 10);
+  const acotar = (n: number) => Math.min(PESO_CORPORAL_MAX_KG, Math.max(PESO_CORPORAL_MIN_KG, Math.round(n * 10) / 10));
+  const [peso, setPeso] = useState(acotar(inicial));
   return (
     <Hoja
       visible
@@ -544,7 +551,7 @@ function HojaPeso({ inicial, hoy, guardando, onCerrar, onGuardar }: { inicial: n
       }
     >
       <View className="mt-4">
-        <Paso valor={peso} onCambiar={setPeso} paso={0.1} min={30} max={250} formato={cifra1} unidad="kg" etiqueta="peso" />
+        <Paso valor={peso} onCambiar={setPeso} paso={0.1} min={PESO_CORPORAL_MIN_KG} max={PESO_CORPORAL_MAX_KG} formato={cifra1} unidad="kg" etiqueta="peso" />
       </View>
       <Txt v="sec" className="mt-3">
         De 0,1 en 0,1; mantén presionado para avanzar rápido. Pésate en ayunas y a la misma hora para comparar parejo.
@@ -567,13 +574,16 @@ function HojaMedidas({
   onGuardar: (v: { [k in ParteMedida]?: number | null }) => void;
 }) {
   const base: { [k in ParteMedida]: number } = { cinturaCm: 72, caderaCm: 96, pechoCm: 88, brazoCm: 27, musloCm: 55 };
+  // Lo último medido (o la base) acotado al rango de la API, por si quedó algo de antes fuera de él.
+  const enRango = (k: ParteMedida, n: number | null | undefined) => Math.min(RANGO_PARTE[k].max, Math.max(RANGO_PARTE[k].min, n ?? base[k]));
   const [v, setV] = useState<{ [k in ParteMedida]: number }>(() => ({
-    cinturaCm: inicial?.cinturaCm ?? base.cinturaCm,
-    caderaCm: inicial?.caderaCm ?? base.caderaCm,
-    pechoCm: inicial?.pechoCm ?? base.pechoCm,
-    brazoCm: inicial?.brazoCm ?? base.brazoCm,
-    musloCm: inicial?.musloCm ?? base.musloCm,
+    cinturaCm: enRango('cinturaCm', inicial?.cinturaCm),
+    caderaCm: enRango('caderaCm', inicial?.caderaCm),
+    pechoCm: enRango('pechoCm', inicial?.pechoCm),
+    brazoCm: enRango('brazoCm', inicial?.brazoCm),
+    musloCm: enRango('musloCm', inicial?.musloCm),
   }));
+  const errores = erroresMedidas(v);
   return (
     <Hoja
       visible
@@ -583,7 +593,7 @@ function HojaMedidas({
       acciones={
         <>
           <Boton titulo="Cancelar" variante="secundario" alto className="flex-1" onPress={onCerrar} />
-          <Boton titulo="Guardar" alto className="flex-1" cargando={guardando} onPress={() => onGuardar(v)} />
+          <Boton titulo="Guardar" alto className="flex-1" cargando={guardando} disabled={Object.keys(errores).length > 0} onPress={() => onGuardar(v)} />
         </>
       }
     >
@@ -592,7 +602,16 @@ function HojaMedidas({
           <View key={p.id} className="mt-2 flex-row items-center gap-3">
             <Text className="flex-1 font-sans-bold text-[15px] text-texto">{p.nombre}</Text>
             <View className="w-[228px]">
-              <Paso valor={v[p.id]} onCambiar={(n) => setV((x) => ({ ...x, [p.id]: n }))} paso={0.5} min={10} max={200} formato={cifra1} unidad="cm" etiqueta={p.nombre.toLowerCase()} />
+              <Paso
+                valor={v[p.id]}
+                onCambiar={(n) => setV((x) => ({ ...x, [p.id]: n }))}
+                paso={0.5}
+                min={RANGO_PARTE[p.id].min}
+                max={RANGO_PARTE[p.id].max}
+                formato={cifra1}
+                unidad="cm"
+                etiqueta={p.nombre.toLowerCase()}
+              />
             </View>
           </View>
         ))}

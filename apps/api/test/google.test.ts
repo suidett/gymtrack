@@ -256,7 +256,7 @@ describeConBase('Ingreso con Google', () => {
     for (let i = 0; i < 4; i++) {
       const r = await e.pedir({
         method: 'POST', url: '/v1/auth/register',
-        payload: { rol: 'client', nombre: 'Prueba', apellido: `Tope ${i}`, email: `tope${i}@gymtrack.test`, password: CLAVE },
+        payload: { rol: 'client', nombre: 'Prueba', apellido: `Tope ${'ABCD'[i]}`, email: `tope${i}@gymtrack.test`, password: CLAVE },
       });
       expect(r.status).toBe(201);
     }

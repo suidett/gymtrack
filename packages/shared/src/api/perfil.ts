@@ -16,18 +16,18 @@
 // Tócalo cuando: agregues o cambies una ruta de perfil, una pregunta de la encuesta o la forma
 // del código de invitación.
 // No lo toques para: rutas de otra área (cada una tiene su archivo en esta carpeta).
-// Depende de: zod, ./comun (DefinicionRuta, esquemas base) y ./cuentas (esquemaUsuario, UNIDADES).
+// Depende de: zod, ./comun (DefinicionRuta, esquemas base), ./cuentas (esquemaPerfilUsuario,
+// esquemaNombrePersona, UNIDADES) y ./reglas (rangos de altura y peso).
 // ─────────────────────────────────────────────────────────────────────────────
 import { z } from 'zod';
 import { esquemaFechaDia, esquemaFechaHora, esquemaUuid, type CatalogoRutas } from './comun';
-import { esquemaUsuario, UNIDADES } from './cuentas';
+import { esquemaNombrePersona, esquemaPerfilUsuario, UNIDADES } from './cuentas';
+import { ALTURA_MAX_CM, ALTURA_MIN_CM, PESO_CORPORAL_MAX_KG, PESO_CORPORAL_MIN_KG } from './reglas';
 
 // ── Reglas de los campos ─────────────────────────────────────────────────────
 /** §Pantallas, Perfil: el descanso va de 30 s a 5 minutos (INT-020). */
 export const DESCANSO_MIN_S = 30;
 export const DESCANSO_MAX_S = 300;
-/** P-13: edad mínima para responder la encuesta. */
-export const EDAD_MINIMA_ENCUESTA = 14;
 /** P-12: versión del cuestionario (no el número de respuesta). */
 export const VERSION_ENCUESTA = 1;
 /** §Datos: el código dura 7 días. */
@@ -54,12 +54,9 @@ export function esZonaHorariaValida(zona: string): boolean {
 /** El código como lo guarda la base: sin espacios y en mayúsculas (`k7p2qx` sirve igual, P-14). */
 export const normalizarCodigoInvitacion = (codigo: string) => codigo.replace(/\s+/g, '').toUpperCase();
 
-const esquemaNombrePerfil = (que: string) =>
-  z.string().trim().min(1, { error: `Escribe tu ${que}.` }).max(80, { error: `Tu ${que} puede tener hasta 80 caracteres.` });
-
 export const esquemaZonaHoraria = z
-  .string()
-  .max(64)
+  .string({ error: 'La zona horaria va como texto, por ejemplo America/Santiago.' })
+  .max(64, { error: 'Esa zona horaria no existe.' })
   .refine(esZonaHorariaValida, { error: 'Esa zona horaria no existe.' });
 
 export const esquemaCodigoInvitacion = z
@@ -68,34 +65,32 @@ export const esquemaCodigoInvitacion = z
   .pipe(z.string().regex(/^[A-Z0-9]{6}$/, { error: 'El código tiene 6 letras y números.' }));
 
 // ── PATCH /me ────────────────────────────────────────────────────────────────
-// El rol y el correo no están: mandarlos da 400 (INT-020, SEG-012).
-export const esquemaPerfilCambios = z.strictObject({
-  nombre: esquemaNombrePerfil('nombre').optional(),
-  apellido: esquemaNombrePerfil('apellido').optional(),
-  timezone: esquemaZonaHoraria.optional(),
-  unidades: z.enum(UNIDADES).optional(),
-  descanso_default_s: z
-    .number()
-    .int()
-    .min(DESCANSO_MIN_S, { error: 'El mínimo es 30 segundos.' })
-    .max(DESCANSO_MAX_S, { error: 'El máximo es 5 minutos.' })
-    .optional(),
-  modo_gimnasio: z.boolean().optional(),
-  /** Solo alumno: recordatorio para entrenar (CU-51). */
-  recordatorio_activo: z.boolean().optional(),
-  /** Solo alumno: hora habitual «HH:MM» en su zona; null vuelve al cálculo automático (P-21). */
-  recordatorio_hora: z
-    .string()
-    .regex(/^([01]\d|2[0-3]):[0-5]\d$/, { error: 'La hora va como HH:MM.' })
-    .nullable()
-    .optional(),
-});
-
-/** GET /me más los ajustes del recordatorio (null para el entrenador). */
-export const esquemaPerfilUsuario = esquemaUsuario.extend({
-  recordatorio_activo: z.boolean().nullable(),
-  recordatorio_hora: z.string().nullable(),
-});
+// El rol y el correo no están: mandarlos da 400 (INT-020, SEG-012). Un cuerpo vacío también: no
+// hay nada que cambiar. El esquema de la respuesta (esquemaPerfilUsuario) vive en cuentas.ts
+// porque GET /me usa el mismo.
+export const esquemaPerfilCambios = z
+  .strictObject({
+    nombre: esquemaNombrePersona('nombre').optional(),
+    apellido: esquemaNombrePersona('apellido').optional(),
+    timezone: esquemaZonaHoraria.optional(),
+    unidades: z.enum(UNIDADES, { error: 'Las unidades van como kg o lb.' }).optional(),
+    descanso_default_s: z
+      .number({ error: 'El descanso va en segundos.' })
+      .int({ error: 'El descanso va en segundos enteros.' })
+      .min(DESCANSO_MIN_S, { error: 'El mínimo es 30 segundos.' })
+      .max(DESCANSO_MAX_S, { error: 'El máximo es 5 minutos.' })
+      .optional(),
+    modo_gimnasio: z.boolean({ error: 'modo_gimnasio va como true o false.' }).optional(),
+    /** Solo alumno: recordatorio para entrenar (CU-51). */
+    recordatorio_activo: z.boolean({ error: 'recordatorio_activo va como true o false.' }).optional(),
+    /** Solo alumno: hora habitual «HH:MM» en su zona; null vuelve al cálculo automático (P-21). */
+    recordatorio_hora: z
+      .string({ error: 'La hora va como HH:MM.' })
+      .regex(/^([01]\d|2[0-3]):[0-5]\d$/, { error: 'La hora va como HH:MM, de 00:00 a 23:59.' })
+      .nullable()
+      .optional(),
+  })
+  .refine((c) => Object.values(c).some((v) => v !== undefined), { error: 'Manda al menos un campo para cambiar.' });
 
 // ── Encuesta (POST y GET /me/survey) ─────────────────────────────────────────
 // §Pantallas, «Las 10 preguntas de la encuesta». Los valores van en snake_case; los textos que se
@@ -112,22 +107,39 @@ export const esquemaEncuestaRespuestas = z.strictObject({
   /** 2. Experiencia entrenando. */
   experiencia: z.enum(EXPERIENCIAS_ENCUESTA),
   /** 3. Días por semana: 2, 3, 4 o 5 (5 es «cinco o más»). */
-  dias_semana: z.number().int().min(2, { error: 'Elige de 2 a 5 días.' }).max(5, { error: 'Elige de 2 a 5 días.' }),
+  dias_semana: z
+    .number({ error: 'Elige de 2 a 5 días.' })
+    .int({ error: 'Elige de 2 a 5 días.' })
+    .min(2, { error: 'Elige de 2 a 5 días.' })
+    .max(5, { error: 'Elige de 2 a 5 días.' }),
   /** 4. Dónde entrenas. */
   lugar: z.enum(LUGARES_ENCUESTA),
   /** 5. Minutos por sesión. */
   minutos_sesion: z.union([z.literal(30), z.literal(45), z.literal(60), z.literal(90)], { error: 'Elige 30, 45, 60 o 90 minutos.' }),
-  /** 6. Fecha de nacimiento (AAAA-MM-DD). La edad mínima la revisa la API (P-13, 422). */
+  /**
+   * 6. Fecha de nacimiento (AAAA-MM-DD). La edad (14 a 100 años, P-13) la revisa la API con el
+   * día de hoy en la zona del alumno (422, errorFechaNacimiento de reglas.ts).
+   */
   fecha_nacimiento: esquemaFechaDia,
-  /** 7. Altura en centímetros. */
-  altura_cm: z.number().min(100, { error: 'Escribe un número entre 100 y 250.' }).max(250, { error: 'Escribe un número entre 100 y 250.' }),
+  /** 7. Altura en centímetros. Junto con el peso, el IMC tiene que ser posible (422, errorImc). */
+  altura_cm: z
+    .number({ error: `Escribe un número entre ${ALTURA_MIN_CM} y ${ALTURA_MAX_CM}.` })
+    .min(ALTURA_MIN_CM, { error: `Escribe un número entre ${ALTURA_MIN_CM} y ${ALTURA_MAX_CM}.` })
+    .max(ALTURA_MAX_CM, { error: `Escribe un número entre ${ALTURA_MIN_CM} y ${ALTURA_MAX_CM}.` }),
   /** 8. Peso actual en kilos: queda como primer registro de peso corporal. */
-  peso_kg: z.number().min(30, { error: 'Escribe un número entre 30 y 300.' }).max(300, { error: 'Escribe un número entre 30 y 300.' }),
+  peso_kg: z
+    .number({ error: `Escribe un número entre ${PESO_CORPORAL_MIN_KG} y ${PESO_CORPORAL_MAX_KG}.` })
+    .min(PESO_CORPORAL_MIN_KG, { error: `Escribe un número entre ${PESO_CORPORAL_MIN_KG} y ${PESO_CORPORAL_MAX_KG}.` })
+    .max(PESO_CORPORAL_MAX_KG, { error: `Escribe un número entre ${PESO_CORPORAL_MIN_KG} y ${PESO_CORPORAL_MAX_KG}.` }),
   /** 9. Lesiones o molestias: «ninguna» excluye las demás; más un texto libre. */
   lesiones: z
     .strictObject({
-      zonas: z.array(z.enum(LESIONES_ENCUESTA)).min(1, { error: 'Elige al menos una opción.' }).max(LESIONES_ENCUESTA.length),
-      texto: z.string().trim().max(500).optional(),
+      zonas: z
+        .array(z.enum(LESIONES_ENCUESTA, { error: 'Esa zona no está en la lista.' }))
+        .min(1, { error: 'Elige al menos una opción.' })
+        .max(LESIONES_ENCUESTA.length)
+        .refine((zonas) => new Set(zonas).size === zonas.length, { error: 'Cada zona va una sola vez.' }),
+      texto: z.string().trim().max(500, { error: 'El detalle puede tener hasta 500 caracteres.' }).optional(),
     })
     .refine((l) => !l.zonas.includes('ninguna') || l.zonas.length === 1, {
       error: '«Ninguna» no va con otras lesiones.',

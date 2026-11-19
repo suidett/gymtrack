@@ -51,7 +51,8 @@ describeConBase('Cuentas: registro', () => {
   it('INT-004 contraseñas de 7 y 129 dan 400 con details.campo = password; 8 y 128 dan 201', async () => {
     const intentar = (largo: number, i: number) => e.pedir({
       method: 'POST', url: '/v1/auth/register',
-      payload: { rol: 'client', nombre: 'Prueba', apellido: 'Largo', email: `largo${i}@gymtrack.test`, password: 'a'.repeat(largo) },
+      // Letras que no se repiten seguidas: una de un solo carácter repetido es fácil de adivinar (VAL-004).
+      payload: { rol: 'client', nombre: 'Prueba', apellido: 'Largo', email: `largo${i}@gymtrack.test`, password: 'sentadilla'.repeat(13).slice(0, largo) },
     });
     for (const [i, largo] of [7, 129].entries()) {
       const r = await intentar(largo, i);

@@ -33,7 +33,7 @@ import {
 } from './errores';
 import { PasoCuentaGoogle } from './PasoCuentaGoogle';
 import { useIngresoGoogle } from './useIngresoGoogle';
-import { limpiarCorreo, sinErrores, validarIngreso, type Errores, type FormIngreso, type RolAcceso } from './validacion';
+import { limpiarCorreo, sinErrores, validarIngreso, type Errores, type FormIngreso, type RolAcceso, LARGO_MAXIMO } from './validacion';
 
 const ROLES: { id: RolAcceso; nombre: string }[] = [
   { id: 'cliente', nombre: 'Cliente' },
@@ -162,6 +162,7 @@ export function PantallaIngreso() {
           <CampoTexto
             ref={correoRef}
             etiqueta="Correo"
+            maxLength={LARGO_MAXIMO.correo}
             valor={form.correo}
             onCambiar={(v) => cambiar('correo', v)}
             error={err.correo}
@@ -181,6 +182,7 @@ export function PantallaIngreso() {
           <CampoTexto
             ref={claveRef}
             etiqueta="Contraseña"
+            maxLength={LARGO_MAXIMO.clave}
             valor={form.clave}
             onCambiar={(v) => cambiar('clave', v)}
             error={err.clave}

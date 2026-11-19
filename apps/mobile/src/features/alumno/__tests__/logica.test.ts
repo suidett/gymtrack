@@ -272,9 +272,9 @@ describe('Progreso: peso y medidas', () => {
     expect(firmado(1.25)).toBe('+1,3');
   });
 
-  it('APP-051 · lo que no se midió va null y no 0, y la grasa vacía también', () => {
+  it('APP-051 · lo que no se midió no va (nunca 0), y la grasa vacía tampoco', () => {
     const c = cuerpoMedidas('2026-11-17', { cinturaCm: 71.5, caderaCm: null, brazoCm: 0 });
-    expect(c).toEqual({ fecha: '2026-11-17', cintura_cm: 71.5, cadera_cm: null, pecho_cm: null, brazo_cm: null, muslo_cm: null, grasa_pct: null });
+    expect(c).toEqual({ fecha: '2026-11-17', cintura_cm: 71.5 });
   });
 });
 

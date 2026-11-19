@@ -363,6 +363,7 @@ function BarraBusqueda({ valor, onCambiar, onVolver }: { valor: string; onCambia
           placeholder="Buscar por nombre"
           placeholderTextColor={c['texto-2']}
           accessibilityLabel="Buscar cliente"
+          maxLength={80}
           autoCorrect={false}
           returnKeyType="search"
           className="h-full flex-1 font-sans-medium text-[16px] text-texto"

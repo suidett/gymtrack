@@ -10,6 +10,8 @@
 //   POST /me/drop-reports    los motivos y hasta 3 consejos por motivo (EP-59).
 // Los cuatro tipos son los de §Datos (estancamiento, baja_rendimiento, sin_sesiones, dolor) y los
 // seis motivos los de la pantalla 20 (sueño, estrés, alimentación, lesión, tiempo, otro).
+// Reglas de los cuerpos: un motivo va una sola vez y «otro» pide el comentario que lo explica; al
+// resolver, cada acción va una vez, «nada» no va con otras y las acciones van solo al resolver.
 // Reglas: los nombres llevan el área (Alerta, Baja) porque index.ts junta todo con export *.
 // Campos en snake_case y fechas con esquemaFechaHora. Los cuerpos van con z.strictObject.
 // Tócalo cuando: agregues o cambies una ruta de alertas, un tipo o un motivo.
@@ -78,10 +80,19 @@ export const esquemaListaAlertasEntrenador = esquemaPagina(esquemaAlerta).extend
 });
 
 // ── PATCH /alerts/:id ────────────────────────────────────────────────────────
-export const esquemaAlertaCambio = z.strictObject({
-  estado: z.enum(['vista', 'resuelta'], { error: 'El estado es vista o resuelta.' }),
-  acciones: z.array(z.enum(ACCIONES_RESOLUCION)).max(ACCIONES_RESOLUCION.length).optional(),
-});
+export const esquemaAlertaCambio = z
+  .strictObject({
+    estado: z.enum(['vista', 'resuelta'], { error: 'El estado es vista o resuelta.' }),
+    acciones: z
+      .array(z.enum(ACCIONES_RESOLUCION, { error: 'Las acciones son cargas, consejo, rutina o nada.' }))
+      .max(ACCIONES_RESOLUCION.length)
+      .refine((a) => new Set(a).size === a.length, { error: 'Cada acción va una sola vez.' })
+      .refine((a) => !a.includes('nada') || a.length === 1, { error: '«Nada» no va con otras acciones.' })
+      .optional(),
+  })
+  .refine((c) => c.estado === 'resuelta' || !c.acciones?.length, {
+    error: 'Las acciones van solo al resolver la alerta.', path: ['acciones'],
+  });
 
 // ── GET /me/alerts ───────────────────────────────────────────────────────────
 export const esquemaListaAlertasAlumno = z.object({ items: z.array(esquemaAlerta) });
@@ -95,6 +106,8 @@ export const esquemaReporteBajaEntrada = z.strictObject({
     .max(MOTIVOS_BAJA.length)
     .refine((m) => new Set(m).size === m.length, { error: 'Un motivo va una sola vez.' }),
   comentario: z.string().trim().max(500, { error: 'El comentario puede tener hasta 500 caracteres.' }).nullable().optional(),
+}).refine((r) => !r.motivos.includes('otro') || Boolean(r.comentario?.trim()), {
+  error: 'Cuéntanos cuál es el otro motivo.', path: ['comentario'],
 });
 
 export const esquemaConsejoBaja = z.object({

@@ -154,7 +154,7 @@ describeConBase('Notificaciones', () => {
     expect(e.buzon.ultimo(camila.email)).toMatchObject({ etiqueta: 'aviso', asunto: 'Martina reportó un dolor fuerte' });
     // Lo que escribió Martina no va en el push.
     expect(JSON.stringify(pushDe(camila))).not.toContain('Me tira');
-    await observar(martina, { tipo: 'dolor', texto: 'Molesta', exercise_id: PRESS, dolor_intensidad: 6 });
+    await observar(martina, { tipo: 'dolor', dolor_zona: 'hombro', texto: 'Molesta', exercise_id: PRESS, dolor_intensidad: 6 });
     expect(await e.prisma.alerta.count({ where: { tipo: 'dolor' } })).toBe(1);
     expect(pushDe(camila).map((p) => p.mensaje.datos.tipo)).toEqual(['dolor', 'observacion']);
     expect(pushDe(martina)).toHaveLength(0);
@@ -184,7 +184,7 @@ describeConBase('Notificaciones', () => {
   it('INT-145 WRK-017 NOT-034 Diego, alumno solo, no le avisa a nadie: ni su dolor ni su cierre', async () => {
     const { camila, diego } = await escenaConTelefonos();
     await registrarExpo(diego, TOKEN_DIEGO);
-    await observar(diego, { tipo: 'dolor', texto: 'Fuerte', exercise_id: PRESS, dolor_intensidad: 9 });
+    await observar(diego, { tipo: 'dolor', dolor_zona: 'hombro', texto: 'Fuerte', exercise_id: PRESS, dolor_intensidad: 9 });
     await cerrarSesion(diego, null, { dolor_general: { zona: 'rodilla', intensidad: 9 } });
     expect(avisos.buzon.todos()).toHaveLength(0);
     expect(e.buzon.ultimo(camila.email)).toBeUndefined();
@@ -228,7 +228,7 @@ describeConBase('Notificaciones', () => {
     expect([r.push.omitido, r.correo]).toEqual(['tope', true]);
     expect(pushDe(camila)).toHaveLength(2);
     expect(e.buzon.ultimo(camila.email)?.asunto).toBe('Martina tiene una alerta nueva');
-    await observar(martina, { tipo: 'dolor', texto: 'Fuerte', exercise_id: PRESS, dolor_intensidad: 8 });
+    await observar(martina, { tipo: 'dolor', dolor_zona: 'hombro', texto: 'Fuerte', exercise_id: PRESS, dolor_intensidad: 8 });
     expect(pushDe(camila).map((p) => p.mensaje.datos.tipo)).toEqual(['observacion', 'observacion', 'dolor']);
     // Un día después (en Santiago) vuelve a haber cupo.
     e.reloj.avanzar('1d');

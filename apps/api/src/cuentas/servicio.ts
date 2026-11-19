@@ -14,10 +14,10 @@
 // para los límites de intentos (src/seguridad/limitador.ts, aplicados en rutas.ts).
 // Depende de: la base (Prisma), el reloj inyectado, src/seguridad/* y el servicio de correo.
 // ─────────────────────────────────────────────────────────────────────────────
-import type { Sesion, Tokens, Usuario as UsuarioApi } from '@gymtrack/shared';
+import type { PerfilUsuario, Sesion, Tokens, Usuario as UsuarioApi } from '@gymtrack/shared';
 import { randomBytes, randomUUID } from 'node:crypto';
 import type { Config } from '../config';
-import { plantillaBienvenida, plantillaRecuperacion } from '../correo/plantillas';
+import { plantillaBienvenida, plantillaIngreso, plantillaRecuperacion } from '../correo/plantillas';
 import type { ServicioCorreo } from '../correo';
 import { esDuplicado, type BaseDeDatos } from '../db';
 import { ErrorApi } from '../errores';
@@ -55,22 +55,38 @@ export function aUsuarioApi(u: Usuario): UsuarioApi {
 }
 
 /**
- * La forma pública con el entrenador del vínculo activo (trainer_clients) y si el alumno todavía
- * no responde la encuesta (survey_responses). La usan GET /v1/me, el ingreso y el registro, para
- * que la app decida al tiro si manda al alumno a la Encuesta (INT-002).
+ * La forma pública con el entrenador del vínculo activo (trainer_clients), si el alumno todavía
+ * no responde la encuesta (survey_responses) y los ajustes del recordatorio (client_profiles:
+ * recordatorio_activo y recordatorio_hora; null para el entrenador). La usan GET /v1/me, PATCH
+ * /v1/me, el ingreso y el registro, para que la app decida al tiro si manda al alumno a la
+ * Encuesta (INT-002). En el ingreso el esquema de la sesión deja afuera el recordatorio.
  */
-export async function usuarioApiCompleto(prisma: BaseDeDatos, u: Usuario): Promise<UsuarioApi> {
+export async function usuarioApiCompleto(prisma: Pick<BaseDeDatos, 'vinculoEntrenador' | 'respuestaEncuesta' | 'perfilAlumno'>, u: Usuario): Promise<PerfilUsuario> {
   const base = aUsuarioApi(u);
-  if (u.rol !== 'client') return { ...base, entrenador: null, encuesta_pendiente: false };
-  const [vinculo, encuestas] = await Promise.all([
+  if (u.rol !== 'client') return { ...base, entrenador: null, encuesta_pendiente: false, recordatorio_activo: null, recordatorio_hora: null };
+  const [vinculo, encuestas, perfil] = await Promise.all([
     prisma.vinculoEntrenador.findFirst({
       where: { alumnoId: u.id, estado: 'activo' },
       select: { entrenador: { select: { id: true, nombre: true, apellido: true } } },
     }),
     prisma.respuestaEncuesta.count({ where: { alumnoId: u.id } }),
+    prisma.perfilAlumno.findUnique({ where: { usuarioId: u.id }, select: { recordatorioActivo: true, recordatorioHora: true } }),
   ]);
-  return { ...base, entrenador: vinculo?.entrenador ?? null, encuesta_pendiente: encuestas === 0 };
+  return {
+    ...base,
+    entrenador: vinculo?.entrenador ?? null,
+    encuesta_pendiente: encuestas === 0,
+    // Sin fila en client_profiles el recordatorio está encendido (el valor por defecto de la base).
+    recordatorio_activo: perfil?.recordatorioActivo ?? true,
+    recordatorio_hora: perfil?.recordatorioHora ?? null,
+  };
 }
+
+/** Solo la parte de usuario (sin el recordatorio), para las respuestas con la sesión. */
+export const usuarioDeSesion = (p: PerfilUsuario): UsuarioApi => {
+  const { recordatorio_activo: _a, recordatorio_hora: _h, ...usuario } = p;
+  return usuario;
+};
 
 export function crearServicioCuentas(d: DependenciasCuentas) {
   // ── Tokens ───────────────────────────────────────────────────────────────
@@ -154,6 +170,15 @@ export function crearServicioCuentas(d: DependenciasCuentas) {
     return { usuario: aUsuarioApi(u), tokens };
   }
 
+  /**
+   * Correo «Iniciaste sesión» a la cuenta que acaba de entrar (contraseña o Google). Va en segundo
+   * plano: el ingreso no espera a Gmail. Renovar el token no lo manda, solo el ingreso de verdad.
+   */
+  function avisarIngreso(u: Usuario, metodo: 'contrasena' | 'google') {
+    const correo = plantillaIngreso({ nombre: u.nombre, cuando: d.reloj.ahora(), zona: u.timezone, metodo });
+    d.correo.enviarEnSegundoPlano({ ...correo, para: u.email, etiqueta: 'ingreso', usuarioId: u.id });
+  }
+
   return {
     // ── Registro ───────────────────────────────────────────────────────────
     async registrar(e: { rol: 'trainer' | 'client'; nombre: string; apellido: string; email: string; password: string }): Promise<Sesion> {
@@ -182,7 +207,8 @@ export function crearServicioCuentas(d: DependenciasCuentas) {
     async abrirSesion(u: Usuario): Promise<Sesion> {
       if (u.deletedAt) throw new ErrorApi('ACCOUNT_DELETED');
       const { tokens } = await emitirTokens(u);
-      return { usuario: await usuarioApiCompleto(d.prisma, u), tokens };
+      avisarIngreso(u, 'google');
+      return { usuario: usuarioDeSesion(await usuarioApiCompleto(d.prisma, u)), tokens };
     },
 
     // ── Ingreso ────────────────────────────────────────────────────────────
@@ -196,7 +222,8 @@ export function crearServicioCuentas(d: DependenciasCuentas) {
       // P-24: solo se dice que la cuenta está marcada si la contraseña era correcta.
       if (u.deletedAt) throw new ErrorApi('ACCOUNT_DELETED');
       const { tokens } = await emitirTokens(u);
-      return { usuario: await usuarioApiCompleto(d.prisma, u), tokens };
+      avisarIngreso(u, 'contrasena');
+      return { usuario: usuarioDeSesion(await usuarioApiCompleto(d.prisma, u)), tokens };
     },
 
     // ── Refresh con rotación ───────────────────────────────────────────────

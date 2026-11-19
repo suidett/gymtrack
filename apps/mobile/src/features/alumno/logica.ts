@@ -8,9 +8,15 @@
 // prueba en Node (ver __tests__/logica.test.ts) y las pantallas solo lo llaman.
 // Tócalo cuando: cambie una regla o un texto que sale de una regla («Faltan 2 cosas para guardar»).
 // No lo toques para: cómo se ve algo (va en la pantalla) ni cómo se lee la API (./datos.ts).
-// Depende de: ./datos (tipos) y @gymtrack/shared (fmtNum, MESES).
+// Las reglas de forma y de fondo que también revisa la API (largos, letras en el nombre, días
+// repetidos, topes de repeticiones o segundos, rangos de las medidas) salen de @gymtrack/shared,
+// así el error se ve junto al campo antes de enviar y dice lo mismo que la API.
+// Depende de: ./datos (tipos) y @gymtrack/shared (fmtNum, MESES y las reglas de reglas.ts).
 // ─────────────────────────────────────────────────────────────────────────────
-import { fmtNum, MESES } from '@gymtrack/shared';
+import {
+  DIAS_RUTINA_MAX, EJERCICIOS_POR_DIA_MAX, errorMedida, errorRepsSegun, erroresDiasRutina, fmtNum, INSTRUCCIONES_EJERCICIO_MAX,
+  LARGO_INVITACION, MESES, NOMBRE_DIA_MAX, NOMBRE_EJERCICIO_MAX, RANGOS_MEDIDA, tieneLetra,
+} from '@gymtrack/shared';
 import type {
   DiaDeRutina,
   EjercicioDeRutina,
@@ -195,15 +201,22 @@ export interface BorradorEjercicio {
   nota: string;
 }
 
+/** Topes de largo del formulario de ejercicio (los mismos de la API): van como maxLength. */
+export const LARGO_EJERCICIO = { nombre: NOMBRE_EJERCICIO_MAX, nota: INSTRUCCIONES_EJERCICIO_MAX } as const;
+
 export function erroresEjercicio(b: BorradorEjercicio, existentes: Pick<Ejercicio, 'nombre' | 'id'>[], idPropio?: string) {
-  const e: { nombre?: string; grupo?: string; equipo?: string } = {};
+  const e: { nombre?: string; grupo?: string; equipo?: string; nota?: string } = {};
   const nombre = b.nombre.trim();
   if (!nombre) e.nombre = 'Ponle un nombre.';
-  else if (existentes.some((x) => x.id !== idPropio && sinTildes(x.nombre) === sinTildes(nombre))) {
+  else if (nombre.length > NOMBRE_EJERCICIO_MAX) e.nombre = `El nombre va hasta ${NOMBRE_EJERCICIO_MAX} caracteres.`;
+  else if (!tieneLetra(nombre)) e.nombre = 'El nombre necesita al menos una letra.';
+  // La API revisa lo mismo con la base (409): aquí se avisa antes con lo que ya está cargado.
+  else if (existentes.some((x) => x.id !== idPropio && sinTildes(x.nombre).replace(/\s+/g, ' ') === sinTildes(nombre).replace(/\s+/g, ' '))) {
     e.nombre = `«${nombre}» ya está en la biblioteca.`;
   }
   if (!b.grupo) e.grupo = 'Elige un grupo.';
   if (!b.equipo) e.equipo = 'Elige el equipo.';
+  if (b.nota.trim().length > INSTRUCCIONES_EJERCICIO_MAX) e.nota = `Las instrucciones van hasta ${INSTRUCCIONES_EJERCICIO_MAX} caracteres.`;
   return e;
 }
 
@@ -388,6 +401,8 @@ export function diaNuevo(n: number): DiaDeRutina {
 /** El ejercicio con los valores de partida al agregarlo desde la biblioteca. */
 export function ejercicioNuevo(e: Pick<Ejercicio, 'id' | 'nombre' | 'grupo' | 'equipo' | 'tipoCarga' | 'incrementoKg'>): EjercicioDeRutina {
   const corporal = e.tipoCarga !== 'kg';
+  // En los de tiempo la «repetición» son segundos: parte en 30 a 45 s, como una plancha.
+  const tiempo = e.tipoCarga === 'tiempo';
   return {
     id: null,
     ejercicioId: e.id,
@@ -396,8 +411,8 @@ export function ejercicioNuevo(e: Pick<Ejercicio, 'id' | 'nombre' | 'grupo' | 'e
     equipo: e.equipo,
     tipoCarga: e.tipoCarga,
     series: 3,
-    repsMin: 8,
-    repsMax: 12,
+    repsMin: tiempo ? 30 : 8,
+    repsMax: tiempo ? 45 : 12,
     rir: 2,
     descansoS: 90,
     incrementoKg: corporal ? 0 : e.incrementoKg || 2.5,
@@ -424,16 +439,38 @@ export interface ErrorRutina {
   texto: string;
 }
 
-/** APP-021: lo que falta para guardar, en el orden en que se lee la pantalla. */
+/** Topes del editor de rutinas (los mismos de la API): van como maxLength. */
+export const LARGO_RUTINA = { nombre: 80, dia: NOMBRE_DIA_MAX, nota: 500 } as const;
+
+/**
+ * APP-021: lo que falta o está mal para guardar, en el orden en que se lee la pantalla. Revisa lo
+ * mismo que la API: nombre de 1 a 80, de 1 a 14 días, nombre del día de 1 a 40 y sin repetir,
+ * un día de la semana por día, hasta 30 ejercicios por día, el mínimo de repeticiones no pasa al
+ * máximo, el tope de repeticiones (60) o de segundos (600) y la nota de hasta 500.
+ */
 export function erroresRutina(b: BorradorRutina): ErrorRutina[] {
   const l: ErrorRutina[] = [];
-  if (!b.nombre.trim()) l.push({ campo: 'nombre', texto: 'Ponle nombre a la rutina.' });
+  const nombre = b.nombre.trim();
+  if (!nombre) l.push({ campo: 'nombre', texto: 'Ponle nombre a la rutina.' });
+  else if (nombre.length > LARGO_RUTINA.nombre) l.push({ campo: 'nombre', texto: `El nombre va hasta ${LARGO_RUTINA.nombre} caracteres.` });
   if (!b.dias.length) l.push({ campo: 'dias', texto: 'Agrega al menos un día.' });
+  if (b.dias.length > DIAS_RUTINA_MAX) l.push({ campo: 'dias', texto: `La rutina va hasta ${DIAS_RUTINA_MAX} días.` });
+  const repetidos = erroresDiasRutina(b.dias.map((d, i) => ({ nombre: d.nombre.trim() || `Día ${i + 1}`, dia_semana: d.diaSemana })));
   b.dias.forEach((d, i) => {
+    const nombreDia = d.nombre.trim();
+    if (!nombreDia) l.push({ campo: 'dia', dia: i, texto: `El día ${i + 1} no tiene nombre.` });
+    else if (nombreDia.length > NOMBRE_DIA_MAX) l.push({ campo: 'dia', dia: i, texto: `${nombreDia}: el nombre del día va hasta ${NOMBRE_DIA_MAX} caracteres.` });
+    for (const r of repetidos.filter((x) => x.dia === i)) l.push({ campo: 'dia', dia: i, texto: `${nombreDia || `Día ${i + 1}`}: ${r.mensaje}` });
     if (!d.ejercicios.length) l.push({ campo: 'dia', dia: i, texto: `${d.nombre} no tiene ejercicios.` });
+    if (d.ejercicios.length > EJERCICIOS_POR_DIA_MAX) l.push({ campo: 'dia', dia: i, texto: `${d.nombre}: un día va hasta ${EJERCICIOS_POR_DIA_MAX} ejercicios.` });
     d.ejercicios.forEach((e, k) => {
       if (e.repsMin > e.repsMax) {
         l.push({ campo: 'ejercicio', dia: i, ejercicio: k, texto: `${e.nombre} en ${d.nombre}: el mínimo de repeticiones pasa al máximo.` });
+      }
+      const tope = errorRepsSegun(e.tipoCarga, e.repsMax);
+      if (tope) l.push({ campo: 'ejercicio', dia: i, ejercicio: k, texto: `${e.nombre} en ${d.nombre}: ${tope.charAt(0).toLowerCase()}${tope.slice(1)}` });
+      if (e.nota.trim().length > LARGO_RUTINA.nota) {
+        l.push({ campo: 'ejercicio', dia: i, ejercicio: k, texto: `${e.nombre} en ${d.nombre}: la nota va hasta ${LARGO_RUTINA.nota} caracteres.` });
       }
     });
   });
@@ -581,11 +618,13 @@ export const PARTES_MEDIDA = [
 
 export type ParteMedida = (typeof PARTES_MEDIDA)[number]['id'];
 
-/** Cuerpo de POST /me/body-metrics para medidas. Lo que no se midió va null, nunca 0 (APP-051). */
+/**
+ * Cuerpo de POST /me/body-metrics para medidas. Lo que no se midió no va (nunca 0, APP-051): la API
+ * acepta null como «no lo medí», pero sin el campo se lee más claro.
+ */
 export function cuerpoMedidas(fecha: string, valores: Partial<{ [k in ParteMedida | 'grasaPct']: number | null }>) {
   const v = (x: number | null | undefined) => (typeof x === 'number' && x > 0 ? Math.round(x * 10) / 10 : null);
-  return {
-    fecha,
+  const campos = {
     cintura_cm: v(valores.cinturaCm),
     cadera_cm: v(valores.caderaCm),
     pecho_cm: v(valores.pechoCm),
@@ -593,6 +632,27 @@ export function cuerpoMedidas(fecha: string, valores: Partial<{ [k in ParteMedid
     muslo_cm: v(valores.musloCm),
     grasa_pct: v(valores.grasaPct),
   };
+  return { fecha, ...Object.fromEntries(Object.entries(campos).filter(([, x]) => x !== null)) } as { fecha: string } & Partial<Record<keyof typeof campos, number>>;
+}
+
+/** Rango de cada medida para su más y menos (el mismo de la API, RANGOS_MEDIDA). */
+export const RANGO_PARTE: { [k in ParteMedida]: { min: number; max: number } } = {
+  cinturaCm: RANGOS_MEDIDA.cintura_cm,
+  caderaCm: RANGOS_MEDIDA.cadera_cm,
+  pechoCm: RANGOS_MEDIDA.pecho_cm,
+  brazoCm: RANGOS_MEDIDA.brazo_cm,
+  musloCm: RANGOS_MEDIDA.muslo_cm,
+};
+
+/** Los errores de las medidas antes de guardar (por si un valor quedó fuera de su rango). */
+export function erroresMedidas(valores: Partial<{ [k in ParteMedida]: number | null }>): Partial<Record<ParteMedida, string>> {
+  const e: Partial<Record<ParteMedida, string>> = {};
+  for (const p of PARTES_MEDIDA) {
+    const x = valores[p.id];
+    const m = typeof x === 'number' ? errorMedida(p.api, x) : null;
+    if (m) e[p.id] = m;
+  }
+  return e;
 }
 
 /** Las medidas que tienen al menos un perímetro. */
@@ -601,9 +661,12 @@ export function conPerimetros(ms: Medida[]): Medida[] {
 }
 
 // ── Perfil (PAN-15) ──────────────────────────────────────────────────────────
-/** Lo que el alumno escribe en las casillas del código: mayúsculas, letras y números, 6 como mucho. */
+/**
+ * Lo que el alumno escribe en las casillas del código: mayúsculas, letras sin tilde ni ñ y
+ * números, 6 como mucho (la misma forma que esquemaCodigoInvitacion de la API).
+ */
 export function limpiarCodigo(s: string): string {
-  return s.toUpperCase().replace(/[^A-Z0-9Ñ]/g, '').slice(0, 6);
+  return s.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, LARGO_INVITACION);
 }
 
 export const DESCANSO_MIN = 30;
@@ -688,6 +751,20 @@ export function nombreMotivo(m: Motivo): string {
 }
 
 /** «Enviar», «Enviar (2)» o «Enviando…». */
+/** POST /me/drop-reports: el comentario va hasta 500 caracteres. */
+export const COMENTARIO_MOTIVOS_MAX = 500;
+
+/**
+ * El error del comentario de Motivos, o null: «otro» pide contar cuál es (la misma regla de la API,
+ * esquemaReporteBajaEntrada) y el comentario va hasta 500 caracteres.
+ */
+export function errorComentarioMotivos(elegidos: readonly string[], comentario: string): string | null {
+  const c = comentario.trim();
+  if (elegidos.includes('otro') && !c) return 'Cuéntanos cuál es el otro motivo.';
+  if (c.length > COMENTARIO_MOTIVOS_MAX) return `El comentario puede tener hasta ${COMENTARIO_MOTIVOS_MAX} caracteres.`;
+  return null;
+}
+
 export function textoEnviar(n: number, enviando: boolean): string {
   if (enviando) return 'Enviando…';
   return n ? `Enviar (${n})` : 'Enviar';
