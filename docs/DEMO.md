@@ -71,6 +71,6 @@ En local (con `DATABASE_URL` en `apps/api/.env` o en el entorno): `pnpm --filter
 ## Cuidados
 
 - **Solo toca el dominio de la demo.** Nunca borra otras cuentas ni los ejercicios base. Si alguien de afuera se vinculó con el código de un entrenador de la demo, al volver a cargarla pierde ese vínculo y las rutinas que ese entrenador le escribió (su cuenta y sus sesiones quedan).
-- **Correo.** `demo.gymtrack.cl` no recibe correo: «Olvidé mi contraseña» no llega a estas cuentas. Si el worker de la noche encuentra una alerta nueva para un entrenador de la demo, le manda el correo de alertas a esa dirección y rebota. Para no ensuciar la cuenta de Gmail, carga la demo cerca de la evaluación y bórrala después.
+- **Correo.** `demo.gymtrack.cl` no recibe correo, así que la API ni lo intenta: `src/correo/index.ts` omite los destinos de ese dominio y de los reservados para pruebas (`.test`, `.example`, `.invalid`, `.localhost`) y lo deja en el log como «correo omitido». «Olvidé mi contraseña» no le llega a estas cuentas: para mostrar el correo, usa una cuenta con un correo real.
 - **Avisos al celular.** Las cuentas parten sin dispositivos registrados. Si en la demo alguien toca «Activar avisos» con una cuenta de la demo, recibe los avisos de verdad (por ejemplo, al responder los motivos de Benjamín le llega el aviso a Francisca).
 - **No trae** fotos de progreso (necesitan archivos en el almacenamiento) ni cuentas con Google.

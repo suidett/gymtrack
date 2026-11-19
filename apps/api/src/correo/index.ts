@@ -72,25 +72,61 @@ export function crearServicioCorreo(opciones: {
   };
 }
 
+/**
+ * Dominios que no reciben correo: los reservados para pruebas (.test, .example, .invalid,
+ * .localhost, RFC 2606) y el de las cuentas de demostración (docs/DEMO.md). Mandarles un correo
+ * real solo genera rebotes en la cuenta que envía.
+ */
+const DOMINIOS_SIN_CORREO = /(^|\.)(test|example|invalid|localhost|demo\.gymtrack\.cl)$/i;
+
+/** true si el correo es de un dominio de prueba o de la demo y no hay que mandarlo. */
+export function esDestinoDePrueba(correo: string): boolean {
+  const dominio = correo.slice(correo.lastIndexOf('@') + 1).trim();
+  return dominio === '' || DOMINIOS_SIN_CORREO.test(dominio);
+}
+
+/**
+ * Envuelve un adaptador real (Resend o Gmail) para que omita los destinos de prueba y de la demo.
+ * Lo omitido queda en el log con el tipo y el id del usuario, sin el correo.
+ */
+export function omitirDestinosDePrueba(adaptador: AdaptadorCorreo, log: FastifyBaseLogger): AdaptadorCorreo {
+  return {
+    nombre: adaptador.nombre,
+    async enviar(correo) {
+      if (esDestinoDePrueba(correo.para)) {
+        log.info({ correo: correo.etiqueta, usuario_id: correo.usuarioId }, 'correo omitido: destino de prueba o demo');
+        return;
+      }
+      await adaptador.enviar(correo);
+    },
+  };
+}
+
 /** Arma el adaptador que pide la configuración. */
 export function adaptadorDesdeConfig(config: Config, log: FastifyBaseLogger): { adaptador: AdaptadorCorreo; buzon?: Buzon } {
   if (config.correo.driver === 'resend') {
     return {
-      adaptador: crearAdaptadorResend({
-        apiKey: config.correo.resendApiKey!,
-        remitente: config.correo.remitente,
-        responderA: config.correo.responderA,
-      }),
+      adaptador: omitirDestinosDePrueba(
+        crearAdaptadorResend({
+          apiKey: config.correo.resendApiKey!,
+          remitente: config.correo.remitente,
+          responderA: config.correo.responderA,
+        }),
+        log,
+      ),
     };
   }
   // Gmail con clave de aplicación (src/correo/smtp.ts). config.ts ya exigió usuario y clave.
   if (config.correo.driver === 'smtp' && config.correo.smtp) {
     return {
-      adaptador: crearAdaptadorSmtp({
-        ...config.correo.smtp,
-        remitente: config.correo.remitente,
-        responderA: config.correo.responderA,
-      }),
+      adaptador: omitirDestinosDePrueba(
+        crearAdaptadorSmtp({
+          ...config.correo.smtp,
+          remitente: config.correo.remitente,
+          responderA: config.correo.responderA,
+        }),
+        log,
+      ),
     };
   }
   const buzon = crearBuzon();

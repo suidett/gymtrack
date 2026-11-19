@@ -4,11 +4,11 @@ import { Writable } from 'node:stream';
 import { colors } from '@gymtrack/tokens';
 import pino from 'pino';
 import { describe, expect, it } from 'vitest';
-import { crearServicioCorreo } from '../src/correo';
+import { crearServicioCorreo, esDestinoDePrueba, omitirDestinosDePrueba } from '../src/correo';
 import { crearAdaptadorConsola, crearAdaptadorMemoria, crearBuzon } from '../src/correo/desarrollo';
 import { escaparHtml, fmtVencimiento, plantillaBienvenida, plantillaRecuperacion } from '../src/correo/plantillas';
 import { crearAdaptadorResend, ErrorResend, TOPE_RESEND_MS, URL_RESEND } from '../src/correo/resend';
-import type { CorreoSaliente } from '../src/correo/tipos';
+import type { AdaptadorCorreo, CorreoSaliente } from '../src/correo/tipos';
 
 const TOKEN = 'AbCdEfGhIjKlMnOpQrStUvWxYz0123456789_-abcd';
 const recuperacion = (): CorreoSaliente => ({
@@ -134,6 +134,32 @@ describe('servicio de correo en segundo plano', () => {
     expect(texto).toContain('"codigo":"23505"');
     expect(texto).not.toContain('martina.fuentes@gymtrack.test');
     expect(texto).not.toContain('already exists');
+  });
+});
+
+describe('destinos de prueba y de la demo', () => {
+  it('reconoce los dominios reservados y el de la demo, y deja pasar los reales', () => {
+    for (const c of ['francisca@demo.gymtrack.cl', 'web.prueba@gymtrack.test', 'a@ejemplo.example', 'x@algo.invalid', 'y@localhost', 'z@']) {
+      expect(esDestinoDePrueba(c)).toBe(true);
+    }
+    for (const c of ['alguien@gmail.com', 'profe@uc.cl', 'demo@gymtrack.cl', 'ana@test.cl']) {
+      expect(esDestinoDePrueba(c)).toBe(false);
+    }
+  });
+
+  it('el adaptador real no manda a la demo y lo deja en el log sin el correo', async () => {
+    const lineas: string[] = [];
+    const log = pino({ level: 'info' }, new Writable({ write(t, _e, listo) { lineas.push(String(t)); listo(); } }));
+    const enviados: string[] = [];
+    const real: AdaptadorCorreo = { nombre: 'smtp', async enviar(c) { enviados.push(c.para); } };
+    const filtrado = omitirDestinosDePrueba(real, log);
+    await filtrado.enviar({ ...recuperacion(), para: 'francisca@demo.gymtrack.cl' });
+    await filtrado.enviar({ ...recuperacion(), para: 'alguien@gmail.com' });
+    expect(filtrado.nombre).toBe('smtp');
+    expect(enviados).toEqual(['alguien@gmail.com']);
+    const texto = lineas.join('');
+    expect(texto).toContain('correo omitido');
+    expect(texto).not.toContain('francisca@demo.gymtrack.cl');
   });
 });
 
