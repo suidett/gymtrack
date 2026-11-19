@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>GymTrack · ejercicio en 3D</title>
+<!--
+  Visor 3D para incrustar en la app (detalle del ejercicio). Muestra solo el maniquí de un
+  ejercicio, en bucle, con Frente, Lado y 3/4, pausa y giro con el dedo. Lo usan
+  apps/mobile/src/components/Visor3D.tsx (WebView en Android) y Visor3D.web.tsx (iframe en la web).
+  Parámetros en el fragmento: #ej=<slug>&tema=gimnasio|clara&vista=frente|lado|tres
+  El slug es el de la biblioteca (el mismo nombre del archivo en ./ejercicios).
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../sistema.css">
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: transparent; }
+  body { font-family: Archivo, system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
+  .marco { position: fixed; inset: 0; display: flex; flex-direction: column; background: var(--sup); color: var(--texto); --figura: var(--texto-2); }
+  .marco[data-tema="clara"] { --figura: color-mix(in srgb, var(--texto-2) 70%, #FFFFFF); }
+  .visor { position: relative; flex: 1; min-height: 0; }
+  .visor canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+  .visor canvas:active { cursor: grabbing; }
+  .pista { position: absolute; left: 12px; bottom: 8px; margin: 0; font-size: 12px; color: var(--texto-2); pointer-events: none; }
+  .mandos { display: flex; gap: 8px; padding: 8px 12px 12px; }
+  .mandos button { flex: 1; min-height: 44px; border-radius: var(--radio); border: 2px solid var(--sup-alta); background: transparent; color: var(--texto-2); font: 600 15px/1 Archivo, system-ui, sans-serif; }
+  .mandos button[aria-pressed="true"] { background: var(--sup-alta); color: var(--texto); border-color: var(--sup-alta); }
+  .mandos .jugar { flex: 0 0 48px; display: flex; align-items: center; justify-content: center; }
+  .mandos .jugar svg { width: 20px; height: 20px; fill: currentColor; }
+  .vacio { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 24px; text-align: center; color: var(--texto-2); font-size: 14px; }
+  .vacio b { color: var(--texto); font-size: 16px; }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<div class="marco" id="tel" data-tema="gimnasio">
+  <div class="vacio" id="estado"><b>Cargando el ejercicio…</b></div>
+</div>
+<script type="module">
+import { crearVisor, cargarEjercicio } from './motor.js';
+
+const p = new URLSearchParams(location.hash.slice(1));
+const slug = (p.get('ej') || '').replace(/[^a-z0-9-]/g, '');
+const tel = document.getElementById('tel');
+tel.dataset.tema = p.get('tema') === 'clara' ? 'clara' : 'gimnasio';
+const VISTAS = [['frente', 'Frente'], ['lado', 'Lado'], ['tres', '3/4']];
+const reducir = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function vacio(titulo, texto) {
+  tel.innerHTML = `<div class="vacio"><b>${titulo}</b><span>${texto}</span></div>`;
+}
+
+const ej = slug ? await cargarEjercicio(slug) : null;
+if (!ej) {
+  vacio('Sin animación 3D', 'Este ejercicio todavía no tiene su figura en 3D.');
+} else {
+  const icoPlay = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>';
+  const icoPausa = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>';
+  const vistaInicial = VISTAS.some(([v]) => v === p.get('vista')) ? p.get('vista') : (VISTAS.some(([v]) => v === ej.vista) ? ej.vista : 'tres');
+  tel.innerHTML = `
+    <div class="visor" data-visor><p class="pista">Gira con el dedo</p></div>
+    <div class="mandos" role="group" aria-label="Vista">
+      ${VISTAS.map(([v, t]) => `<button type="button" data-vista="${v}" aria-pressed="${v === vistaInicial}">${t}</button>`).join('')}
+      <button type="button" class="jugar" aria-label="Pausar"></button>
+    </div>`;
+  const v = crearVisor(tel.querySelector('[data-visor]'), { tel, ejercicio: ej, vista: vistaInicial, amortiguar: true, alMover: () => { if (!jugando) { v.posar(t); v.dibujar(); } } });
+  let t = 0.5;
+  let jugando = !reducir;
+  let antes = performance.now();
+  let pedido = 0;
+  const btnJugar = tel.querySelector('.jugar');
+  const pintarBoton = () => { btnJugar.innerHTML = jugando ? icoPausa : icoPlay; btnJugar.setAttribute('aria-label', jugando ? 'Pausar' : 'Reproducir'); };
+  function cuadro(ahora) {
+    const dt = Math.min(0.1, (ahora - antes) / 1000);
+    antes = ahora;
+    if (jugando) t = (t + dt / (ej.periodo || 3)) % 1;
+    v.posar(t);
+    v.dibujar();
+    pedido = jugando ? requestAnimationFrame(cuadro) : 0;
+  }
+  function seguir() { if (!pedido) { antes = performance.now(); pedido = requestAnimationFrame(cuadro); } }
+  btnJugar.addEventListener('click', () => { jugando = !jugando; pintarBoton(); if (jugando) seguir(); });
+  tel.querySelectorAll('[data-vista]').forEach((b) => b.addEventListener('click', () => {
+    v.vista(b.dataset.vista);
+    tel.querySelectorAll('[data-vista]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+    if (!jugando) { v.posar(t); v.dibujar(); }
+  }));
+  // Sin gastar batería: se detiene si la app pasa a segundo plano.
+  document.addEventListener('visibilitychange', () => { if (document.hidden) { cancelAnimationFrame(pedido); pedido = 0; } else if (jugando) seguir(); });
+  addEventListener('resize', () => { v.medir(); v.posar(t); v.dibujar(); });
+  pintarBoton();
+  v.posar(t);
+  v.dibujar();
+  if (jugando) seguir();
+}
+</script>
+</body>
+</html>

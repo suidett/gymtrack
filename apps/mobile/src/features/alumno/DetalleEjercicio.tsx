@@ -1,8 +1,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Detalle de ejercicio y Nuevo ejercicio · Zona: Alumno (área Ejercicios, PAN-10)
 //
-// Qué hace: el detalle de docs/pantallas/ejercicio.html: referencia (o «Sin referencia todavía»
-// en los propios), origen, cómo se hace, músculos o grupo, el historial del alumno (récord de 1RM
+// Qué hace: el detalle de docs/pantallas/ejercicio.html: referencia (el maniquí 3D en los de la
+// biblioteca, o «Sin referencia todavía» en los propios), origen, cómo se hace, músculos o grupo, el historial del alumno (récord de 1RM
 // estimado, mejor serie, gráfico desde la tercera sesión con «1RM estimado» y «Mejor serie», y
 // la lista de sesiones) y sus observaciones y dolores, con la hoja para anotar una. Sin señal, la
 // referencia avisa y lo demás sale de lo guardado (APP-025). Solo los propios muestran Editar.
@@ -13,7 +13,7 @@
 // Tócalo cuando: cambie el detalle de un ejercicio, su hoja de observación o el formulario.
 // No lo toques para: la lista y la búsqueda (./Ejercicios.tsx).
 // Depende de: ./api, ./datos, ./logica, ./piezas, ./graficos, ./Ejercicios (Miniatura),
-// @gymtrack/shared (e1rm), @/components/ui y @/lib/sesion.
+// @gymtrack/shared (e1rm), @/components/ui, @/components/VisorEjercicio3D y @/lib/sesion.
 // ─────────────────────────────────────────────────────────────────────────────
 import { detalleDeError, e1rm as calcularE1rm } from '@gymtrack/shared';
 import { router } from 'expo-router';
@@ -21,6 +21,7 @@ import { useMemo, useState } from 'react';
 import { Image, KeyboardAvoidingView, Linking, Platform, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BarraAccion, Boton, Cabecera, CampoTexto, Chip, Hoja, Pantalla, Paso, Separador, Tarjeta, Txt, useAviso } from '@/components/ui';
+import { Visor3D } from '@/components/VisorEjercicio3D';
 import { useSesion } from '@/lib/sesion';
 import {
   cambiarEjercicio,
@@ -275,6 +276,15 @@ function Referencia({ ej, propio, sinRed, onSubir }: { ej: Ejercicio; propio: bo
     return (
       <View className="overflow-hidden rounded-control border border-sup-alta bg-sup">
         <Image source={{ uri: foto.url }} style={{ width: '100%', aspectRatio: 16 / 9 }} resizeMode="cover" accessibilityLabel={`Referencia de ${ej.nombre}`} />
+        {video?.url ? <Boton titulo="Ver video" variante="fantasma" className="self-start" onPress={() => video.url && Linking.openURL(video.url)} /> : null}
+      </View>
+    );
+  }
+  // Los de la biblioteca traen su maniquí 3D (docs/pantallas/3d): se mueve en bucle y se gira.
+  if (ej.slug && !propio && !sinRed) {
+    return (
+      <View className="gap-2">
+        <Visor3D slug={ej.slug} nombre={ej.nombre} />
         {video?.url ? <Boton titulo="Ver video" variante="fantasma" className="self-start" onPress={() => video.url && Linking.openURL(video.url)} /> : null}
       </View>
     );

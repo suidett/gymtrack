@@ -30,6 +30,7 @@ import {
 const ej = (id: string, nombre: string, tipoCarga: Ejercicio['tipoCarga'] = 'kg'): Ejercicio => ({
   id,
   duenoId: null,
+  slug: id,
   nombre,
   grupo: 'Piernas',
   equipo: 'Barra',

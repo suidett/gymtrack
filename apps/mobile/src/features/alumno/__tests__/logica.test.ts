@@ -51,6 +51,7 @@ const MARTES = new Date(2026, 10, 17, 10); // martes 17 de noviembre de 2026
 const ej = (id: string, nombre: string, grupo: string, equipo: string, duenoId: string | null = null): Ejercicio => ({
   id,
   duenoId,
+  slug: duenoId ? null : id,
   nombre,
   grupo,
   equipo,

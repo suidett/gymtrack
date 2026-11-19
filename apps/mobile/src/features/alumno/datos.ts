@@ -78,6 +78,8 @@ export interface Rutina {
 export interface Ejercicio {
   id: string;
   duenoId: string | null;
+  /** El id de la biblioteca (`press-de-banca`), que también nombra su animación 3D; null en los propios. */
+  slug: string | null;
   nombre: string;
   grupo: string;
   equipo: string;
@@ -345,6 +347,7 @@ export function aEjercicio(x: unknown): Ejercicio {
   return {
     id: texto(o.id),
     duenoId: texto(campo(o, 'owner_id', 'dueno_id')) || null,
+    slug: texto(o.slug) || null,
     nombre: texto(o.nombre, 'Ejercicio'),
     grupo: texto(campo(o, 'grupo_muscular', 'grupo')),
     equipo: texto(o.equipo),
