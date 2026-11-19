@@ -8,7 +8,7 @@ Lo que pide la pauta y cómo mostrarlo, en el orden en que conviene hacerlo. Las
 | --- | --- |
 | API (servidor en Vultr, Santiago) | <https://gymtrack-api.64.176.27.203.sslip.io/health> |
 | App web para iPhone | <https://gymtrack-app-5dd46.web.app> |
-| APK de Android | Página de la última construcción en expo.dev (proyecto `@suidett2/gymtrack`, perfil `preview`), botón «Install» o el código QR |
+| APK de Android | <https://expo.dev/accounts/suidett2/projects/gymtrack/builds/b4d70cab-680f-4883-84ed-5259dcbbc7fb> (botón «Install» o el código QR). Trae Google, la campana de notificaciones, las validaciones, el guardado al tiro y los ejercicios en 3D |
 | Repositorio entregado | <https://github.com/suidett/Gymtrackfinal> |
 | Política de privacidad y condiciones | <https://gymtrack-app-5dd46.web.app/privacidad.html> y `/terminos.html` |
 
@@ -19,10 +19,11 @@ Lo que pide la pauta y cómo mostrarlo, en el orden en que conviene hacerlo. Las
 3. **Instalar en los teléfonos** (la pauta no revisa apps sin instalar):
    - Android: abrir la página del APK en el teléfono, «Install», aceptar «instalar apps de origen desconocido». Abrir la app una vez.
    - iPhone: abrir <https://gymtrack-app-5dd46.web.app> en **Safari**, Compartir > «Agregar a pantalla de inicio». Abrirla desde el ícono (no desde Safari) e ingresar una vez.
-4. **Avisos**: en cada teléfono, Perfil > «Activar avisos» y aceptar el permiso. Con una cuenta de entrenador, «Probar avisos»: llega un push a cada teléfono y un correo.
-5. **DBeaver conectado** a la base del servidor (abajo) y con la consulta de cuentas guardada.
-6. **Documento de requerimientos aprobado, impreso** (no se aceptan fotos).
-7. Teléfonos y computador cargados.
+4. **Ejercicios en 3D**: Ejercicios > cualquier ejercicio de la biblioteca: el maniquí se mueve en bucle y se gira con el dedo (necesita señal).
+5. **Avisos**: en cada teléfono, Perfil > «Activar avisos» y aceptar el permiso. Con una cuenta de entrenador, «Probar avisos»: llega un push a cada teléfono y un correo.
+6. **DBeaver conectado** a la base del servidor (abajo) y con la consulta de cuentas guardada.
+7. **Documento de requerimientos aprobado, impreso** (no se aceptan fotos).
+8. Teléfonos y computador cargados.
 
 ## Orden sugerido de la demostración
 
