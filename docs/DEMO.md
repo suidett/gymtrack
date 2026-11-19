@@ -25,6 +25,8 @@ Todas en el dominio `demo.gymtrack.cl`, zona America/Santiago, con encuesta resp
 | `fernanda@demo.gymtrack.cl` | Alumna sola | 5 semanas de su propia rutina «Glúteo y pierna 3 días» y un ejercicio propio («Patada de glúteo en polea»); la sentadilla búlgara se estancó | Alumna sin entrenador: rutina propia, ejercicio propio en la biblioteca. Su alerta de estancamiento no tiene entrenador (`trainer_id` nulo) y ya tiene sus motivos (tiempo), por eso la app ya no se los pide |
 | `ignacio@demo.gymtrack.cl` | Alumno solo | 4 semanas de su propia rutina «Full body en casa» (mancuernas y peso corporal) | Alumno principiante que entrena en la casa, flexiones y plancha que progresan en repeticiones y segundos |
 
+Todas las cuentas traen la campana con número: por ejemplo, Francisca con 4 sin leer (el dolor y la baja de Matías, las observaciones de Valentina y Josefa) y Valentina con 2 recordatorios. Tocar una la marca leída y abre su pantalla. «Probar avisos» deja una nueva que aparece sola en menos de 15 segundos, aunque el teléfono no tenga push.
+
 Las fechas son relativas al día en que se carga: la última sesión de casi todos es de los días anteriores, así Hoy, la racha, la adherencia de la semana y las alertas se ven al día. Los códigos de invitación vigentes cambian en cada carga: el script los muestra al terminar y también se ven en la app (Perfil del entrenador > Invitar).
 
 ## Qué queda en la base
@@ -46,6 +48,7 @@ SELECT id, email, rol, nombre, apellido, created_at FROM users WHERE email LIKE 
 | `observations` | Observaciones de los alumnos, consejos de los entrenadores y el dolor de Matías |
 | `alerts`, `drop_reports` | Las alertas de la tabla de arriba (nuevas, vistas y resueltas) y los motivos de Josefa y Fernanda |
 | `exercises` | Los 67 ejercicios base (no los toca) y el ejercicio propio de Fernanda |
+| `notificaciones` | Lo que muestra la campana de Hoy (alumno) y de Clientes (entrenador): los avisos de cada cuenta (observaciones, dolor, alertas del cierre y de la noche, consejos, rutinas asignadas y recordatorios). Sin leer, las de los últimos 3 días; leídas, las más antiguas y las alertas que el entrenador ya vio |
 
 ## Cargarla en el servidor (Dokploy)
 
