@@ -2,7 +2,11 @@
 // Servicio de avisos · Zona: Notificaciones (API)
 //
 // Qué hace: manda un aviso a una persona por los canales que correspondan y deja registro:
-//   1. Si ese aviso (su clave) ya salió, no hace nada (WRK-014).
+//   0. La notificación dentro de la app (la campana, ./bandeja.ts): SIEMPRE, antes que nada y
+//      con la misma clave, aunque la persona no tenga dispositivos, haya llegado al tope o el
+//      push falle. El tope es solo del push. Si no se pudo guardar, queda en el log y el aviso
+//      sigue.
+//   1. Si ese aviso (su clave) ya salió, no hace nada más (WRK-014).
 //   2. Push: si cuenta para el tope y la persona ya recibió 2 hoy (día de su zona), no sale
 //      (P-20, WRK-007, WRK-016). El dolor de 7 o más sale igual y cuenta. A cada dispositivo
 //      vigente le manda por su canal: Expo para los tokens de la app Android, Web Push para la
@@ -15,7 +19,7 @@
 // Tócalo cuando: cambie una regla del envío (el tope, qué cuenta, qué se borra).
 // No lo toques para: los textos (./textos.ts), a quién avisar en cada evento (./eventos.ts) ni
 // cómo se habla con Expo o el navegador (./proveedores.ts).
-// Depende de: ./almacen, ./proveedores, ./registro, ./config, src/correo (la forma del correo),
+// Depende de: ./almacen, ./bandeja, ./proveedores, ./registro, ./config, src/correo (la forma del correo),
 // ../progreso/zona (día local) y @gymtrack/shared (TOPE_AVISOS_DIA).
 // ─────────────────────────────────────────────────────────────────────────────
 import { TOPE_AVISOS_DIA } from '@gymtrack/shared';
@@ -25,6 +29,7 @@ import { resumenError } from '../../errores';
 import type { Reloj } from '../../reloj';
 import { diaLocal } from '../progreso/zona';
 import type { AlmacenDispositivos, Dispositivo, DispositivoExpo, DispositivoWeb } from './almacen';
+import { notificacionDeAviso, type Bandeja, type ContenidoNotificacion } from './bandeja';
 import type { ConfigAvisos } from './config';
 import type { BuzonPush, MensajePush, ProveedoresPush, ResultadoEnvio } from './proveedores';
 import type { RegistroAvisos } from './registro';
@@ -51,13 +56,20 @@ export interface Aviso {
   cuentaTope: boolean;
   /** Sale aunque ya haya 2 hoy (dolor de 7 o más, P-20). Igual cuenta. */
   saltaTope?: boolean;
+  /**
+   * Lo que queda en la campana cuando no es lo mismo del push (el correo de la noche no trae
+   * push). Sin esto, la notificación lleva el título, el texto y la ruta del push.
+   */
+  notificacion?: ContenidoNotificacion | null;
 }
 
 export type MotivoSinPush = 'tope' | 'sin_dispositivos' | 'sin_push';
 
 export interface ResultadoAviso {
-  /** true si ese aviso ya había salido: no se hizo nada. */
+  /** true si ese aviso ya había salido: no se mandó nada otra vez. */
   repetido: boolean;
+  /** true si este envío dejó la notificación en la campana (false si ya estaba o no hubo). */
+  notificacion: boolean;
   push: {
     dispositivos: number;
     enviados: number;
@@ -73,6 +85,8 @@ export interface ServicioAvisos {
   readonly config: ConfigAvisos;
   readonly dispositivos: AlmacenDispositivos;
   readonly registro: RegistroAvisos;
+  /** Las notificaciones dentro de la app (las rutas de la campana la leen). */
+  readonly bandeja: Bandeja;
   /** Lo que salió con PUSH_DRIVER memoria o consola (las pruebas lo leen). */
   readonly buzon: BuzonPush;
   enviar(aviso: Aviso): Promise<ResultadoAviso>;
@@ -87,6 +101,7 @@ export function crearServicioAvisos(o: {
   reloj: Reloj;
   dispositivos: AlmacenDispositivos;
   registro: RegistroAvisos;
+  bandeja: Bandeja;
   proveedores: ProveedoresPush;
   buzon: BuzonPush;
   /** Encola el correo (en la API, ctx.correo.enviarEnSegundoPlano). */
@@ -114,13 +129,27 @@ export function crearServicioAvisos(o: {
     return { dispositivos: ds.length, enviados: contar('enviado'), invalidos: contar('invalido'), fallidos: contar('fallido'), omitido: null, resultados };
   }
 
+  /** La campana: una por clave. Si la base falla, el aviso sigue (el push y el correo igual salen). */
+  async function guardarNotificacion(aviso: Aviso, ahora: Date): Promise<boolean> {
+    const n = notificacionDeAviso(aviso);
+    if (!n) return false;
+    try {
+      return await o.bandeja.crear(n, ahora);
+    } catch (err) {
+      o.log.error({ aviso: aviso.tipo, usuario_id: aviso.para.id, error: resumenError(err) }, 'no se pudo guardar la notificación');
+      return false;
+    }
+  }
+
   async function enviar(aviso: Aviso): Promise<ResultadoAviso> {
     const para = aviso.para;
-    if (para.deletedAt) return { repetido: false, push: vacio('sin_push'), correo: false };
+    if (para.deletedAt) return { repetido: false, notificacion: false, push: vacio('sin_push'), correo: false };
     const ahora = o.reloj.ahora();
+    // Primero la campana: no depende de dispositivos, del tope ni de que el push salga.
+    const notificacion = await guardarNotificacion(aviso, ahora);
     const dia = diaLocal(ahora, para.timezone || 'America/Santiago');
     const reservado = await o.registro.reservar({ clave: aviso.clave, usuarioId: para.id, dia, tipo: aviso.tipo, cuentaTope: aviso.cuentaTope }, ahora);
-    if (!reservado) return { repetido: true, push: vacio(null), correo: false };
+    if (!reservado) return { repetido: true, notificacion, push: vacio(null), correo: false };
 
     let push = vacio('sin_push');
     if (aviso.push) {
@@ -138,16 +167,18 @@ export function crearServicioAvisos(o: {
         aviso: aviso.tipo, usuario_id: para.id,
         push: { dispositivos: push.dispositivos, enviados: push.enviados, invalidos: push.invalidos, fallidos: push.fallidos, omitido: push.omitido },
         correo,
+        notificacion,
       },
       'aviso',
     );
-    return { repetido: false, push, correo };
+    return { repetido: false, notificacion, push, correo };
   }
 
   return {
     config: o.config,
     dispositivos: o.dispositivos,
     registro: o.registro,
+    bandeja: o.bandeja,
     buzon: o.buzon,
     enviar,
     enFondo(etiqueta, preparar) {

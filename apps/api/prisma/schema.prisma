@@ -210,6 +210,7 @@ model Usuario {
   passwordResets PasswordReset[]
   pushTokens     PushToken[]
   avisosEnviados AvisoEnviado[]
+  notificaciones Notificacion[]
 
   // Como alumno.
   perfilAlumno       PerfilAlumno?          @relation("PerfilDelAlumno")
@@ -317,6 +318,28 @@ model AvisoEnviado {
 
   @@index([usuarioId, dia])
   @@map("avisos_enviados")
+}
+
+/// Las notificaciones dentro de la app: la campana de Hoy (alumno) y de Clientes (entrenador)
+/// (src/modulos/notificaciones/bandeja.ts). Cada aviso deja una, con el mismo título y texto del
+/// push y la ruta de la app que abre, aunque la persona no tenga dispositivos, aunque haya llegado
+/// al tope de 2 push al día o aunque el push falle. La clave es la misma del aviso
+/// (avisos_enviados.clave): el mismo aviso dos veces no deja dos notificaciones.
+model Notificacion {
+  id        String    @id @default(uuid(7)) @db.Uuid
+  usuarioId String    @map("user_id") @db.Uuid
+  clave     String    @unique
+  tipo      String
+  titulo    String
+  cuerpo    String
+  ruta      String
+  leidaAt   DateTime? @map("leida_at") @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId, createdAt(sort: Desc)])
+  @@map("notificaciones")
 }
 
 // ── Perfil del alumno, encuesta y vínculo ────────────────────────────────────

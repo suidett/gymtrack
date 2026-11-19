@@ -10,16 +10,23 @@
 //                                             `correo: true`, también por correo. En producción
 //                                             solo el entrenador (al alumno, 403); fuera de
 //                                             producción, cualquiera. Hasta 10 por hora por persona.
+//   GET    /notificaciones                    la campana: las notificaciones de quien llama, lo
+//                                             último primero (`?limite=` de 1 a 50 y `?antes=`), y
+//                                             cuántas tiene sin leer.
+//   POST   /notificaciones/:id/leer           marca una propia como leída (la ajena o la que no
+//                                             existe dan 404, igual que siempre).
+//   POST   /notificaciones/leer-todas         marca todas las propias como leídas.
 // Al registrarse arma el servicio de avisos (./fabrica.ts) y lo deja en el contexto para que
 // sesiones y rutinas avisen (./eventos.ts). Al cerrar la API espera los avisos en curso.
 // Tócalo cuando: agregues o cambies una ruta de avisos.
 // No lo toques para: cuándo sale un aviso (./eventos.ts, ./recordatorios.ts), el tope
 // (./servicio.ts) ni la forma de la entrada y la salida (packages/shared/src/api/notificaciones.ts).
-// Depende de: src/compartido, ./fabrica, ./eventos, ./textos y @gymtrack/shared.
+// Depende de: src/compartido, ./fabrica, ./eventos, ./bandeja, ./textos y @gymtrack/shared.
 // ─────────────────────────────────────────────────────────────────────────────
 import { RUTAS_NOTIFICACIONES as R } from '@gymtrack/shared';
 import { randomUUID } from 'node:crypto';
 import { definirModulo, ErrorApi, esquemaDe, noEncontrado, prohibido, urlDe, usuarioDe } from '../../compartido';
+import { notificacionApi } from './bandeja';
 import { instalarAvisos } from './eventos';
 import { armarServicioAvisos } from './fabrica';
 import { avisoPrueba, correoPrueba } from './textos';
@@ -82,5 +89,26 @@ export default definirModulo(async (app, ctx) => {
         dispositivo_id: x.dispositivo.id, tipo: x.dispositivo.tipo, plataforma: x.dispositivo.plataforma, resultado: x.resultado,
       })),
     };
+  });
+
+  // ── Campana ────────────────────────────────────────────────────────────────
+  // Cualquiera con sesión (alumno con o sin entrenador, entrenador): cada uno ve solo lo suyo.
+  app.get(urlDe(R.listar), { schema: esquemaDe(R.listar), preHandler: app.exigirSesion }, async (req) => {
+    const { limite, antes } = req.query;
+    const { items, sinLeer } = await avisos.bandeja.listar(usuarioDe(req).id, { limite, antes: antes ? new Date(antes) : undefined });
+    return { items: items.map(notificacionApi), sin_leer: sinLeer };
+  });
+
+  app.post(urlDe(R.leer), { schema: esquemaDe(R.leer), preHandler: app.exigirSesion }, async (req) => {
+    const usuario = usuarioDe(req);
+    const fila = await avisos.bandeja.leer(usuario.id, req.params.id, ctx.reloj.ahora());
+    if (!fila) noEncontrado();
+    return { notificacion: notificacionApi(fila), sin_leer: await avisos.bandeja.contarSinLeer(usuario.id) };
+  });
+
+  app.post(urlDe(R.leerTodas), { schema: esquemaDe(R.leerTodas), preHandler: app.exigirSesion }, async (req) => {
+    const usuario = usuarioDe(req);
+    const marcadas = await avisos.bandeja.leerTodas(usuario.id, ctx.reloj.ahora());
+    return { marcadas, sin_leer: await avisos.bandeja.contarSinLeer(usuario.id) };
   });
 });

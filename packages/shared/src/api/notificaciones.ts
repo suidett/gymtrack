@@ -9,6 +9,11 @@
 //   DELETE /notificaciones/dispositivos/:id   lo borra (al cerrar sesión o al apagar los avisos).
 //   POST   /notificaciones/prueba             manda un aviso al propio usuario (solo entrenador,
 //                                             o cualquiera fuera de producción).
+//   GET    /notificaciones                    las notificaciones dentro de la app (la campana),
+//                                             lo último primero, con `?limite=` y `?antes=`, y
+//                                             cuántas hay sin leer.
+//   POST   /notificaciones/:id/leer           marca una propia como leída (ajena o inexistente: 404).
+//   POST   /notificaciones/leer-todas         marca todas las propias como leídas.
 // La forma va revisada aquí (formato del token, URL https, llaves en base64url) y el fondo
 // también: la suscripción web solo puede apuntar a un servicio de push conocido (FCM, Apple,
 // Mozilla, Windows), así la API nunca hace un POST a una dirección que eligió el cliente, y las
@@ -17,7 +22,8 @@
 // snake_case salvo la suscripción web, que va tal como la entrega el navegador
 // (PushSubscription.toJSON(): endpoint, expirationTime, keys). Los cuerpos van con
 // z.strictObject (CON-012).
-// Tócalo cuando: cambie lo que se registra de un dispositivo o lo que devuelve la prueba.
+// Tócalo cuando: cambie lo que se registra de un dispositivo, lo que devuelve la prueba o la forma
+// de las notificaciones de la campana.
 // No lo toques para: los textos de los avisos ni cuándo salen (apps/api/src/modulos/notificaciones).
 // Depende de: zod y ./comun (DefinicionRuta, esquemas base).
 // ─────────────────────────────────────────────────────────────────────────────
@@ -181,6 +187,77 @@ export const esquemaDatosAviso = z.object({
 });
 export type DatosAviso = z.infer<typeof esquemaDatosAviso>;
 
+// ── Notificaciones dentro de la app (la campana) ─────────────────────────────
+// Cada aviso deja una notificación para quien lo recibe, aunque no tenga dispositivos o el push
+// no salga (el tope de 2 al día es solo del push). Las ve la campana de Hoy y de Clientes.
+
+/** Los tipos que hoy deja la API (los mismos del aviso). La app no falla si llega uno nuevo. */
+export const TIPOS_NOTIFICACION = ['alerta', 'dolor', 'observacion', 'consejo', 'rutina', 'recordatorio', 'alertas_noche', 'prueba'] as const;
+export type TipoNotificacion = (typeof TIPOS_NOTIFICACION)[number];
+/** Cuántas trae GET /notificaciones si no se pide `limite`, y el máximo. */
+export const LIMITE_NOTIFICACIONES_POR_DEFECTO = 20;
+export const LIMITE_NOTIFICACIONES_MAXIMO = 50;
+
+const errorLimite = `limite va de 1 a ${LIMITE_NOTIFICACIONES_MAXIMO}, sin decimales.`;
+/** `?limite=` llega como texto: solo dígitos (nada de «1e1», «0x10», « 5» ni «2.5»), de 1 a 50. */
+const esquemaLimiteNotificaciones = z
+  .string({ error: errorLimite })
+  .regex(/^[0-9]{1,3}$/, { error: errorLimite })
+  .transform(Number)
+  .pipe(z.number().int().min(1, { error: errorLimite }).max(LIMITE_NOTIFICACIONES_MAXIMO, { error: errorLimite }));
+
+/**
+ * GET /notificaciones: `limite` (1 a 50, 20 si no viene) y `antes`, la fecha y hora ISO con zona
+ * de la última que ya tienes (trae las anteriores a ese instante). Estricta: otro parámetro da 400.
+ */
+export const esquemaQueryNotificaciones = z.strictObject({
+  limite: esquemaLimiteNotificaciones.default(LIMITE_NOTIFICACIONES_POR_DEFECTO),
+  antes: esquemaFechaHora
+    .refine((v) => Number.isFinite(Date.parse(v)), { error: 'antes no es una fecha que exista.' })
+    .optional(),
+});
+export type QueryNotificaciones = z.input<typeof esquemaQueryNotificaciones>;
+
+/** POST /notificaciones/:id/leer y /leer-todas no llevan cuerpo; si viene, tiene que ser `{}`. */
+export const esquemaSinCuerpoNotificacion = z.strictObject({}).nullish();
+
+export const esquemaNotificacion = z.object({
+  id: esquemaUuid,
+  /** Uno de TIPOS_NOTIFICACION. */
+  tipo: z.string(),
+  titulo: z.string(),
+  cuerpo: z.string(),
+  /** Ruta de la app que se abre al tocarla (la misma del push: `/entrenador/alertas`, `/cliente/<id>`, `/`). */
+  ruta: z.string(),
+  leida: z.boolean(),
+  created_at: esquemaFechaHora,
+});
+export type Notificacion = z.infer<typeof esquemaNotificacion>;
+
+/**
+ * La lista, lo último primero. `sin_leer` cuenta todas las tuyas sin leer, no solo las de la
+ * página. Una página nunca corta un mismo instante: si varias comparten la hora de la última, van
+ * todas (puede pasar de `limite`), así pedir la siguiente con `antes` no se salta ninguna.
+ */
+export const esquemaListaNotificaciones = z.object({
+  items: z.array(esquemaNotificacion),
+  sin_leer: z.number().int().nonnegative(),
+});
+export type ListaNotificaciones = z.infer<typeof esquemaListaNotificaciones>;
+
+export const esquemaNotificacionLeida = z.object({
+  notificacion: esquemaNotificacion,
+  sin_leer: z.number().int().nonnegative(),
+});
+export type NotificacionLeida = z.infer<typeof esquemaNotificacionLeida>;
+
+export const esquemaNotificacionesLeidas = z.object({
+  /** Cuántas estaban sin leer y quedaron leídas. */
+  marcadas: z.number().int().nonnegative(),
+  sin_leer: z.number().int().nonnegative(),
+});
+export type NotificacionesLeidas = z.infer<typeof esquemaNotificacionesLeidas>;
+
 // ── Catálogo ─────────────────────────────────────────────────────────────────
 export const RUTAS_NOTIFICACIONES = {
   registrarDispositivo: {
@@ -195,5 +272,18 @@ export const RUTAS_NOTIFICACIONES = {
   prueba: {
     metodo: 'POST', ruta: '/v1/notificaciones/prueba', publica: false,
     cuerpo: esquemaPruebaAvisoEntrada, exito: 200, respuesta: esquemaPruebaAviso,
+  },
+  // La campana: solo las propias. Una ajena o que no existe da 404, igual que siempre.
+  listar: {
+    metodo: 'GET', ruta: '/v1/notificaciones', publica: false,
+    query: esquemaQueryNotificaciones, exito: 200, respuesta: esquemaListaNotificaciones,
+  },
+  leer: {
+    metodo: 'POST', ruta: '/v1/notificaciones/:id/leer', publica: false,
+    params: esquemaParamsId, cuerpo: esquemaSinCuerpoNotificacion, exito: 200, respuesta: esquemaNotificacionLeida,
+  },
+  leerTodas: {
+    metodo: 'POST', ruta: '/v1/notificaciones/leer-todas', publica: false,
+    cuerpo: esquemaSinCuerpoNotificacion, exito: 200, respuesta: esquemaNotificacionesLeidas,
   },
 } as const satisfies CatalogoRutas;

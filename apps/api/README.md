@@ -18,7 +18,7 @@ Todas bajo `/v1`, salvo `/health`. Las privadas piden `Authorization: Bearer <ac
 | Progreso (`modulos/progreso`) | `GET /me/progress/exercises/:id`, `GET /me/progress/volume`, `GET /me/prs`, `GET` y `POST /me/body-metrics`, `POST` y `GET /me/photos`, `DELETE /me/photos/:id`, `PUT` y `GET /me/photos/:id/archivo` (públicas, firmadas), `GET /clients/:id/suggestions`, `PATCH /suggestions/:id` | El entrenador lee con `?client_id=` (P-02) |
 | Alertas (`modulos/alertas`) | `GET /trainer/alerts`, `PATCH /alerts/:id`, `GET /me/alerts`, `POST /me/drop-reports` | Resolver guarda `acciones` (cargas, consejo, rutina, nada) |
 | Entrenador (`modulos/entrenador`) | `GET /trainer/clients`, `GET /trainer/clients/:id`, `DELETE /trainer/clients/:id` | Lo ajeno da 404 |
-| Notificaciones (`modulos/notificaciones`) | `POST /notificaciones/dispositivos`, `DELETE /notificaciones/dispositivos/:id`, `POST /notificaciones/prueba` | Token de Expo (Android) o suscripción web (iPhone); la prueba es solo del entrenador en producción. Ver «Avisos al celular» |
+| Notificaciones (`modulos/notificaciones`) | `POST /notificaciones/dispositivos`, `DELETE /notificaciones/dispositivos/:id`, `POST /notificaciones/prueba`, `GET /notificaciones`, `POST /notificaciones/:id/leer`, `POST /notificaciones/leer-todas` | Token de Expo (Android) o suscripción web (iPhone); la prueba es solo del entrenador en producción. Las tres últimas son la campana de la app. Ver «Avisos al celular» y «Notificaciones en la app» |
 
 Todo error sale con el sobre de §API: `{ "error": { "code", "message", "details" } }`, con un código de `packages/shared/src/api/errores.ts`. El access dura 15 minutos (HS256); el refresh, 30 días; los tokens opacos se guardan solo como hash SHA-256. Lo que el rol no puede hacer da 403 `FORBIDDEN`; lo que no es tuyo ni de tu alumno, 404.
 
@@ -169,6 +169,18 @@ El módulo `src/modulos/notificaciones` registra los dispositivos y manda los pu
 - Lo que escribe el alumno no va en el push (se ve en la pantalla bloqueada): solo que dejó una observación y sobre qué.
 - Para la demostración: el entrenador toca «Probar avisos» en Perfil (o llama a `POST /v1/notificaciones/prueba` con `{"correo": true}`) y le llega un push a cada teléfono registrado y un correo. Lo que hay que configurar antes (Firebase, EAS, VAPID, Gmail) está en [docs/CONFIGURAR-SERVICIOS.md](../../docs/CONFIGURAR-SERVICIOS.md).
 
+## Notificaciones en la app
+
+Cada aviso de la tabla de arriba (también los recordatorios, el correo de la noche y «Probar avisos») deja una notificación en la tabla `notificaciones` (migración `20261119000000_notificaciones`) para quien lo recibe. Es lo que muestra la campana de Hoy (alumno) y de Clientes (entrenador), aunque el teléfono no tenga push.
+
+- Se crea **siempre** y antes del push (`src/modulos/notificaciones/servicio.ts` y `bandeja.ts`): aunque la persona no tenga dispositivos, aunque haya llegado al tope de 2 al día (el tope es solo del push) o aunque el push falle. Si la base no la puede guardar, queda en el log y el push sale igual.
+- Lleva el mismo título, texto y ruta del push (lo que escribe el alumno tampoco va, INT-150). El correo de la noche no tiene push: su notificación lleva el asunto del correo y las alertas en una línea.
+- La clave es la misma del aviso (`avisos_enviados.clave`, única también en `notificaciones`): el mismo aviso dos veces deja una sola.
+- `GET /v1/notificaciones?limite=1..50&antes=<iso>`: lo último primero, con `sin_leer` (todas las tuyas sin leer). `antes` es la hora de la última que ya tienes. Una página no corta un mismo instante: si varias comparten la hora de la última van todas, así la siguiente no se salta ninguna. La query es estricta: otro parámetro, un `limite` con decimales o un `antes` sin zona dan 400 con el campo.
+- `POST /v1/notificaciones/:id/leer` devuelve `{ notificacion, sin_leer }`; otra vez da lo mismo y no cambia la hora. La ajena o la que no existe: 404 `NOT_FOUND`. `POST /v1/notificaciones/leer-todas` devuelve `{ marcadas, sin_leer }`.
+- La app consulta cada 15 segundos mientras está al frente y al volver al frente (`apps/mobile/src/features/notificaciones`): con 60 llamadas por minuto por persona sobra.
+- La demo (`prisma/demo.ts`) deja notificaciones con las mismas funciones: sin leer las de los últimos 3 días.
+
 ## Ingreso con Google
 
 `POST /v1/auth/google` (`src/cuentas/google.ts`) recibe el `id_token` que Google le da a la app y lo verifica con google-auth-library: firma con los certificados de Google, emisor, vencimiento, audiencia contra `GOOGLE_CLIENT_IDS` y `email_verified`.
@@ -218,7 +230,7 @@ Cada área de §API es una carpeta en `src/modulos/<nombre>/` (hoy: perfil, ejer
 
    También: `e.crear('rodrigo')`, `vincular` y `desvincular`, `e.reloj.avanzar('7d')`, `idEjercicioBase('press-de-banca')` y `e.prisma` para preparar datos. Cada persona tiene 60 llamadas por minuto (el límite se vacía antes de cada caso).
 
-El esquema completo de la base está en `prisma/schema.prisma` (las 22 tablas de §Datos más `avisos_enviados`, con nombres en español en el código y en snake_case en la base). Una tabla o un campo nuevo: cambia el esquema y corre `pnpm --filter api db:nueva-migracion`.
+El esquema completo de la base está en `prisma/schema.prisma` (las 22 tablas de §Datos más `avisos_enviados` y `notificaciones`, con nombres en español en el código y en snake_case en la base). Una tabla o un campo nuevo: cambia el esquema y corre `pnpm --filter api db:nueva-migracion`.
 
 ## Dónde tocar
 
@@ -238,6 +250,7 @@ El esquema completo de la base está en `prisma/schema.prisma` (las 22 tablas de
 | La detección nocturna o la purga | `src/worker/tareas.ts` y `purga.ts` |
 | El texto de un correo | `src/correo/plantillas.ts` (los de avisos: `src/modulos/notificaciones/textos.ts`) |
 | Cuándo y a quién sale un aviso | `src/modulos/notificaciones/eventos.ts` y `recordatorios.ts` |
+| Qué queda en la campana de la app y cómo se pagina | `src/modulos/notificaciones/bandeja.ts` |
 | El tope de push o el registro | `src/modulos/notificaciones/servicio.ts` y `registro.ts` |
 | Cómo se habla con Expo o con Web Push | `src/modulos/notificaciones/proveedores.ts` |
 | El ingreso con Google | `src/cuentas/google.ts` (la variable, en `src/config.ts`) |

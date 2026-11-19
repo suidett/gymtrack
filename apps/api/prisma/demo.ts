@@ -5,11 +5,15 @@
 // entrenadores y 8 alumnos (6 con entrenador y 2 solos), todos con correo @demo.gymtrack.cl y la
 // misma contraseña (CLAVE_DEMO), con encuesta, hora habitual, rutinas armadas con los ejercicios
 // base, de 4 a 8 semanas de sesiones con series que progresan, peso y medidas, observaciones,
-// récords, sugerencias y alertas. No escribe esas filas a mano: llama a las mismas funciones de
+// récords, sugerencias, alertas y las notificaciones de la campana. No escribe esas filas a mano: llama a las mismas funciones de
 // dominio que usan las rutas (responderEncuesta, crearRutina, copiarRutina, activarRutina,
 // iniciarSesion, guardarSeries, cerrarSesion, detectarTrasCierre, crearObservacion,
 // crearAlertaSiFalta...) con el «ahora» de cada momento simulado, en orden, así las sugerencias,
-// los récords y las alertas salen con las reglas de la API. Cada alumno sigue lo que le sugiere
+// los récords y las alertas salen con las reglas de la API. Cada evento que en la API avisa deja su
+// notificación con las mismas funciones (armarAvisoDe..., notificacionDeAviso y la bandeja): las
+// observaciones, los cierres con alertas, las rutinas que asigna el entrenador, la alerta de la
+// noche y el recordatorio de las últimas 3 sesiones de cada alumno. Al final quedan sin leer las
+// de los últimos 3 días (salvo las alertas que el entrenador ya vio) y leídas las demás. Cada alumno sigue lo que le sugiere
 // la app y rinde según una fuerza que crece, se estanca o baja según su historia (ALUMNOS).
 // Las fechas son relativas a hoy en America/Santiago: correrla de nuevo deja la demo al día.
 // Es idempotente: primero borra las cuentas @demo.gymtrack.cl con todo lo que depende de ellas y
@@ -22,12 +26,13 @@
 // distintas (revisa el resumen que imprime al terminar).
 // No lo toques para: los ejercicios base y los consejos (prisma/semilla.ts) ni los datos de las
 // pruebas (test/ayudas).
-// Depende de: src/config.ts, src/db.ts, los servicios de src/modulos, src/seguridad/contrasenas.ts
+// Depende de: src/config.ts, src/db.ts, los servicios de src/modulos (con src/modulos/notificaciones
+// para la campana), src/seguridad/contrasenas.ts
 // y @gymtrack/shared. Necesita las migraciones al día y la semilla base (los 67 ejercicios).
 // Corre empaquetado con esbuild (dist/demo.js), igual que la semilla.
 // ─────────────────────────────────────────────────────────────────────────────
 import {
-  CONSEJOS_POR_MOTIVO, esquemaContrasena, esquemaEjercicioNuevo, esquemaEncuestaEntrada, esquemaFinSesion,
+  CONSEJOS_POR_MOTIVO, MINUTOS_ANTES_RECORDATORIO, esquemaContrasena, esquemaEjercicioNuevo, esquemaEncuestaEntrada, esquemaFinSesion,
   esquemaObservacionNueva, esquemaPerfilCambios, esquemaRutinaNueva, esquemaSeriesLote, esquemaSesionNueva,
   esquemaDiasRutina, type EjercicioNuevoApi, type EncuestaRespuestas,
 } from '@gymtrack/shared';
@@ -38,6 +43,10 @@ import { crearPrisma, type BaseDeDatos } from '../src/db';
 import type { Alerta, MetodoProgresion, MotivoBaja, Prisma, TipoAlerta, TipoCarga, Usuario } from '../src/generado/prisma/client';
 import { crearAlertaSiFalta, detectarTrasCierre, limiteSinSesiones } from '../src/modulos/alertas/deteccion';
 import { leerUmbrales, type Umbrales } from '../src/modulos/alertas/umbrales';
+import { crearBandeja, notificacionDeAviso, type Bandeja } from '../src/modulos/notificaciones/bandeja';
+import { armarAvisoDeCierre, armarAvisoDeObservacion, armarAvisoDeRutina, armarAvisosDeLaNoche } from '../src/modulos/notificaciones/eventos';
+import { armarAvisoRecordatorio } from '../src/modulos/notificaciones/recordatorios';
+import type { Aviso } from '../src/modulos/notificaciones/servicio';
 import { actualizarPerfil, crearInvitacion, responderEncuesta } from '../src/modulos/perfil/servicio';
 import { diaLocal, diaSemanaIso, fechaDbDeDia, inicioDelDia, sumarDias } from '../src/modulos/progreso/zona';
 import { activarRutina, copiarRutina, crearRutina, reemplazarDias, validarEstructura } from '../src/modulos/rutinas/servicio';
@@ -589,6 +598,8 @@ interface Contexto {
   /** slug → lo que hace falta para calcular cargas e incrementos. */
   info: Map<string, InfoEjercicio>;
   hashClave: string;
+  /** La bandeja de la campana (src/modulos/notificaciones/bandeja.ts), la misma de la API. */
+  bandeja: Bandeja;
 }
 
 interface InfoEjercicio {
@@ -602,6 +613,50 @@ function idEjercicio(ctx: Contexto, slug: string): string {
   const id = ctx.ejercicios.get(slug);
   if (!id) throw new Error(`No está el ejercicio «${slug}». Corre la semilla base antes (node dist/semilla.js).`);
   return id;
+}
+
+// ── Campana ──────────────────────────────────────────────────────────────────
+/**
+ * Lo que la API deja en la campana con cada aviso (servicio.ts y bandeja.ts), con la hora simulada
+ * del evento. Sin push ni correo: las cuentas de la demo no tienen dispositivos.
+ */
+async function dejarNotificacion(ctx: Contexto, aviso: Aviso | null, t: Date): Promise<void> {
+  const n = aviso ? notificacionDeAviso(aviso) : null;
+  if (n) await ctx.bandeja.crear(n, t);
+}
+
+/** Las notificaciones que quedan sin leer: las de los últimos 3 días. */
+const SIN_LEER_MS = 3 * DIA_MS;
+
+/**
+ * Lee la campana como lo haría cada persona: lo de hace más de 3 días ya lo leyó (el alumno al
+ * empezar su sesión siguiente, o a las pocas horas); lo reciente queda sin leer, salvo las alertas
+ * que el entrenador ya vio en Alertas (se leen a esa hora). Usa bandeja.leer, lo mismo que
+ * POST /v1/notificaciones/:id/leer.
+ */
+async function leerCampanas(ctx: Contexto, ids: string[]): Promise<void> {
+  const { prisma } = ctx;
+  const filas = await prisma.notificacion.findMany({ where: { usuarioId: { in: ids } }, orderBy: { createdAt: 'asc' } });
+  const sesiones = await prisma.sesionEntreno.findMany({
+    where: { alumnoId: { in: ids } }, select: { alumnoId: true, iniciadaAt: true }, orderBy: { iniciadaAt: 'asc' },
+  });
+  for (const f of filas) {
+    const edad = ctx.ahora.getTime() - f.createdAt.getTime();
+    let leidaAt: Date | null = null;
+    if (edad > SIN_LEER_MS) {
+      const siguiente = sesiones.find((x) => x.alumnoId === f.usuarioId && x.iniciadaAt > f.createdAt)?.iniciadaAt;
+      leidaAt = new Date(Math.min(siguiente?.getTime() ?? Infinity, mas(f.createdAt, 5 * HORA_MS).getTime()));
+    } else {
+      // Una alerta que el entrenador ya vio (o resolvió): leyó también su notificación.
+      const [tipo, id] = f.clave.split(':');
+      const alertas = tipo === 'cierre' || tipo === 'observacion'
+        ? await prisma.alerta.findMany({ where: { detalle: { path: [tipo === 'cierre' ? 'session_id' : 'observation_id'], equals: id }, entrenadorId: f.usuarioId } })
+        : [];
+      const vistas = alertas.map((a) => a.vistaAt ?? a.resueltaAt);
+      if (alertas.length > 0 && vistas.every((v) => v !== null)) leidaAt = new Date(Math.max(...vistas.map((v) => v!.getTime())));
+    }
+    if (leidaAt && leidaAt < ctx.ahora) await ctx.bandeja.leer(f.usuarioId, f.id, leidaAt);
+  }
 }
 
 // ── Borrar la demo ───────────────────────────────────────────────────────────
@@ -969,6 +1024,8 @@ async function cargarAlumno(
     const { observacion } = await crearObservacion(prisma, autor, entrada);
     // Un dolor de 7 o más dejó su alerta con la hora real: va a la de la observación.
     await prisma.alerta.updateMany({ where: { alumnoId: usuario.id, tipo: 'dolor', detalle: { path: ['observation_id'], equals: observacion.id } }, data: { createdAt: t } });
+    // Lo que avisa POST /observations: al entrenador (o al alumno, si la escribió el entrenador).
+    await dejarNotificacion(ctx, await armarAvisoDeObservacion(prisma, observacion.id, null), t);
   };
 
   const vista = (al: Alerta, t: Date) => agenda.poner(t, async () => {
@@ -1071,11 +1128,19 @@ async function cargarAlumno(
         : await armarRutina(ctx, RUTINAS[clave], { duenoId: dueno.id, alumnoId: usuario.id }, tRutina, a);
       await activarRutina(prisma, nueva, usuario.id, tRutina);
       rutina = await prisma.rutina.findUniqueOrThrow({ where: { id: nueva.id }, include: INCLUIR_RUTINA });
+      // Lo que avisa asignar (la copia de una plantilla, ya activa) o activar: solo si la armó el entrenador.
+      const accion = PLANTILLAS.has(clave) ? 'asignada_activa' : 'activada';
+      await dejarNotificacion(ctx, await armarAvisoDeRutina(prisma, rutina.id, dueno.id, accion), mas(tRutina, 20 * MIN_MS));
     }
     await agenda.correrHasta(inicioSesion);
     primera ??= inicioSesion;
     const metodo = rutina.metodoProgresion;
     const dia = rutina.dias[s.dia]!;
+    // El recordatorio del worker 30 minutos antes de su hora habitual, en las últimas 3 sesiones.
+    if (desdeFinal >= -3) {
+      const tRecordatorio = instanteLocal(s.fecha, horaBase - MINUTOS_ANTES_RECORDATORIO);
+      await dejarNotificacion(ctx, armarAvisoRecordatorio(usuario, s.fecha, horaBase, dia.nombre), tRecordatorio);
+    }
 
     // Cómo llega hoy: un día bueno o malo, la semana de baja o el dolor.
     const semanas = (inicioSesion.getTime() - primera.getTime()) / (7 * DIA_MS);
@@ -1131,8 +1196,9 @@ async function cargarAlumno(
     if (dolor) {
       await prisma.alerta.updateMany({ where: { alumnoId: usuario.id, tipo: 'dolor', ejercicioId: null, detalle: { path: ['session_id'], equals: id } }, data: { createdAt: cierre } });
     }
-    // Lo que corre la API después del cierre: estancamiento y baja.
+    // Lo que corre la API después del cierre: estancamiento y baja, y el aviso de las alertas al entrenador.
     await detectarTrasCierre(prisma, id, ctx.umbrales, cierre);
+    await dejarNotificacion(ctx, await armarAvisoDeCierre(prisma, id, null), mas(cierre, MIN_MS));
     ultimaCerrada = cierre;
 
     // Lo que precarga la próxima sesión: la sugerencia que dejó el cierre (como Hoy).
@@ -1177,6 +1243,8 @@ async function cargarAlumno(
           ultima_sesion_at: ultimaCerrada.toISOString(), desde: referencia.toISOString(), routine_id: rutina.id,
         },
       }, noche);
+      // El correo de la noche al entrenador deja también su notificación.
+      for (const aviso of await armarAvisosDeLaNoche(prisma, noche, null)) await dejarNotificacion(ctx, aviso, noche);
       await programarAlertas();
     }
   }
@@ -1272,6 +1340,7 @@ async function cargarDemo(prisma: BaseDeDatos, ahora: Date): Promise<void> {
     slugs: new Map(base.map((e) => [e.id, e.slug!])),
     info: new Map(base.map(({ slug, id: _id, ...info }) => [slug!, info])),
     hashClave: await hashearContrasena(CLAVE_DEMO),
+    bandeja: crearBandeja(prisma),
   };
 
   const entrenadores = new Map<ClaveEntrenador, Usuario>();
@@ -1296,10 +1365,20 @@ async function cargarDemo(prisma: BaseDeDatos, ahora: Date): Promise<void> {
   const idsAlumnos = (await prisma.usuario.findMany({ where: { email: { endsWith: `@${DOMINIO}` }, rol: 'client' }, select: { id: true } })).map((u) => u.id);
   const idsEntrenadores = [...entrenadores.values()].map((u) => u.id);
   await ajustarFechas(prisma, idsAlumnos, idsEntrenadores);
+  await leerCampanas(ctx, [...idsAlumnos, ...idsEntrenadores]);
   await imprimirResumen(prisma, resumen, entrenadores, codigos);
 }
 
 // ── Resumen ──────────────────────────────────────────────────────────────────
+/** «7 notificaciones (3 sin leer)». */
+async function campana(prisma: BaseDeDatos, usuarioId: string): Promise<string> {
+  const [total, sinLeer] = await Promise.all([
+    prisma.notificacion.count({ where: { usuarioId } }),
+    prisma.notificacion.count({ where: { usuarioId, leidaAt: null } }),
+  ]);
+  return `${total} notificaciones (${sinLeer} sin leer)`;
+}
+
 async function imprimirResumen(
   prisma: BaseDeDatos,
   alumnos: ResumenAlumno[],
@@ -1310,7 +1389,7 @@ async function imprimirResumen(
   for (const [clave, u] of entrenadores) {
     const clientes = await prisma.vinculoEntrenador.count({ where: { entrenadorId: u.id, estado: 'activo' } });
     const abiertas = await prisma.alerta.count({ where: { entrenadorId: u.id, estado: { in: ['nueva', 'vista'] } } });
-    console.log(`  entrenador  ${u.email.padEnd(30)} ${clientes} alumnos, ${abiertas} alertas abiertas, código vigente ${codigos.get(clave)}`);
+    console.log(`  entrenador  ${u.email.padEnd(30)} ${clientes} alumnos, ${abiertas} alertas abiertas, ${await campana(prisma, u.id)}, código vigente ${codigos.get(clave)}`);
   }
   for (const r of alumnos) {
     const u = await prisma.usuario.findUniqueOrThrow({ where: { email: r.email } });
@@ -1322,7 +1401,7 @@ async function imprimirResumen(
       prisma.alerta.findMany({ where: { alumnoId: u.id }, include: { ejercicio: { select: { nombre: true } } }, orderBy: { createdAt: 'asc' } }),
     ]);
     const conQuien = r.entrenador ? `con ${r.entrenador}` : 'solo';
-    console.log(`  alumno      ${r.email.padEnd(30)} ${conQuien}; «${r.rutina}»; ${r.sesiones} sesiones, ${series} series, ${prs} récords vigentes, ${medidas} medidas, ${obs} observaciones`);
+    console.log(`  alumno      ${r.email.padEnd(30)} ${conQuien}; «${r.rutina}»; ${r.sesiones} sesiones, ${series} series, ${prs} récords vigentes, ${medidas} medidas, ${obs} observaciones, ${await campana(prisma, u.id)}`);
     for (const al of alertas) {
       console.log(`              alerta ${al.tipo}${al.ejercicio ? ` (${al.ejercicio.nombre})` : ''}: ${al.estado}, ${al.createdAt.toISOString().slice(0, 10)}`);
     }

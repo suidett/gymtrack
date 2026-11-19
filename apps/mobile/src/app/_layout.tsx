@@ -102,6 +102,7 @@ function Navegacion() {
           <Stack.Screen name="rutina/nueva" options={{ animation: 'slide_from_bottom' }} />
           <Stack.Screen name="rutina/[id]" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="ejercicio/[id]" options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="notificaciones" options={{ animation: 'slide_from_right' }} />
         </Stack.Protected>
       </Stack>
       {conSesion && usuario ? <AvisosConSesion usuarioId={usuario.id} /> : null}

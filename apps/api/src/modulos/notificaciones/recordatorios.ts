@@ -19,7 +19,7 @@
 import { MINUTOS_ANTES_RECORDATORIO } from '@gymtrack/shared';
 import type { BaseDeDatos } from '../../db';
 import { diaLocal, diaSemanaIso, inicioDelDia, sumarDias } from '../progreso/zona';
-import type { ServicioAvisos } from './servicio';
+import type { Aviso, Destinatario, ServicioAvisos } from './servicio';
 import { avisoRecordatorio } from './textos';
 
 export const INTERVALO_RECORDATORIOS_MIN = 5;
@@ -80,6 +80,21 @@ export function instanteLocal(dia: string, minutos: number, zona: string): Date 
 /** true si `objetivo` cae en (ahora - intervalo, ahora]. */
 export function enVentana(objetivo: Date, ahora: Date, intervaloMin: number): boolean {
   return objetivo.getTime() > ahora.getTime() - intervaloMin * MIN_MS && objetivo.getTime() <= ahora.getTime();
+}
+
+/**
+ * El aviso del recordatorio de ese día: uno por alumno y día (la clave), cuenta para el tope. Lo
+ * usan mandarRecordatorios y la demo (prisma/demo.ts), así el texto y la clave son los mismos.
+ */
+export function armarAvisoRecordatorio(alumno: Destinatario, diaEntreno: string, hora: number, nombreDia: string | null): Aviso {
+  return {
+    tipo: 'recordatorio',
+    clave: `recordatorio:${alumno.id}:${diaEntreno}`,
+    para: alumno,
+    push: avisoRecordatorio({ hora: formatearHora(hora), dia: nombreDia }),
+    correo: null,
+    cuentaTope: true,
+  };
 }
 
 // ── Con base ─────────────────────────────────────────────────────────────────
@@ -154,14 +169,7 @@ export async function mandarRecordatorios(
       r.sin_recordatorio += 1;
       continue;
     }
-    const res = await avisos.enviar({
-      tipo: 'recordatorio',
-      clave: `recordatorio:${p.usuarioId}:${diaEntreno}`,
-      para: p.usuario,
-      push: avisoRecordatorio({ hora: formatearHora(hora), dia: nombreDia }),
-      correo: null,
-      cuentaTope: true,
-    });
+    const res = await avisos.enviar(armarAvisoRecordatorio(p.usuario, diaEntreno, hora, nombreDia));
     if (res.push.enviados > 0) r.enviados += 1;
     if (res.push.omitido === 'tope') r.omitidos_por_tope += 1;
   }

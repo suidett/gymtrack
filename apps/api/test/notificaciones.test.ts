@@ -82,14 +82,15 @@ describe('Contrato de dispositivos', () => {
     // Lo mismo que CON-001, mirado solo en este módulo (CATALOGO_API ya incluye RUTAS_NOTIFICACIONES).
     const a = await armarApp({ url: URL_SIN_BASE });
     try {
-      const mias = a.app.gymtrack.rutas.filter((r) => r.url.startsWith('/v1/notificaciones/'));
+      const mias = a.app.gymtrack.rutas.filter((r) => r.url === '/v1/notificaciones' || r.url.startsWith('/v1/notificaciones/'));
       const catalogo = Object.values(RUTAS_NOTIFICACIONES);
       expect(mias).toHaveLength(catalogo.length);
       for (const r of mias) {
         const c = catalogo.find((x) => x.ruta === r.url && x.metodo === r.metodo);
         expect(c, `${r.metodo} ${r.url}`).toBeDefined();
-        const schema = r.schema as { body?: unknown; params?: unknown; response: Record<string, unknown> };
+        const schema = r.schema as { body?: unknown; querystring?: unknown; params?: unknown; response: Record<string, unknown> };
         expect(schema.body).toBe((c as { cuerpo?: unknown }).cuerpo);
+        expect(schema.querystring).toBe((c as { query?: unknown }).query);
         expect(schema.params).toBe((c as { params?: unknown }).params);
         expect(schema.response[c!.exito]).toBe(c!.respuesta);
         for (const [estado, esquema] of Object.entries(RESPUESTAS_ERROR)) expect(schema.response[estado]).toBe(esquema);

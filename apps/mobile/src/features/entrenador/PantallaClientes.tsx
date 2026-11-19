@@ -17,6 +17,7 @@ import { useRef, useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BarraAccion, Boton, BotonIcono, Ceja, Chip, Etiqueta, Hoja, Icono, Simbolo, Tarjeta, Titulo, Txt, useAviso } from '@/components/ui';
+import { Campana } from '@/features/notificaciones';
 import { useSesion } from '@/lib/sesion';
 import { useTema } from '@/lib/tema';
 import { BloqueCodigo, SIN_RED_CODIGO, useCodigoInvitacion } from './CodigoInvitacion';
@@ -113,8 +114,9 @@ export function PantallaClientes() {
 
   const saludo = (
     <>
-      <View className="h-14 flex-row items-center">
+      <View className="h-14 flex-row items-center justify-between">
         <Simbolo tamano={28} />
+        <Campana />
       </View>
       <View className="mb-5 mt-1">
         <Ceja>{fmtFecha(hoy, 'larga')}</Ceja>
