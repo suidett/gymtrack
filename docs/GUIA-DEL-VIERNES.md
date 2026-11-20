@@ -8,7 +8,7 @@ Lo que pide la pauta y cómo mostrarlo, en el orden en que conviene hacerlo. Las
 | --- | --- |
 | API (servidor en Vultr, Santiago) | <https://gymtrack-api.64.176.27.203.sslip.io/health> |
 | App web para iPhone | <https://gymtrack-app-5dd46.web.app> |
-| APK de Android | <https://expo.dev/accounts/suidett2/projects/gymtrack/builds/b4d70cab-680f-4883-84ed-5259dcbbc7fb> (botón «Install» o el código QR). Trae Google, la campana de notificaciones, las validaciones, el guardado al tiro y los ejercicios en 3D |
+| APK de Android | <https://expo.dev/accounts/suidett2/projects/gymtrack/builds/fb1b4291-6304-4d10-b954-fd309c3833c4> (botón «Install» o el código QR). Trae Google, la campana de notificaciones, las validaciones, el guardado al tiro, los ejercicios en 3D con sus pasos, exportar mis datos y cambiar la contraseña |
 | Repositorio entregado | <https://github.com/suidett/Gymtrackfinal> |
 | Política de privacidad y condiciones | <https://gymtrack-app-5dd46.web.app/privacidad.html> y `/terminos.html` |
 
