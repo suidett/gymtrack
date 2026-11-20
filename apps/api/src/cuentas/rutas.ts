@@ -125,6 +125,13 @@ export async function rutasCuentas(appBase: FastifyInstance, o: OpcionesRutasCue
     return { restablecida: true as const };
   });
 
+  // Con la sesión abierta: el límite del ingreso por persona, para que no sirva para adivinar.
+  app.post(R.cambiarContrasena.ruta, { schema: esquema(R.cambiarContrasena), preHandler: o.autenticar }, async (req) => {
+    const usuario = req.usuario!;
+    revisarLimite(o.limitadorIngreso, `cambio:${usuario.id}`);
+    return o.cuentas.cambiarContrasena(usuario, req.body);
+  });
+
   // ── Perfil ─────────────────────────────────────────────────────────────────
   // La misma forma que responde PATCH /v1/me: el recordatorio_hora vive en client_profiles.
   app.get(

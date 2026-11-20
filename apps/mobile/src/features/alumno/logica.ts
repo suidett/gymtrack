@@ -810,3 +810,12 @@ export function resumenAlerta(a: {
     ultimaKg: ult,
   };
 }
+
+// ── Enlaces ──────────────────────────────────────────────────────────────────
+/**
+ * Si la app corre en https (la web) y la API devolvió el enlace con http (un proxy mal
+ * configurado), se pide por https: el navegador bloquea pedir http desde una página https.
+ */
+export function aHttpsSiHaceFalta(url: string, protocoloPagina: string | undefined = globalThis.location?.protocol): string {
+  return protocoloPagina === 'https:' && url.startsWith('http://') ? `https://${url.slice('http://'.length)}` : url;
+}

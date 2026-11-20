@@ -3,7 +3,8 @@
 //
 // Qué hace: la regla de quién ve qué ejercicio (P-07) escrita una sola vez como filtro de Prisma,
 // la búsqueda de la lista (q, grupo, equipo) con su cursor por nombre, el PR vigente del alumno
-// por ejercicio y el paso de la fila de la base a la forma de la API (snake_case, fechas ISO).
+// por ejercicio y el paso de la fila de la base a la forma de la API (snake_case, fechas ISO; los
+// músculos de la biblioteca base salen de DETALLE_BASE, no de la base).
 // Quién ve qué:
 //   - La biblioteca base (owner_id nulo): todos.
 //   - Un ejercicio propio: su dueño.
@@ -16,8 +17,9 @@
 // No lo toques para: las rutas (index.ts) ni la regla del vínculo (src/compartido/vinculo.ts).
 // Depende de: src/compartido (vínculo, cursor), el cliente de Prisma y @gymtrack/shared.
 // ─────────────────────────────────────────────────────────────────────────────
-import type {
-  EjercicioApi, EjercicioDetalleApi, Equipo, GrupoMuscular, Patron, TipoCarga,
+import {
+  DETALLE_BASE, type DetalleEjercicioBase, type EjercicioApi, type EjercicioDetalleApi, type Equipo,
+  type GrupoMuscular, type Patron, type TipoCarga,
 } from '@gymtrack/shared';
 import { z } from 'zod';
 import { idsDeClientes, leerCursor } from '../../compartido';
@@ -134,6 +136,16 @@ export async function prsDe(
 }
 
 // ── A la forma de la API ─────────────────────────────────────────────────────
+/**
+ * Los músculos de un ejercicio de la biblioteca base, por su slug (exercises.detalle.ts):
+ * `trabajan` va como principales. Los propios (o un slug que no esté) dan null.
+ */
+export function musculosDe(e: Pick<Ejercicio, 'duenoId' | 'slug'>): EjercicioApi['musculos'] {
+  if (e.duenoId !== null || !e.slug) return null;
+  const d: DetalleEjercicioBase | undefined = DETALLE_BASE[e.slug];
+  return d ? { principales: [...d.trabajan], ayudan: [...d.ayudan] } : null;
+}
+
 export function ejercicioAApi(e: Ejercicio, quien: Pick<Usuario, 'id'>, pr: Pr | null): EjercicioApi {
   return {
     id: e.id,
@@ -145,6 +157,7 @@ export function ejercicioAApi(e: Ejercicio, quien: Pick<Usuario, 'id'>, pr: Pr |
     tipo_carga: e.tipoCarga,
     incremento_default_kg: e.incrementoDefaultKg,
     instrucciones: e.instrucciones,
+    musculos: musculosDe(e),
     owner_id: e.duenoId,
     base: e.duenoId === null,
     propio: e.duenoId === quien.id,

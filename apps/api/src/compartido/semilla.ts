@@ -7,7 +7,8 @@
 // la app sin «base-» como slug (`press-de-banca`) y recibe un UUID v7 fijo calculado desde el slug,
 // el mismo en todas las bases: una prueba o la app lo pueden calcular con idEjercicioBase(slug).
 // Es idempotente: lo que ya está no se duplica. Con `actualizar` también reescribe nombre, grupo,
-// equipo e incremento de los que ya estaban (para cuando cambie exercises.seed.ts).
+// equipo, incremento e instrucciones de los que ya estaban (para cuando cambie exercises.seed.ts
+// o los pasos de exercises.detalle.ts).
 // Tócalo cuando: haya otro contenido que toda base necesite.
 // No lo toques para: cambiar un ejercicio (exercises.seed.ts) ni para datos de prueba
 // (test/ayudas).

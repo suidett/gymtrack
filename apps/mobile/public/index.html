@@ -11,6 +11,10 @@
   inicio») y abrirla como app: el manifest, las etiquetas de Apple, el viewport con
   viewport-fit=cover (las zonas seguras las respeta react-native-safe-area-context) y el fondo
   grafito desde el primer cuadro, para que no haya destello blanco mientras carga.
+  Para que se sienta app y no página: la barra de estado transparente sobre el fondo de la app
+  (black-translucent; en modo claro la franja de arriba la pinta FranjaEstadoWeb), la pantalla
+  de inicio con el logo (public/inicio, una por tamaño de iPhone), sin zoom con dos dedos ni con
+  doble toque, sin seleccionar texto ni el menú de mantener presionado fuera de los campos.
   Por qué no es src/app/+html.tsx: en el SDK 57 ese archivo solo se usa con la salida "static",
   que pinta cada pantalla en Node al exportar, y el store guarda en AsyncStorage al importarse
   (en Node no hay window). Con "single" la app es una página y Firebase reescribe todo a ella.
@@ -22,7 +26,7 @@
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <!-- viewport-fit=cover: la app ocupa toda la pantalla y las zonas seguras van por env(). -->
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
     <title>%WEB_TITLE%</title>
     <!-- Los pesos y las repeticiones no son teléfonos: Safari no los convierte en enlaces. -->
     <meta name="format-detection" content="telephone=no" />
@@ -32,10 +36,21 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="GymTrack" />
-    <!-- black: barra negra con letras blancas y la app debajo; se lee igual en los dos temas. -->
-    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <!-- black-translucent: la app se dibuja bajo la barra de estado (letras blancas), como una app. -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="icon" type="image/png" sizes="192x192" href="/icono-192.png" />
+    <!-- Pantalla de inicio del iPhone (sin esto, la app abre en blanco un instante). -->
+    <link rel="apple-touch-startup-image" media="(device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/inicio/1320x2868.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/inicio/1206x2622.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/inicio/1290x2796.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/inicio/1179x2556.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/inicio/1284x2778.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/inicio/1170x2532.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/inicio/1125x2436.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/inicio/1242x2688.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="/inicio/828x1792.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="/inicio/750x1334.png" />
 
     <!--
       El reset que recomienda react-native-web: las pantallas desplazan con ScrollView, como en el
@@ -51,6 +66,20 @@
       body {
         overflow: hidden;
         -webkit-text-size-adjust: 100%;
+        /* Como una app: sin seleccionar texto, sin el menú de mantener presionado, sin el
+           destello gris al tocar y sin zoom con doble toque. */
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+      }
+      input,
+      textarea,
+      [contenteditable='true'] {
+        -webkit-user-select: text;
+        user-select: text;
+        -webkit-touch-callout: default;
       }
       #root {
         display: flex;

@@ -62,6 +62,15 @@ export function TemaProvider({ children, inicial = 'gimnasio' }: { children: Rea
   );
 }
 
+/**
+ * Las variables CSS del tema activo, para lo que se pinta fuera del árbol del proveedor: el Modal
+ * de la Hoja va en un portal (en la web, al final del body), así que no hereda --texto ni --sup y
+ * en modo claro quedaba con letras claras sobre fondo blanco.
+ */
+export function useVariablesTema() {
+  return VARIABLES[useContext(Contexto).modo];
+}
+
 // ── Hook ─────────────────────────────────────────────────────────────────────
 /** El tema activo y cómo cambiarlo (Perfil y ajustes, «Modo gimnasio»). */
 export function useTema(): ValorTema {

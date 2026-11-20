@@ -2,7 +2,7 @@
 // INT-050 a INT-059, INT-146, INT-152; SEG-013; P-07 y PERM-13 a 15, PERM-40).
 // La escena: Camila entrenadora, Martina vinculada a Camila, Diego solo; Rodrigo entrenador sin
 // clientes. La base parte sembrada con la biblioteca de EJERCICIOS_BASE.
-import { EJERCICIOS_BASE } from '@gymtrack/shared';
+import { DETALLE_BASE, EJERCICIOS_BASE } from '@gymtrack/shared';
 import { randomUUID } from 'node:crypto';
 import { expect, it } from 'vitest';
 import { AHORA, describeConBase, idEjercicioBase, usarEntornoApi, type PersonaDePrueba } from '../ayudas';
@@ -53,7 +53,12 @@ describeConBase('Ejercicios', () => {
     expect(items.every((x) => x.grupo_muscular === 'Pecho' && /press/i.test(x.nombre))).toBe(true);
     const baseEsperados = EJERCICIOS_BASE.filter((x) => x.grupo === 'Pecho' && /press/i.test(x.nombre)).length;
     expect(items.filter((x) => x.base)).toHaveLength(baseEsperados);
-    expect(items.find((x) => x.id === pausa.id)).toMatchObject({ propio: true, editable: true, owner_id: martina.id });
+    expect(items.find((x) => x.id === pausa.id)).toMatchObject({ propio: true, editable: true, owner_id: martina.id, musculos: null });
+    // En la lista, cada uno de la base trae sus pasos y sus músculos principales.
+    for (const x of items.filter((i) => i.base)) {
+      expect(x.instrucciones?.split('\n').length, x.slug).toBeGreaterThanOrEqual(3);
+      expect(x.musculos?.principales.length, x.slug).toBeGreaterThan(0);
+    }
     expect(items.some((x) => x.nombre === 'Puente de glúteo con banda')).toBe(false);
     expect(items.find((x) => x.id === idEjercicioBase('press-de-banca'))?.pr).toMatchObject({ tipo: 'peso_max', valor: 47.5 });
     expect(r.json.next_cursor).toBeNull();
@@ -164,14 +169,18 @@ describeConBase('Ejercicios', () => {
   });
 
   // ── Detalle ─────────────────────────────────────────────────────────────────
-  it('INT-054 detalle: el base da 200 con sus datos; el propio de Diego, 404 para Martina', async () => {
+  it('INT-054 detalle: el base da 200 con sus datos, pasos y músculos; el propio de Diego, 404 para Martina', async () => {
     const { martina, diego } = await e.escena();
     const deDiego = await crearPropio(diego, 'Remo con pausa', { grupo_muscular: 'Espalda', patron: 'tiron' });
     const base = await e.pedirComo(martina, { method: 'GET', url: `/v1/exercises/${idEjercicioBase('press-de-banca')}` });
     expect(base.status).toBe(200);
     expect(base.json).toMatchObject({ slug: 'press-de-banca', nombre: 'Press de banca', base: true, editable: false, owner_id: null });
     expect(Array.isArray(base.json.media)).toBe(true);
-    expect('instrucciones' in base.json).toBe(true);
+    // La técnica y los músculos salen de DETALLE_BASE (los visores 3D): un paso por línea.
+    const detalle = DETALLE_BASE['press-de-banca']!;
+    expect(base.json.instrucciones).toBe(detalle.pasos.join('\n'));
+    expect(base.json.musculos).toEqual({ principales: [...detalle.trabajan], ayudan: [...detalle.ayudan] });
+    expect(base.json.musculos.principales.length).toBeGreaterThan(0);
     expect((await e.pedirComo(martina, { method: 'GET', url: `/v1/exercises/${deDiego.id}` })).status).toBe(404);
     expect((await e.pedirComo(martina, { method: 'GET', url: `/v1/exercises/${randomUUID()}` })).status).toBe(404);
   });
@@ -182,7 +191,9 @@ describeConBase('Ejercicios', () => {
     const antes = await e.prisma.ejercicio.count({ where: { duenoId: null } });
     for (const p of [camila, martina, diego]) {
       const r = await crearPropio(p, `Ejercicio de ${p.nombre}`);
-      expect(r).toMatchObject({ owner_id: p.id, propio: true, editable: true, base: false, slug: null, tipo_carga: 'kg', pr: null });
+      expect(r).toMatchObject({
+        owner_id: p.id, propio: true, editable: true, base: false, slug: null, tipo_carga: 'kg', pr: null, musculos: null, instrucciones: null,
+      });
     }
     expect(await e.prisma.ejercicio.count({ where: { duenoId: null } })).toBe(antes);
     expect(antes).toBe(EJERCICIOS_BASE.length);

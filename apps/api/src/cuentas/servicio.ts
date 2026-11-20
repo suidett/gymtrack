@@ -14,7 +14,7 @@
 // para los límites de intentos (src/seguridad/limitador.ts, aplicados en rutas.ts).
 // Depende de: la base (Prisma), el reloj inyectado, src/seguridad/* y el servicio de correo.
 // ─────────────────────────────────────────────────────────────────────────────
-import type { PerfilUsuario, Sesion, Tokens, Usuario as UsuarioApi } from '@gymtrack/shared';
+import { errorContrasenaDebil, type PerfilUsuario, type Sesion, type Tokens, type Usuario as UsuarioApi } from '@gymtrack/shared';
 import { randomBytes, randomUUID } from 'node:crypto';
 import type { Config } from '../config';
 import { plantillaBienvenida, plantillaIngreso, plantillaRecuperacion } from '../correo/plantillas';
@@ -224,6 +224,32 @@ export function crearServicioCuentas(d: DependenciasCuentas) {
       const { tokens } = await emitirTokens(u);
       avisarIngreso(u, 'contrasena');
       return { usuario: usuarioDeSesion(await usuarioApiCompleto(d.prisma, u)), tokens };
+    },
+
+    // ── Cambiar la contraseña con la sesión abierta ────────────────────────
+    /**
+     * Revisa la actual, guarda la nueva, cierra las sesiones de todos los dispositivos (el sello del
+     * access cambia con la contraseña) y entrega una sesión nueva para el que hizo el cambio.
+     */
+    async cambiarContrasena(u: Usuario, e: { password_actual: string; password: string }): Promise<Sesion> {
+      if (!(await verificarContrasena(u.passwordHash, e.password_actual))) {
+        throw new ErrorApi('BUSINESS_RULE', { campo: 'password_actual', motivo: 'La contraseña actual no coincide.' }, 'La contraseña actual no coincide.');
+      }
+      if (e.password === e.password_actual) {
+        throw new ErrorApi('BUSINESS_RULE', { campo: 'password', motivo: 'La nueva tiene que ser distinta de la actual.' }, 'La nueva tiene que ser distinta de la actual.');
+      }
+      const debil = errorContrasenaDebil(e.password, u.email);
+      if (debil) throw new ErrorApi('BUSINESS_RULE', { campo: 'password', motivo: debil }, debil);
+      const ahora = d.reloj.ahora();
+      const passwordHash = await hashearContrasena(e.password);
+      const actualizado = await d.prisma.$transaction(async (tx) => {
+        const nuevo = await tx.usuario.update({ where: { id: u.id }, data: { passwordHash } });
+        await revocarTodos(u.id, ahora, tx);
+        await tx.passwordReset.updateMany({ where: { usuarioId: u.id, usadoAt: null }, data: { usadoAt: ahora } });
+        return nuevo;
+      });
+      const { tokens } = await emitirTokens(actualizado);
+      return { usuario: usuarioDeSesion(await usuarioApiCompleto(d.prisma, actualizado)), tokens };
     },
 
     // ── Refresh con rotación ───────────────────────────────────────────────

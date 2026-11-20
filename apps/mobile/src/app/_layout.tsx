@@ -24,6 +24,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect } from 'react';
 import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { FranjaEstadoWeb } from '@/components/FranjaEstadoWeb';
 import { AvisoProvider } from '@/components/ui';
 import { useFuentes } from '@/lib/fuentes';
 import { renovarAvisos, useAbrirAvisos } from '@/lib/notificaciones';
@@ -106,6 +107,7 @@ function Navegacion() {
         </Stack.Protected>
       </Stack>
       {conSesion && usuario ? <AvisosConSesion usuarioId={usuario.id} /> : null}
+      <FranjaEstadoWeb />
     </>
   );
 }

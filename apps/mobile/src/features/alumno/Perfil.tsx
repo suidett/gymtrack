@@ -17,15 +17,17 @@
 // @/lib/sesion y @/lib/tema.
 // ─────────────────────────────────────────────────────────────────────────────
 import { useRef, useState, type ReactNode } from 'react';
-import { Linking, Pressable, Share, Text, TextInput, View } from 'react-native';
+import { Pressable, Share, Text, TextInput, View } from 'react-native';
 import { BarraAccion, Boton, Cabecera, CampoTexto, Chip, Hoja, Icono, Interruptor, Pantalla, Separador, Simbolo, Tarjeta, Txt, useAviso } from '@/components/ui';
 import { AvisosDelTelefono } from '@/components/AvisosDelTelefono';
 import { detalleDeError } from '@gymtrack/shared';
-import { errorNombre, LARGO_MAXIMO } from '@/features/acceso/validacion';
+import { errorContrasenaNueva, errorNombre, LARGO_MAXIMO, MINIMO_CONTRASENA } from '@/features/acceso/validacion';
 import { ErrorDeApi, useSesion } from '@/lib/sesion';
+import { descargarArchivo } from './descargarArchivo';
 import { useTema } from '@/lib/tema';
 import {
   borrarCuenta,
+  cambiarContrasena,
   cambiarPerfil,
   cifrasAlumno,
   cifrasEntrenador,
@@ -39,6 +41,8 @@ import type { Invitacion } from './datos';
 import { codigoVencido, fechaBorrado, fechaConDia, iniciales, limpiarCodigo, pasoDescanso, reloj } from './logica';
 import { Avatar, CuadroCifra } from './piezas';
 import { ahora, guardarCache, leerCache, useCarga } from './useCarga';
+
+const ARCHIVO_EXPORTACION = 'gymtrack-mis-datos.zip';
 
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 const fechaDesde = (iso: string | undefined) => {
@@ -111,8 +115,9 @@ function Perfil({ abrirVincular, onBorrar }: { abrirVincular: boolean; onBorrar:
     setExportando(true);
     try {
       const url = await exportarDatos();
-      if (url) await Linking.openURL(url);
-      aviso.mostrar('Listo: gymtrack-mis-datos.zip. Elige dónde guardarlo o a quién mandarlo.');
+      if (!url) throw new Error('La API no devolvió el enlace del archivo.');
+      await descargarArchivo(url, ARCHIVO_EXPORTACION);
+      aviso.mostrar(`Listo: ${ARCHIVO_EXPORTACION}. Lo encuentras en tus descargas.`);
     } catch (e) {
       aviso.mostrar(`No pudimos preparar tu archivo. ${mensajeDeError(e)}`, { accion: { titulo: 'Reintentar', onPress: exportar } });
     } finally {
@@ -266,7 +271,7 @@ function Perfil({ abrirVincular, onBorrar }: { abrirVincular: boolean; onBorrar:
 
       <Separador titulo="Tu cuenta" />
       <Tarjeta className="py-1">
-        <FilaIr titulo="Datos personales" detalle="Nombre, correo y contraseña." onPress={() => setHoja('datos')} />
+        <FilaIr titulo="Datos personales" detalle="Nombre, apellido y contraseña." onPress={() => setHoja('datos')} />
         <FilaIr
           titulo={exportando ? 'Preparando tu archivo…' : 'Exportar mis datos'}
           detalle={
@@ -474,26 +479,52 @@ function HojaVincular({ onCerrar, onVinculado }: { onCerrar: () => void; onVincu
 }
 
 function HojaDatos({ onCerrar }: { onCerrar: () => void }) {
-  const { usuario, actualizarUsuario } = useSesion();
+  const { usuario, actualizarUsuario, entrarConSesion } = useSesion();
   const aviso = useAviso();
   const [nombre, setNombre] = useState(usuario?.nombre ?? '');
   const [apellido, setApellido] = useState(usuario?.apellido ?? '');
+  const [conClave, setConClave] = useState(false);
+  const [actual, setActual] = useState('');
+  const [nueva, setNueva] = useState('');
   const [guardando, setGuardando] = useState(false);
-  const [errores, setErrores] = useState<{ nombre?: string | null; apellido?: string | null }>({});
+  type Campo = 'nombre' | 'apellido' | 'password_actual' | 'password';
+  const [errores, setErrores] = useState<Partial<Record<Campo, string | null>>>({});
+  const limpiar = (k: Campo) => setErrores((x) => ({ ...x, [k]: null }));
+  const cambioNombre = nombre.trim() !== (usuario?.nombre ?? '') || apellido.trim() !== (usuario?.apellido ?? '');
+
   async function guardar() {
-    // Las mismas reglas de la API (errorNombrePersona): el error va bajo el campo.
-    const e = { nombre: errorNombre(nombre, 'nombre'), apellido: errorNombre(apellido, 'apellido') };
+    // Las mismas reglas de la API (errorNombrePersona y la de la contraseña nueva): el error va
+    // bajo el campo.
+    const e: Partial<Record<Campo, string | null>> = { nombre: errorNombre(nombre, 'nombre'), apellido: errorNombre(apellido, 'apellido') };
+    if (conClave) {
+      e.password_actual = actual ? null : 'Escribe tu contraseña actual.';
+      const debil = errorContrasenaNueva(nueva, usuario?.email);
+      e.password =
+        debil === 'corta'
+          ? `Tiene que tener al menos ${MINIMO_CONTRASENA} caracteres.`
+          : (debil ?? (nueva === actual ? 'La nueva tiene que ser distinta de la actual.' : null));
+    }
     setErrores(e);
-    if (e.nombre || e.apellido) return;
+    if (Object.values(e).some(Boolean)) return;
+    if (!cambioNombre && !conClave) {
+      onCerrar();
+      return;
+    }
     setGuardando(true);
     try {
-      await cambiarPerfil({ nombre: nombre.trim(), apellido: apellido.trim() });
-      actualizarUsuario({ nombre: nombre.trim(), apellido: apellido.trim() });
-      aviso.mostrar('Guardaste tus datos.');
+      if (cambioNombre) {
+        await cambiarPerfil({ nombre: nombre.trim(), apellido: apellido.trim() });
+        actualizarUsuario({ nombre: nombre.trim(), apellido: apellido.trim() });
+      }
+      if (conClave) {
+        const sesion = await cambiarContrasena({ password_actual: actual, password: nueva });
+        await entrarConSesion(sesion);
+      }
+      aviso.mostrar(conClave ? 'Cambiaste tu contraseña. Cerramos tu sesión en los otros teléfonos.' : 'Guardaste tus datos.');
       onCerrar();
     } catch (err) {
       const { campo, motivo } = detalleDeError(err);
-      if (motivo && (campo === 'nombre' || campo === 'apellido')) setErrores({ [campo]: motivo });
+      if (motivo && (campo === 'nombre' || campo === 'apellido' || campo === 'password_actual' || campo === 'password')) setErrores({ [campo]: motivo });
       else aviso.mostrar(mensajeDeError(err));
     } finally {
       setGuardando(false);
@@ -515,7 +546,7 @@ function HojaDatos({ onCerrar }: { onCerrar: () => void }) {
         <CampoTexto
           etiqueta="Nombre"
           valor={nombre}
-          onCambiar={(v) => (setNombre(v), setErrores((x) => ({ ...x, nombre: null })))}
+          onCambiar={(v) => (setNombre(v), limpiar('nombre'))}
           error={errores.nombre}
           maxLength={LARGO_MAXIMO.nombre}
           autoCapitalize="words"
@@ -524,15 +555,47 @@ function HojaDatos({ onCerrar }: { onCerrar: () => void }) {
         <CampoTexto
           etiqueta="Apellido"
           valor={apellido}
-          onCambiar={(v) => (setApellido(v), setErrores((x) => ({ ...x, apellido: null })))}
+          onCambiar={(v) => (setApellido(v), limpiar('apellido'))}
           error={errores.apellido}
           maxLength={LARGO_MAXIMO.nombre}
           autoCapitalize="words"
           autoComplete="family-name"
         />
-        <Txt v="sec">
-          Tu correo es {usuario?.email}. Para cambiar la contraseña, cierra sesión y usa «¿Olvidaste tu contraseña?» al ingresar.
-        </Txt>
+        <View className="gap-1">
+          <Txt v="etiquetaCampo">Correo</Txt>
+          <Txt v="cuerpo">{usuario?.email}</Txt>
+          <Txt v="sec">Es con el que ingresas y donde te llegan los avisos; no se puede cambiar.</Txt>
+        </View>
+        {conClave ? (
+          <>
+            <CampoTexto
+              etiqueta="Contraseña actual"
+              valor={actual}
+              onCambiar={(v) => (setActual(v), limpiar('password_actual'))}
+              error={errores.password_actual}
+              contrasena
+              maxLength={LARGO_MAXIMO.clave}
+              autoCapitalize="none"
+              autoCorrect={false}
+              autoComplete="current-password"
+            />
+            <CampoTexto
+              etiqueta="Contraseña nueva"
+              valor={nueva}
+              onCambiar={(v) => (setNueva(v), limpiar('password'))}
+              error={errores.password}
+              ayuda={`Al menos ${MINIMO_CONTRASENA} caracteres, distinta de tu correo y de la actual.`}
+              contrasena
+              maxLength={LARGO_MAXIMO.clave}
+              autoCapitalize="none"
+              autoCorrect={false}
+              autoComplete="new-password"
+            />
+            <Txt v="sec">Si entraste con Google y nunca tuviste contraseña, usa «Olvidé mi contraseña» al ingresar para crear una.</Txt>
+          </>
+        ) : (
+          <Boton titulo="Cambiar contraseña" variante="secundario" ancho onPress={() => setConClave(true)} />
+        )}
       </View>
     </Hoja>
   );
@@ -643,8 +706,9 @@ function BorrarCuenta({ onVolver }: { onVolver: () => void }) {
     setExportando(true);
     try {
       const url = await exportarDatos();
-      if (url) await Linking.openURL(url);
-      aviso.mostrar('Listo: gymtrack-mis-datos.zip. Elige dónde guardarlo o a quién mandarlo.');
+      if (!url) throw new Error('La API no devolvió el enlace del archivo.');
+      await descargarArchivo(url, ARCHIVO_EXPORTACION);
+      aviso.mostrar(`Listo: ${ARCHIVO_EXPORTACION}. Lo encuentras en tus descargas.`);
     } catch (e) {
       aviso.mostrar(`No pudimos preparar tu archivo. ${mensajeDeError(e)}`);
     } finally {

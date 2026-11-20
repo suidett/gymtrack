@@ -100,6 +100,19 @@ export const esquemaRestablecerContrasena = z.strictObject({
   password: esquemaContrasenaNueva,
 });
 
+/**
+ * Cambiar la contraseña con la sesión abierta (Perfil > Datos personales): la actual para
+ * confirmar que es la persona, y la nueva con las mismas reglas del registro. La API revisa
+ * además que la nueva no sea igual a la actual ni al correo.
+ */
+export const esquemaCambiarContrasena = z.strictObject({
+  password_actual: z
+    .string({ error: 'Escribe tu contraseña actual.' })
+    .min(1, { error: 'Escribe tu contraseña actual.' })
+    .max(CONTRASENA_MAX),
+  password: esquemaContrasenaNueva,
+});
+
 // ── Salidas ──────────────────────────────────────────────────────────────────
 export const esquemaUsuario = z.object({
   id: z.uuid(),
@@ -206,6 +219,7 @@ export type PerfilGoogle = z.infer<typeof esquemaPerfilGoogle>;
 export type RespuestaGoogle = z.infer<typeof esquemaRespuestaGoogle>;
 export type EntradaIngreso = z.input<typeof esquemaIngreso>;
 export type EntradaRestablecer = z.input<typeof esquemaRestablecerContrasena>;
+export type EntradaCambiarContrasena = z.input<typeof esquemaCambiarContrasena>;
 export type Usuario = z.infer<typeof esquemaUsuario>;
 export type Tokens = z.infer<typeof esquemaTokens>;
 export type Sesion = z.infer<typeof esquemaSesion>;
@@ -245,6 +259,13 @@ export const RUTAS_CUENTAS = {
   restablecerContrasena: {
     metodo: 'POST', ruta: '/v1/auth/password/reset', publica: true,
     cuerpo: esquemaRestablecerContrasena, exito: 200, respuesta: esquemaRespuestaRestablecer,
+  },
+  // Responde una sesión nueva (como el ingreso): la contraseña cambia el sello del access y se
+  // cierran las demás sesiones. Errores propios: 422 BUSINESS_RULE con campo password_actual
+  // (no coincide) o password (igual a la actual o al correo).
+  cambiarContrasena: {
+    metodo: 'POST', ruta: '/v1/me/password', publica: false,
+    cuerpo: esquemaCambiarContrasena, exito: 200, respuesta: esquemaSesion,
   },
   perfil: {
     metodo: 'GET', ruta: '/v1/me', publica: false,

@@ -107,7 +107,13 @@ export const esquemaEjercicio = z.object({
   patron: esquemaPatron,
   tipo_carga: esquemaTipoCarga,
   incremento_default_kg: z.number(),
+  /** Los pasos de la técnica, uno por línea. En la base salen de exercises.detalle.ts. */
   instrucciones: z.string().nullable(),
+  /**
+   * Los músculos que trabajan (principales) y los que ayudan, de exercises.detalle.ts. Solo los
+   * trae la biblioteca base; null en los propios.
+   */
+  musculos: z.object({ principales: z.array(z.string()), ayudan: z.array(z.string()) }).nullable(),
   /** null en la biblioteca base. */
   owner_id: esquemaUuid.nullable(),
   /** true si es de la biblioteca base. */

@@ -10,6 +10,7 @@
 import { describe, expect, it } from 'vitest';
 import type { DiaDeRutina, Ejercicio, Medida, Rutina } from '../datos';
 import {
+  aHttpsSiHaceFalta,
   accionDetalle,
   accionesRutina,
   cambio30Dias,
@@ -322,5 +323,16 @@ describe('Motivos de la baja', () => {
     expect(textoEnviar(0, false)).toBe('Enviar');
     expect(textoEnviar(2, false)).toBe('Enviar (2)');
     expect(textoEnviar(2, true)).toBe('Enviando…');
+  });
+});
+
+describe('aHttpsSiHaceFalta (exportar mis datos)', () => {
+  it('en una página https sube el enlace http a https', () => {
+    expect(aHttpsSiHaceFalta('http://api.ejemplo.cl/v1/me/export/archivo?token=a', 'https:')).toBe('https://api.ejemplo.cl/v1/me/export/archivo?token=a');
+  });
+  it('deja igual un enlace https, y uno http si la página también es http', () => {
+    expect(aHttpsSiHaceFalta('https://api.ejemplo.cl/x', 'https:')).toBe('https://api.ejemplo.cl/x');
+    expect(aHttpsSiHaceFalta('http://localhost:3000/x', 'http:')).toBe('http://localhost:3000/x');
+    expect(aHttpsSiHaceFalta('http://localhost:3000/x', undefined)).toBe('http://localhost:3000/x');
   });
 });

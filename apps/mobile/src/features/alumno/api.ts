@@ -10,7 +10,9 @@
 // No lo toques para: leer un campo nuevo de la respuesta (va en ./datos.ts).
 // Depende de: @/lib/sesion (api) y ./datos.
 // ─────────────────────────────────────────────────────────────────────────────
+import type { Sesion } from '@gymtrack/shared';
 import { api, ErrorDeApi, esSinConexion } from '@/lib/sesion';
+import { aHttpsSiHaceFalta } from './logica';
 import {
   aAlerta,
   aConsejos,
@@ -220,7 +222,12 @@ export async function desvincular() {
 /** GET /me/export: la URL firmada del ZIP. */
 export async function exportarDatos(): Promise<string | null> {
   const r = desenvolver(await api.llamar('GET', '/v1/me/export'));
-  return texto(r.url ?? r.url_firmada) || null;
+  return aHttpsSiHaceFalta(texto(r.url ?? r.url_firmada)) || null;
+}
+
+/** POST /v1/me/password: devuelve la sesión nueva (las demás quedan cerradas). */
+export async function cambiarContrasena(cuerpo: { password_actual: string; password: string }): Promise<Sesion> {
+  return api.llamar<Sesion>('POST', '/v1/me/password', { cuerpo });
 }
 
 export async function borrarCuenta() {

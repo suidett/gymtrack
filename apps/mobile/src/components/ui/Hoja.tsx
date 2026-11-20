@@ -12,7 +12,7 @@
 import type { ReactNode } from 'react';
 import { Modal, Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTema } from '@/lib/tema';
+import { useTema, useVariablesTema } from '@/lib/tema';
 import { Txt } from './Txt';
 
 /**
@@ -36,10 +36,13 @@ export function Hoja({
 }) {
   const insets = useSafeAreaInsets();
   const { c } = useTema();
+  const variables = useVariablesTema();
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCerrar} statusBarTranslucent>
-      {/* El Modal se pinta fuera del árbol de la raíz en Android: el fondo va con el hexadecimal. */}
-      <View className="flex-1 justify-end" style={{ backgroundColor: 'rgba(0,0,0,0.55)' }}>
+      {/* El Modal se pinta fuera del árbol de la raíz (Android y web): el fondo va con el
+          hexadecimal y las variables del tema se vuelven a poner aquí, para que el texto siga el
+          modo elegido. */}
+      <View className="flex-1 justify-end" style={[{ backgroundColor: 'rgba(0,0,0,0.55)' }, variables]}>
         <Pressable className="flex-1" accessibilityRole="button" accessibilityLabel="Cerrar" onPress={onCerrar} />
         <View
           accessibilityViewIsModal

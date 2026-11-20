@@ -3,7 +3,8 @@
 //
 // Qué hace: la lista de ejercicios con la que parte todo alumno (67 hoy), cada uno con su grupo
 // muscular, equipo, patrón de movimiento, tipo de carga y cuántos kilos sube por defecto cuando la
-// progresión lo indica. El store la copia al teléfono la primera vez que se abre la app.
+// progresión lo indica. Las instrucciones (los pasos de la técnica, uno por línea) salen de
+// exercises.detalle.ts. El store la copia al teléfono la primera vez que se abre la app.
 // Tócalo cuando: falte un ejercicio, un nombre esté mal escrito o un incremento por defecto no
 // tenga sentido para el equipo. Un ejercicio nuevo es una línea `ex(...)` bajo su grupo. Ojo con
 // dos cosas: el id (la primera parte, sin "base-") no se cambia una vez publicado, porque las
@@ -11,9 +12,12 @@
 // (primera vez o "restablecer datos" en useStore.ts), así que quien ya tiene datos no ve un
 // ejercicio nuevo hasta que exista una migración.
 // No lo toques para: cambiar qué campos tiene un ejercicio (types.ts), cómo se calcula la
-// progresión (progression.ts) ni la rutina de ejemplo (rutina-ejemplo.ts).
-// Depende de: types.ts (los tipos Exercise, GrupoMuscular, Equipo, Patron y TipoCarga).
+// progresión (progression.ts), la rutina de ejemplo (rutina-ejemplo.ts) ni los pasos o músculos
+// de un ejercicio (exercises.detalle.ts, que se regenera desde docs/pantallas/3d/ejercicios).
+// Depende de: types.ts (los tipos Exercise, GrupoMuscular, Equipo, Patron y TipoCarga) y
+// exercises.detalle.ts (DETALLE_BASE).
 // ─────────────────────────────────────────────────────────────────────────────
+import { DETALLE_BASE, type DetalleEjercicioBase } from './exercises.detalle';
 import type { Equipo, Exercise, GrupoMuscular, Patron, TipoCarga } from './types';
 
 // ── Fecha fija y ayudante ────────────────────────────────────────────────────
@@ -27,7 +31,8 @@ const CREADO = '2026-09-23T00:00:00.000Z';
  * Arma un Exercise de la biblioteca base escribiendo solo lo que cambia entre uno y otro.
  * Recibe el id corto (se le antepone "base-"), el nombre que ve el alumno, grupo, equipo, patrón,
  * el incremento por defecto en kilos y el tipo de carga ('kg' si no se indica).
- * Siempre deja propio en false y la fecha fija de arriba.
+ * Siempre deja propio en false y la fecha fija de arriba. Las instrucciones son los pasos de
+ * DETALLE_BASE unidos por saltos de línea (uno por paso); sin pasos, el campo no va.
  */
 function ex(
   id: string,
@@ -38,7 +43,11 @@ function ex(
   incrementoKg: number,
   tipoCarga: TipoCarga = 'kg',
 ): Exercise {
-  return { id: `base-${id}`, nombre, grupo, equipo, patron, tipoCarga, incrementoKg, propio: false, creadoAt: CREADO };
+  const detalle: DetalleEjercicioBase | undefined = DETALLE_BASE[id];
+  const instrucciones = detalle?.pasos.length ? { instrucciones: detalle.pasos.join('\n') } : {};
+  return {
+    id: `base-${id}`, nombre, grupo, equipo, patron, tipoCarga, incrementoKg, ...instrucciones, propio: false, creadoAt: CREADO,
+  };
 }
 
 // ── La biblioteca ────────────────────────────────────────────────────────────
